@@ -2,11 +2,27 @@ import twilio from 'twilio';
 import { randomUUID } from 'crypto';
 import { addWebhookLog } from './webhook-logger';
 
-// Twilio yapılandırma değişkenleri
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
-const deadlineFlowSid = process.env.TWILIO_DEADLINE_FLOW_SID; // Yeni eklenen Flow SID
+// Twilio client'ı lazy initialize et
+function getTwilioClient() {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  
+  if (!accountSid || !authToken) {
+    throw new Error('Twilio credentials not configured');
+  }
+  
+  return twilio(accountSid, authToken);
+}
+
+// Twilio yapılandırma değişkenlerini lazy olarak al
+function getTwilioConfig() {
+  return {
+    accountSid: process.env.TWILIO_ACCOUNT_SID,
+    authToken: process.env.TWILIO_AUTH_TOKEN,
+    twilioPhoneNumber: process.env.TWILIO_PHONE_NUMBER,
+    deadlineFlowSid: process.env.TWILIO_DEADLINE_FLOW_SID
+  };
+}
 
 // Arama durum takibi için tip tanımları
 export interface CallResult {
@@ -40,7 +56,9 @@ export async function makeCall(
   callbackUrl?: string
 ): Promise<CallResult> {
   try {
-    if (!accountSid || !authToken || !twilioPhoneNumber) {
+    const config = getTwilioConfig();
+    
+    if (!config.accountSid || !config.authToken || !config.twilioPhoneNumber) {
       throw new Error("Twilio yapılandırması eksik. Lütfen çevre değişkenlerini kontrol edin.");
     }
 
@@ -50,13 +68,13 @@ export async function makeCall(
     }
 
     // Twilio istemcisini oluştur
-    const client = twilio(accountSid, authToken);
+    const client = getTwilioClient();
 
     // Aramayı yap
     const call = await client.calls.create({
       twiml: `<Response><Say voice="woman" language="tr-TR">${message}</Say></Response>`,
       to: phoneNumber,
-      from: twilioPhoneNumber,
+      from: config.twilioPhoneNumber,
       statusCallback: callbackUrl
     });
 
@@ -65,7 +83,7 @@ export async function makeCall(
       message: 'Call initiated successfully',
       phoneNumber,
       callSid: call.sid,
-      from: twilioPhoneNumber
+      from: config.twilioPhoneNumber
     }, {
       phoneNumber,
       executionSid: call.sid
@@ -144,7 +162,9 @@ export async function makeDeadlineFlowCall(
   appUrl?: string
 ): Promise<FlowExecutionResult> {
   try {
-    if (!accountSid || !authToken || !twilioPhoneNumber || !deadlineFlowSid) {
+    const config = getTwilioConfig();
+    
+    if (!config.accountSid || !config.authToken || !config.twilioPhoneNumber || !config.deadlineFlowSid) {
       throw new Error("Twilio yapılandırması eksik. Lütfen çevre değişkenlerini kontrol edin.");
     }
 
@@ -154,7 +174,7 @@ export async function makeDeadlineFlowCall(
     }
 
     // Twilio istemcisini oluştur
-    const client = twilio(accountSid, authToken);
+    const client = getTwilioClient();
 
     // Webhook URL'lerini oluştur - Production URL kullan
     const baseUrl = appUrl || process.env.NEXT_PUBLIC_APP_URL || 'https://happy-transfer.vercel.app';
@@ -192,7 +212,7 @@ export async function makeDeadlineFlowCall(
 
     console.log('Yeni çağrı başlatılıyor:', {
       to: phoneNumber,
-      from: twilioPhoneNumber,
+      from: config.twilioPhoneNumber,
       webhooks: webhookUrls,
       parameters: flowParameters
     });
@@ -211,10 +231,10 @@ export async function makeDeadlineFlowCall(
 
     // Studio Flow execution başlat
     const execution = await client.studio.v2
-      .flows(deadlineFlowSid)
+      .flows(config.deadlineFlowSid)
       .executions.create({
         to: phoneNumber,
-        from: twilioPhoneNumber,
+        from: config.twilioPhoneNumber,
         parameters: flowParameters
       });
 

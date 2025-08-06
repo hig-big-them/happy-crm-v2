@@ -51,11 +51,16 @@ const sendEmailSchema = z.object({
   template_variables: z.record(z.string()).optional()
 })
 
-// Twilio istemcisini oluştur
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-)
+// Twilio client'ı lazy initialize et
+function getTwilioClient() {
+  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
+    throw new Error('Twilio credentials not configured')
+  }
+  return twilio(
+    process.env.TWILIO_ACCOUNT_SID,
+    process.env.TWILIO_AUTH_TOKEN
+  )
+}
 
 export const createMessage = authActionClient
   .schema(createMessageSchema)
@@ -308,6 +313,7 @@ export async function getMessagesByLead(lead_id: string): Promise<Message[]> {
 
 export async function getTwilioContentTemplates(): Promise<TwilioContentTemplate[]> {
   try {
+    const twilioClient = getTwilioClient()
     const contents = await twilioClient.content.v1.contents.list()
     
     return contents.map(content => ({

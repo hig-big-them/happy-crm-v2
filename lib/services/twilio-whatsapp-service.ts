@@ -1,10 +1,26 @@
 import twilio from 'twilio';
 import { randomUUID } from 'crypto';
 
-// Twilio yapılandırma değişkenleri
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+// Twilio client'ı lazy initialize et
+function getTwilioClient() {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  
+  if (!accountSid || !authToken) {
+    throw new Error('Twilio credentials not configured');
+  }
+  
+  return twilio(accountSid, authToken);
+}
+
+// Twilio config'i lazy olarak al
+function getTwilioConfig() {
+  return {
+    accountSid: process.env.TWILIO_ACCOUNT_SID,
+    authToken: process.env.TWILIO_AUTH_TOKEN,
+    twilioPhoneNumber: process.env.TWILIO_PHONE_NUMBER
+  };
+}
 
 // Mesaj sonuç tipi
 export interface MessageResult {
@@ -44,7 +60,9 @@ export async function sendMessage(
 ): Promise<MessageResult> {
   console.log(`[TwilioService] ${channel.toUpperCase()} mesajı gönderiliyor. Alıcı: ${phoneNumber}`);
 
-  if (!accountSid || !authToken || !twilioPhoneNumber) {
+  const config = getTwilioConfig();
+  
+  if (!config.accountSid || !config.authToken || !config.twilioPhoneNumber) {
     const errorMsg = "Twilio yapılandırma bilgileri eksik. Lütfen .env dosyasını kontrol edin.";
     console.error(`[TwilioService] Hata: ${errorMsg}`);
     return { success: false, error: errorMsg, phoneNumber, channel };
@@ -57,12 +75,12 @@ export async function sendMessage(
     }
 
     // Twilio istemcisini oluştur
-    const client = twilio(accountSid, authToken);
+    const client = getTwilioClient();
 
     // Mesaj parametrelerini hazırla
     const messageOptions: any = {
       body: message,
-      from: channel === 'whatsapp' ? `whatsapp:${twilioPhoneNumber}` : twilioPhoneNumber,
+      from: channel === 'whatsapp' ? `whatsapp:${config.twilioPhoneNumber}` : config.twilioPhoneNumber,
       to: channel === 'whatsapp' ? `whatsapp:${phoneNumber}` : phoneNumber,
     };
 
@@ -150,7 +168,9 @@ export async function sendWhatsAppTemplate(
   console.log(`[TwilioService] WhatsApp template mesajı gönderiliyor. Alıcı: ${phoneNumber}, Content SID: ${templateSid}`);
   console.log(`[TwilioService] Template Değişkenleri:`, templateParams);
 
-  if (!accountSid || !authToken || !twilioPhoneNumber) {
+  const config = getTwilioConfig();
+  
+  if (!config.accountSid || !config.authToken || !config.twilioPhoneNumber) {
     const errorMsg = "Twilio yapılandırma bilgileri eksik. Lütfen .env dosyasını kontrol edin.";
     console.error(`[TwilioService] Hata: ${errorMsg}`);
     return { success: false, error: errorMsg, phoneNumber, channel: 'whatsapp' };
@@ -163,12 +183,12 @@ export async function sendWhatsAppTemplate(
     }
 
     // Twilio istemcisini oluştur
-    const client = twilio(accountSid, authToken);
+    const client = getTwilioClient();
 
     // WhatsApp template mesajını gönder
     const messageOptions: any = {
       contentSid: templateSid,
-      from: `whatsapp:${twilioPhoneNumber}`,
+      from: `whatsapp:${config.twilioPhoneNumber}`,
       to: `whatsapp:${phoneNumber}`,
     };
 
@@ -303,7 +323,7 @@ export async function getMessageStatus(messageSid: string): Promise<string | nul
   }
 
   try {
-    const client = twilio(accountSid, authToken);
+    const client = getTwilioClient();
     const message = await client.messages(messageSid).fetch();
     return message.status;
   } catch (error) {

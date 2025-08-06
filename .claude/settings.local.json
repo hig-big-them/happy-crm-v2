@@ -39,7 +39,8 @@
       "WebFetch(domain:developers.facebook.com)",
       "Bash(pkill:*)",
       "Bash(true)",
-      "Bash(npm update:*)"
+      "Bash(npm update:*)",
+      "Bash(npx next build:*)"
     ],
     "deny": []
   }

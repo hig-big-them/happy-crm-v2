@@ -7,15 +7,27 @@
 
 import twilio from 'twilio';
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
-
-if (!accountSid || !authToken || !twilioPhoneNumber) {
-  console.warn('⚠️ Twilio credentials eksik. Notification servisi devre dışı.');
+// Twilio client'ı lazy initialize et
+function getTwilioClient() {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  
+  if (!accountSid || !authToken) {
+    console.warn('⚠️ Twilio credentials eksik. Notification servisi devre dışı.');
+    return null;
+  }
+  
+  return twilio(accountSid, authToken);
 }
 
-const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
+// Twilio config'i lazy olarak al
+function getTwilioConfig() {
+  return {
+    accountSid: process.env.TWILIO_ACCOUNT_SID,
+    authToken: process.env.TWILIO_AUTH_TOKEN,
+    twilioPhoneNumber: process.env.TWILIO_PHONE_NUMBER
+  };
+}
 
 export interface NotificationResult {
   success: boolean;
@@ -33,6 +45,9 @@ export async function sendCRMSMSNotification(
   message: string,
   customFromNumber?: string
 ): Promise<NotificationResult> {
+  const client = getTwilioClient();
+  const config = getTwilioConfig();
+  
   if (!client) {
     return {
       success: false,
@@ -44,7 +59,7 @@ export async function sendCRMSMSNotification(
   try {
     const smsMessage = await client.messages.create({
       body: message,
-      from: customFromNumber || twilioPhoneNumber,
+      from: customFromNumber || config.twilioPhoneNumber,
       to: to
     });
 
@@ -74,6 +89,9 @@ export async function sendCRMVoiceNotification(
   message: string,
   voiceUrl?: string
 ): Promise<NotificationResult> {
+  const client = getTwilioClient();
+  const config = getTwilioConfig();
+  
   if (!client) {
     return {
       success: false,
@@ -89,7 +107,7 @@ export async function sendCRMVoiceNotification(
     const call = await client.calls.create({
       url: twimlUrl,
       to: to,
-      from: twilioPhoneNumber!,
+      from: config.twilioPhoneNumber!,
       method: 'POST'
     });
 
@@ -246,6 +264,8 @@ export async function cleanupTwilioNotifyServices(): Promise<{
   removedServices: number;
   errors: string[];
 }> {
+  const client = getTwilioClient();
+  
   if (!client) {
     return {
       success: false,

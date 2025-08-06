@@ -2,11 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/utils/supabase/server';
 import twilio from 'twilio';
 
-// Twilio istemcisini oluştur
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
+// Twilio client'ı lazy initialize et
+function getTwilioClient() {
+  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
+    throw new Error('Twilio credentials not configured');
+  }
+  return twilio(
+    process.env.TWILIO_ACCOUNT_SID,
+    process.env.TWILIO_AUTH_TOKEN
+  );
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,6 +27,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Fetch Twilio content templates
+    const twilioClient = getTwilioClient();
     const contents = await twilioClient.content.v1.contents.list();
     
     const templates = contents.map(content => ({
@@ -71,6 +77,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Create Twilio content template
+    const twilioClient = getTwilioClient();
     const twilioContent = await twilioClient.content.v1.contents.create({
       friendlyName: name,
       language: language,
