@@ -12,7 +12,7 @@
 .vercel/
 .env.production
 .env.local
-*.env
+.env
 .md
 *.md
 
