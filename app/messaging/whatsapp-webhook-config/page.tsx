@@ -179,30 +179,51 @@ export default function WhatsAppWebhookConfigPage() {
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
                       <p className="font-medium">messages</p>
-                      <p className="text-sm text-gray-600">Receive incoming messages</p>
+                      <p className="text-sm text-gray-600">Gelen mesajları alın - müşteri mesajları</p>
                     </div>
-                    <Badge className="bg-green-100 text-green-800">Required</Badge>
+                    <Badge className="bg-green-100 text-green-800">Zorunlu</Badge>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
-                      <p className="font-medium">message_status</p>
-                      <p className="text-sm text-gray-600">Track message delivery status</p>
+                      <p className="font-medium">message_echoes</p>
+                      <p className="text-sm text-gray-600">Gönderdiğiniz mesajların kopyaları</p>
                     </div>
-                    <Badge className="bg-green-100 text-green-800">Required</Badge>
+                    <Badge className="bg-green-100 text-green-800">Zorunlu</Badge>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
                       <p className="font-medium">account_alerts</p>
-                      <p className="text-sm text-gray-600">Account security and limit alerts</p>
+                      <p className="text-sm text-gray-600">Hesap güvenlik ve limit uyarıları</p>
                     </div>
-                    <Badge className="bg-blue-100 text-blue-800">Recommended</Badge>
+                    <Badge className="bg-blue-100 text-blue-800">Önerilen</Badge>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
                       <p className="font-medium">phone_number_quality_update</p>
-                      <p className="text-sm text-gray-600">Quality rating changes</p>
+                      <p className="text-sm text-gray-600">Kalite puanı değişiklikleri</p>
                     </div>
-                    <Badge className="bg-blue-100 text-blue-800">Recommended</Badge>
+                    <Badge className="bg-blue-100 text-blue-800">Önerilen</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium">message_template_status_update</p>
+                      <p className="text-sm text-gray-600">Template onay durumu güncellemeleri</p>
+                    </div>
+                    <Badge className="bg-blue-100 text-blue-800">Önerilen</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium">business_capability_update</p>
+                      <p className="text-sm text-gray-600">İşletme yetenek güncellemeleri</p>
+                    </div>
+                    <Badge>İsteğe Bağlı</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium">security</p>
+                      <p className="text-sm text-gray-600">Güvenlik olayları ve uyarıları</p>
+                    </div>
+                    <Badge>İsteğe Bağlı</Badge>
                   </div>
                 </div>
               </CardContent>
