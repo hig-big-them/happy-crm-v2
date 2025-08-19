@@ -215,6 +215,9 @@ export async function POST(request: NextRequest) {
           case 'messages':
             await processMessageEvent(supabase, change.value);
             break;
+          case 'message_echoes':
+            await processMessageEchoes(supabase, change.value);
+            break;
           // ⚠️ DEVRE DIŞI BIRAKILDI - Template yönetimi CRM'e taşındı
           // case 'message_template_status_update':
           //   await processTemplateStatusUpdate(supabase, change.value);
@@ -302,6 +305,30 @@ async function processMessageEvent(supabase: any, value: any) {
   }
 }
 
+// Message echoes - gönderilen mesajların kopyaları
+async function processMessageEchoes(supabase: any, value: any) {
+  try {
+    console.log('📤 Processing message echoes:', JSON.stringify(value, null, 2));
+
+    // Process message echoes (messages sent by your business)
+    if (value.message_echoes) {
+      for (const echo of value.message_echoes) {
+        await handleMessageEcho(supabase, echo, value.metadata);
+      }
+    }
+
+    // Handle errors if any
+    if (value.errors) {
+      for (const error of value.errors) {
+        await handleWebhookError(supabase, error);
+      }
+    }
+
+  } catch (error) {
+    console.error('❌ Message echo processing error:', error);
+  }
+}
+
 // Gelen mesajı işle
 async function handleIncomingMessage(supabase: any, message: any, metadata: any) {
   try {
@@ -338,6 +365,43 @@ async function handleIncomingMessage(supabase: any, message: any, metadata: any)
 
   } catch (error) {
     console.error('❌ Incoming message handling error:', error);
+  }
+}
+
+// Message echo handler - gönderilen mesajların kopyaları
+async function handleMessageEcho(supabase: any, echo: any, metadata: any) {
+  try {
+    console.log(`📤 Message echo to ${echo.to}: ${echo.text?.body || echo.type}`);
+
+    // Save sent message echo to database
+    const { error } = await supabase
+      .from('whatsapp_messages')
+      .insert({
+        message_id: echo.id,
+        from_number: metadata.phone_number_id,
+        to_number: echo.to,
+        message_type: echo.type,
+        message_creation_type: echo.message_creation_type || 'user_initiated',
+        content: {
+          text: echo.text?.body,
+          media: echo.image || echo.video || echo.document || echo.audio,
+          location: echo.location,
+          template: echo.template
+        },
+        status: 'sent',
+        sent_at: new Date(parseInt(echo.timestamp) * 1000).toISOString(),
+        is_incoming: false,
+        platform: 'whatsapp_cloud'
+      });
+
+    if (error) {
+      console.error('❌ Message echo save error:', error);
+    } else {
+      console.log('✅ Message echo saved to database');
+    }
+
+  } catch (error) {
+    console.error('❌ Message echo handling error:', error);
   }
 }
 

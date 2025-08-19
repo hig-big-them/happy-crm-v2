@@ -375,10 +375,11 @@ export default function WhatsAppWebhookConfigPage() {
                         Enable these webhook fields:
                       </p>
                       <ul className="text-sm text-gray-600 space-y-1">
-                        <li>✓ messages</li>
-                        <li>✓ message_status</li>
-                        <li>✓ account_alerts (optional)</li>
-                        <li>✓ phone_number_quality_update (optional)</li>
+                        <li>✓ messages (zorunlu)</li>
+                        <li>✓ message_echoes (zorunlu)</li>
+                        <li>✓ account_alerts (önerilen)</li>
+                        <li>✓ phone_number_quality_update (önerilen)</li>
+                        <li>✓ message_template_status_update (önerilen)</li>
                       </ul>
                     </div>
                   </div>
