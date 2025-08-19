@@ -323,10 +323,28 @@ async function processMessageEchoes(supabase: any, value: any) {
   try {
     console.log('📤 Processing message echoes:', JSON.stringify(value, null, 2));
 
-    // Process message echoes (messages sent by your business)
-    if (value.message_echoes) {
-      for (const echo of value.message_echoes) {
-        await handleMessageEcho(supabase, echo, value.metadata);
+    // Check both possible field names (WhatsApp vs Messenger format)
+    const echoes = value.message_echoes || value.messages || [];
+    
+    // If there's a single message object with is_echo flag
+    if (value.message && value.message.is_echo) {
+      echoes.push(value.message);
+    }
+
+    // Process message echoes
+    if (Array.isArray(echoes) && echoes.length > 0) {
+      for (const echo of echoes) {
+        // Skip if not an echo (in case of mixed format)
+        if (echo.is_echo === false) continue;
+        
+        await handleMessageEcho(supabase, echo, value.metadata || {});
+      }
+    }
+
+    // Handle statuses if present (WhatsApp format)
+    if (value.statuses) {
+      for (const status of value.statuses) {
+        await handleMessageStatus(supabase, status);
       }
     }
 
@@ -339,6 +357,7 @@ async function processMessageEchoes(supabase: any, value: any) {
 
   } catch (error) {
     console.error('❌ Message echo processing error:', error);
+    // Don't throw - we want webhook to succeed even if processing fails
   }
 }
 
@@ -384,37 +403,57 @@ async function handleIncomingMessage(supabase: any, message: any, metadata: any)
 // Message echo handler - gönderilen mesajların kopyaları
 async function handleMessageEcho(supabase: any, echo: any, metadata: any) {
   try {
-    console.log(`📤 Message echo to ${echo.to}: ${echo.text?.body || echo.type}`);
+    // Support both WhatsApp and Messenger formats
+    const toNumber = echo.to || echo.recipient?.id || 'unknown';
+    const fromNumber = echo.from || metadata?.phone_number_id || metadata?.display_phone_number || 'unknown';
+    const messageId = echo.id || echo.mid || `echo_${Date.now()}`;
+    const messageText = echo.text?.body || echo.text || '';
+    const timestamp = echo.timestamp ? 
+      (typeof echo.timestamp === 'string' ? parseInt(echo.timestamp) : echo.timestamp) : 
+      Date.now();
+    
+    console.log(`📤 Message echo to ${toNumber}: ${messageText || echo.type || 'unknown'}`);
+
+    // Skip database save if we don't have minimum required fields
+    if (!messageId || toNumber === 'unknown') {
+      console.log('⚠️ Skipping echo save - missing required fields');
+      return;
+    }
 
     // Save sent message echo to database
     const { error } = await supabase
       .from('whatsapp_messages')
       .insert({
-        message_id: echo.id,
-        from_number: metadata.phone_number_id,
-        to_number: echo.to,
-        message_type: echo.type,
+        message_id: messageId,
+        from_number: fromNumber,
+        to_number: toNumber,
+        message_type: echo.type || 'text',
         message_creation_type: echo.message_creation_type || 'user_initiated',
         content: {
-          text: echo.text?.body,
-          media: echo.image || echo.video || echo.document || echo.audio,
+          text: messageText,
+          media: echo.image || echo.video || echo.document || echo.audio || echo.attachments,
           location: echo.location,
-          template: echo.template
+          template: echo.template,
+          is_echo: true,
+          app_id: echo.app_id,
+          metadata: echo.metadata
         },
         status: 'sent',
-        sent_at: new Date(parseInt(echo.timestamp) * 1000).toISOString(),
+        sent_at: new Date(timestamp * (timestamp > 9999999999 ? 1 : 1000)).toISOString(),
         is_incoming: false,
         platform: 'whatsapp_cloud'
       });
 
     if (error) {
       console.error('❌ Message echo save error:', error);
+      // Don't throw - continue processing
     } else {
       console.log('✅ Message echo saved to database');
     }
 
   } catch (error) {
     console.error('❌ Message echo handling error:', error);
+    // Don't throw - we want webhook to succeed
   }
 }
 
