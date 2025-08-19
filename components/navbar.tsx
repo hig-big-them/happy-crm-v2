@@ -56,6 +56,9 @@ export function Navbar({}: NavbarProps) {
   const adminNavItems = userRole === "superuser" ? [
     { name: "Yönetim", href: "/admin/agencies" },
     { name: t.common.settings, href: "/admin/messaging-settings", icon: Settings },
+    { name: "Webhook Test", href: "/admin/tools/webhook-test" },
+    { name: "Webhook Monitor", href: "/admin/tools/webhook-monitor" },
+    { name: "WhatsApp Debug", href: "/admin/tools/whatsapp-debug" },
   ] : [];
 
   // Mobil navigasyon linkleri
