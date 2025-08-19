@@ -39,15 +39,29 @@ CREATE TABLE IF NOT EXISTS webhook_dedup (
 -- Index for cleanup queries
 CREATE INDEX IF NOT EXISTS idx_webhook_dedup_expires_at ON webhook_dedup(expires_at);
 
--- Webhook Logs Table
-CREATE TABLE IF NOT EXISTS webhook_logs (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  webhook_type TEXT NOT NULL, -- whatsapp_cloud, twilio, etc.
-  event_type TEXT NOT NULL,
-  data JSONB,
-  processed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  status TEXT -- success, error, unknown
-);
+-- Webhook Logs Table - Check if exists and add missing columns
+DO $$ 
+BEGIN
+  -- Create table if not exists
+  IF NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'webhook_logs') THEN
+    CREATE TABLE webhook_logs (
+      id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+      webhook_type TEXT NOT NULL, -- whatsapp_cloud, twilio, etc.
+      event_type TEXT NOT NULL,
+      data JSONB,
+      processed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      status TEXT -- success, error, unknown
+    );
+  ELSE
+    -- Add missing columns if table exists
+    ALTER TABLE webhook_logs 
+    ADD COLUMN IF NOT EXISTS webhook_type TEXT,
+    ADD COLUMN IF NOT EXISTS event_type TEXT,
+    ADD COLUMN IF NOT EXISTS data JSONB,
+    ADD COLUMN IF NOT EXISTS processed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    ADD COLUMN IF NOT EXISTS status TEXT;
+  END IF;
+END $$;
 
 -- Index for webhook logs
 CREATE INDEX IF NOT EXISTS idx_webhook_logs_webhook_type ON webhook_logs(webhook_type);
@@ -102,30 +116,79 @@ CREATE INDEX IF NOT EXISTS idx_whatsapp_templates_name ON whatsapp_templates(nam
 CREATE INDEX IF NOT EXISTS idx_whatsapp_templates_status ON whatsapp_templates(status);
 
 -- RLS Policies (adjust based on your needs)
-ALTER TABLE whatsapp_messages ENABLE ROW LEVEL SECURITY;
-ALTER TABLE webhook_dedup ENABLE ROW LEVEL SECURITY;
-ALTER TABLE webhook_logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE webhook_errors ENABLE ROW LEVEL SECURITY;
-ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE whatsapp_templates ENABLE ROW LEVEL SECURITY;
+-- Only enable RLS if tables exist
+DO $$ 
+BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'whatsapp_messages') THEN
+    ALTER TABLE whatsapp_messages ENABLE ROW LEVEL SECURITY;
+  END IF;
+  
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'webhook_dedup') THEN
+    ALTER TABLE webhook_dedup ENABLE ROW LEVEL SECURITY;
+  END IF;
+  
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'webhook_logs') THEN
+    ALTER TABLE webhook_logs ENABLE ROW LEVEL SECURITY;
+  END IF;
+  
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'webhook_errors') THEN
+    ALTER TABLE webhook_errors ENABLE ROW LEVEL SECURITY;
+  END IF;
+  
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'notifications') THEN
+    ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+  END IF;
+  
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'whatsapp_templates') THEN
+    ALTER TABLE whatsapp_templates ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 
--- Allow service role full access
-CREATE POLICY "Service role has full access to whatsapp_messages" ON whatsapp_messages
-  FOR ALL USING (auth.role() = 'service_role');
+-- Create policies only if tables exist
+DO $$ 
+BEGIN
+  -- WhatsApp Messages policies
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'whatsapp_messages') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'whatsapp_messages' AND policyname = 'Service role has full access to whatsapp_messages') THEN
+      CREATE POLICY "Service role has full access to whatsapp_messages" ON whatsapp_messages
+        FOR ALL USING (auth.role() = 'service_role');
+    END IF;
+  END IF;
 
-CREATE POLICY "Service role has full access to webhook_dedup" ON webhook_dedup
-  FOR ALL USING (auth.role() = 'service_role');
+  -- Webhook Dedup policies
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'webhook_dedup') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'webhook_dedup' AND policyname = 'Service role has full access to webhook_dedup') THEN
+      CREATE POLICY "Service role has full access to webhook_dedup" ON webhook_dedup
+        FOR ALL USING (auth.role() = 'service_role');
+    END IF;
+  END IF;
 
-CREATE POLICY "Service role has full access to webhook_logs" ON webhook_logs
-  FOR ALL USING (auth.role() = 'service_role');
+  -- Webhook Logs policies
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'webhook_logs') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'webhook_logs' AND policyname = 'Service role has full access to webhook_logs') THEN
+      CREATE POLICY "Service role has full access to webhook_logs" ON webhook_logs
+        FOR ALL USING (auth.role() = 'service_role');
+    END IF;
+  END IF;
 
-CREATE POLICY "Service role has full access to webhook_errors" ON webhook_errors
-  FOR ALL USING (auth.role() = 'service_role');
+  -- Webhook Errors policies
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'webhook_errors') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'webhook_errors' AND policyname = 'Service role has full access to webhook_errors') THEN
+      CREATE POLICY "Service role has full access to webhook_errors" ON webhook_errors
+        FOR ALL USING (auth.role() = 'service_role');
+    END IF;
+  END IF;
 
--- Users can read their own notifications
-CREATE POLICY "Users can read their own notifications" ON notifications
-  FOR SELECT USING (auth.uid() = user_id);
-
--- Service role can manage all notifications
-CREATE POLICY "Service role can manage notifications" ON notifications
-  FOR ALL USING (auth.role() = 'service_role');
+  -- Notifications policies
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'notifications') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'notifications' AND policyname = 'Users can read their own notifications') THEN
+      CREATE POLICY "Users can read their own notifications" ON notifications
+        FOR SELECT USING (auth.uid() = user_id);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'notifications' AND policyname = 'Service role can manage notifications') THEN
+      CREATE POLICY "Service role can manage notifications" ON notifications
+        FOR ALL USING (auth.role() = 'service_role');
+    END IF;
+  END IF;
+END $$;
