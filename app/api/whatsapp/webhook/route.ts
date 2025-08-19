@@ -197,27 +197,32 @@ export async function POST(request: NextRequest) {
     // Her entry için event'leri işle
     for (const entry of webhookData.entry) {
       for (const change of entry.changes) {
-        // Event deduplication with persistent storage
-        const eventId = `${entry.id}_${change.field}_${entry.time || Date.now()}`;
-        
-        // Check for duplicate using deduplication service
-        const isDuplicate = await dedupService.isDuplicate(eventId);
-        if (isDuplicate) {
-          console.log('⚠️ Duplicate event detected, skipping:', eventId);
-          continue;
-        }
-        
-        // Mark as processed
-        await dedupService.markProcessed(eventId);
+        try {
+          // Event deduplication with persistent storage
+          const eventId = `${entry.id}_${change.field}_${entry.time || Date.now()}`;
+          
+          // Skip deduplication for now to fix Meta webhook subscription
+          // TODO: Re-enable after webhook_dedup table is created in Supabase
+          /*
+          // Check for duplicate using deduplication service
+          const isDuplicate = await dedupService.isDuplicate(eventId);
+          if (isDuplicate) {
+            console.log('⚠️ Duplicate event detected, skipping:', eventId);
+            continue;
+          }
+          
+          // Mark as processed
+          await dedupService.markProcessed(eventId);
+          */
 
-        // Process different webhook fields
-        switch (change.field) {
-          case 'messages':
-            await processMessageEvent(supabase, change.value);
-            break;
-          case 'message_echoes':
-            await processMessageEchoes(supabase, change.value);
-            break;
+          // Process different webhook fields
+          switch (change.field) {
+            case 'messages':
+              await processMessageEvent(supabase, change.value);
+              break;
+            case 'message_echoes':
+              await processMessageEchoes(supabase, change.value);
+              break;
           // ⚠️ DEVRE DIŞI BIRAKILDI - Template yönetimi CRM'e taşındı
           // case 'message_template_status_update':
           //   await processTemplateStatusUpdate(supabase, change.value);
@@ -248,12 +253,20 @@ export async function POST(request: NextRequest) {
           default:
             console.log('⚠️ Unknown webhook field:', change.field);
             await logUnknownEvent(supabase, change);
+          }
+        } catch (fieldError) {
+          // Log error but don't fail the webhook
+          console.error(`❌ Error processing ${change.field}:`, fieldError);
         }
       }
     }
 
-    // Webhook event'ini logla
-    await logWebhookEvent(supabase, webhookData);
+    // Webhook event'ini logla (try-catch ile sarmalayarak hata durumunda webhook'u etkilemesin)
+    try {
+      await logWebhookEvent(supabase, webhookData);
+    } catch (logError) {
+      console.error('❌ Failed to log webhook event:', logError);
+    }
 
     // Facebook requires 200 OK response
     return new NextResponse('OK', { 
