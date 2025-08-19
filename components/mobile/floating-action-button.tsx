@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Plus, Target, X, Users, ChevronUp, MessageCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { triggerHaptic } from '@/hooks/use-swipe'
+import { useI18n } from '@/lib/i18n/client'
 
 interface FloatingActionButtonProps {
   onNewLead?: () => void
@@ -18,6 +19,7 @@ export function FloatingActionButton({
   onMessages,
   className
 }: FloatingActionButtonProps) {
+  const { locale } = useI18n()
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
@@ -78,13 +80,13 @@ export function FloatingActionButton({
 
   const actions = [
     {
-      label: 'Yeni Lead',
+      label: locale === 'tr' ? 'Yeni Lead' : 'New Lead',
       icon: Users,
       onClick: onNewLead,
       color: 'bg-blue-500 hover:bg-blue-600',
     },
     {
-      label: 'Mesajlar',
+      label: locale === 'tr' ? 'Mesajlar' : 'Messages',
       icon: MessageCircle,
       onClick: onMessages || handleMessagesClick,
       color: 'bg-green-500 hover:bg-green-600',

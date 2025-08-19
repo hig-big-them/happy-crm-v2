@@ -305,9 +305,20 @@ export const createTemplateLimiter = () => new RateLimiter({
 export const createWebhookLimiter = () => new RateLimiter({
   ...RATE_LIMITS.webhooks,
   skipIf: (req) => {
-    // Skip rate limiting for verified webhook requests
-    const signature = req.headers.get('x-hub-signature-256');
-    return !!signature; // In production, verify the signature
+    // SECURITY: Never skip rate limiting in production
+    // Rate limiting should apply even to signed webhook requests
+    if (process.env.NODE_ENV === 'production') {
+      return false; // Always apply rate limiting in production
+    }
+    
+    // Only allow bypass in development for testing
+    if (process.env.NODE_ENV === 'development' && 
+        process.env.SKIP_WEBHOOK_RATE_LIMIT === 'true') {
+      console.warn('⚠️ DEV MODE: Webhook rate limiting disabled');
+      return true;
+    }
+    
+    return false; // Default: apply rate limiting
   }
 });
 

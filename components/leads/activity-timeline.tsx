@@ -10,6 +10,7 @@ import { getMessagesByLead } from '@/lib/actions/message-actions'
 import { Message } from '@/lib/actions/message-types'
 import { format } from 'date-fns'
 import { tr } from 'date-fns/locale'
+import { useI18n } from '@/lib/i18n/client'
 
 interface ActivityTimelineProps {
   leadId: string
@@ -19,6 +20,7 @@ interface ActivityTimelineProps {
 export default function ActivityTimeline({ leadId, refreshTrigger }: ActivityTimelineProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
+  const { locale } = useI18n()
 
   useEffect(() => {
     loadMessages()
@@ -91,11 +93,11 @@ export default function ActivityTimeline({ leadId, refreshTrigger }: ActivityTim
       case 'whatsapp':
         return 'WhatsApp'
       case 'email':
-        return 'E-posta'
+        return locale === 'tr' ? 'E-posta' : 'Email'
       case 'note':
-        return 'Not'
+        return locale === 'tr' ? 'Not' : 'Note'
       case 'call':
-        return 'Arama'
+        return locale === 'tr' ? 'Arama' : 'Call'
       default:
         return channel
     }
@@ -104,13 +106,13 @@ export default function ActivityTimeline({ leadId, refreshTrigger }: ActivityTim
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'sent':
-        return 'Gönderildi'
+        return locale === 'tr' ? 'Gönderildi' : 'Sent'
       case 'delivered':
-        return 'Teslim Edildi'
+        return locale === 'tr' ? 'Teslim Edildi' : 'Delivered'
       case 'read':
-        return 'Okundu'
+        return locale === 'tr' ? 'Okundu' : 'Read'
       case 'failed':
-        return 'Başarısız'
+        return locale === 'tr' ? 'Başarısız' : 'Failed'
       default:
         return status
     }
@@ -132,12 +134,12 @@ export default function ActivityTimeline({ leadId, refreshTrigger }: ActivityTim
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            Aktivite Geçmişi
+            {locale === 'tr' ? 'Aktivite Geçmişi' : 'Activity Timeline'}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            Yükleniyor...
+            {locale === 'tr' ? 'Yükleniyor...' : 'Loading...'}
           </div>
         </CardContent>
       </Card>
@@ -149,10 +151,10 @@ export default function ActivityTimeline({ leadId, refreshTrigger }: ActivityTim
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Clock className="h-5 w-5" />
-          Aktivite Geçmişi
+          {locale === 'tr' ? 'Aktivite Geçmişi' : 'Activity Timeline'}
         </CardTitle>
         <CardDescription>
-          Bu lead ile yapılan tüm iletişim ve aktiviteler
+          {locale === 'tr' ? 'Bu lead ile yapılan tüm iletişim ve aktiviteler' : 'All communications and activities for this lead'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -160,7 +162,7 @@ export default function ActivityTimeline({ leadId, refreshTrigger }: ActivityTim
           {messages.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>Henüz aktivite bulunmuyor</p>
+              <p>{locale === 'tr' ? 'Henüz aktivite bulunmuyor' : 'No activity yet'}</p>
             </div>
           ) : (
             <div className="space-y-4">

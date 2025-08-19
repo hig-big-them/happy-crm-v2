@@ -87,39 +87,49 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { useInfiniteMessages } from '@/lib/providers/query-provider';
 import { useMessagingStore } from '@/lib/stores/messaging-store';
-// Date formatting utilities
+// Date formatting utilities (uses locale cookie if present)
+function getLocaleTag(): 'tr-TR' | 'en-US' {
+  if (typeof document === 'undefined') return 'tr-TR'
+  const m = document.cookie.match(/(?:^|; )NEXT_LOCALE=([^;]+)/)
+  const loc = m?.[1] || (typeof navigator !== 'undefined' && navigator.language?.startsWith('en') ? 'en' : 'tr')
+  return loc === 'en' ? 'en-US' : 'tr-TR'
+}
+
 const formatDistanceToNow = (date: Date) => {
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+  const loc = getLocaleTag()
   
-  if (minutes < 1) return 'şimdi';
-  if (minutes < 60) return `${minutes} dakika önce`;
-  if (hours < 24) return `${hours} saat önce`;
-  if (days < 7) return `${days} gün önce`;
-  return date.toLocaleDateString('tr-TR');
-};
+  if (minutes < 1) return loc === 'tr-TR' ? 'şimdi' : 'now'
+  if (minutes < 60) return loc === 'tr-TR' ? `${minutes} dakika önce` : `${minutes} minutes ago`
+  if (hours < 24) return loc === 'tr-TR' ? `${hours} saat önce` : `${hours} hours ago`
+  if (days < 7) return loc === 'tr-TR' ? `${days} gün önce` : `${days} days ago`
+  return date.toLocaleDateString(loc)
+}
 
 const format = (date: Date, formatStr: string, options?: any) => {
+  const loc = getLocaleTag()
   if (formatStr === 'HH:mm') {
-    return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })
   }
   if (formatStr === 'dd MMM HH:mm') {
-    return date.toLocaleDateString('tr-TR', { 
+    return date.toLocaleDateString(loc, { 
       day: '2-digit', 
       month: 'short', 
       hour: '2-digit', 
       minute: '2-digit' 
-    });
+    })
   }
-  return date.toLocaleString('tr-TR');
-};
+  return date.toLocaleString(loc)
+}
 import { toast } from '@/components/ui/use-toast';
 import { isBypassMode, mockLeads } from '@/lib/utils/bypass-helper';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
+import { useI18n } from '@/lib/i18n/client';
 
 // WhatsApp Business API Types
 interface WhatsAppNumber {
@@ -196,6 +206,7 @@ interface MessageThread {
 }
 
 export default function MessagingPage() {
+  const { t, locale } = useI18n()
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeChannel, setActiveChannel] = useState<'all' | 'whatsapp' | 'sms' | 'email' | 'note'>('all');
@@ -342,8 +353,8 @@ export default function MessagingPage() {
       // await supabase.from('messages').delete().eq('id', messageId);
       
       toast({
-        title: "Mesaj silindi",
-        description: "Mesaj başarıyla silindi",
+        title: locale === 'tr' ? 'Mesaj silindi' : 'Message deleted',
+        description: locale === 'tr' ? 'Mesaj başarıyla silindi' : 'Message deleted successfully',
       });
       
       setShowMessageActions(null);
@@ -570,9 +581,9 @@ export default function MessagingPage() {
     } catch (error) {
       console.error('Error loading message threads:', error);
       toast({
-        title: "Hata",
-        description: "Mesaj konuşmaları yüklenirken hata oluştu",
-        variant: "destructive"
+        title: locale === 'tr' ? 'Hata' : 'Error',
+        description: locale === 'tr' ? 'Mesaj konuşmaları yüklenirken hata oluştu' : 'Failed to load message threads',
+        variant: 'destructive'
       });
     } finally {
       setLoading(false);
@@ -650,10 +661,10 @@ export default function MessagingPage() {
     
     if (isToday) {
       return format(messageDate, 'HH:mm');
-    } else if (isYesterday) {
-      return 'Dün ' + format(messageDate, 'HH:mm');
+                    } else if (isYesterday) {
+                      return t.messaging.yesterday + ' ' + format(messageDate, 'HH:mm');
     } else {
-      return format(messageDate, 'dd MMM HH:mm', { locale: tr });
+                      return format(messageDate, 'dd MMM HH:mm');
     }
   };
 
@@ -673,8 +684,8 @@ export default function MessagingPage() {
       // await supabase.from('messages').update({ is_read: true }).eq('lead_id', leadId);
       
       toast({
-        title: "✓ Okundu",
-        description: "Mesajlar okundu olarak işaretlendi",
+        title: locale === 'tr' ? '✓ Okundu' : '✓ Read',
+        description: locale === 'tr' ? 'Mesajlar okundu olarak işaretlendi' : 'Messages marked as read',
       });
     } catch (error) {
       console.error('Error marking as read:', error);
@@ -700,8 +711,8 @@ export default function MessagingPage() {
       // await supabase.from('lead_threads').update({ is_starred: newStarredState }).eq('lead_id', leadId);
       
       toast({
-        title: newStarredState ? "⭐ Yıldızlandı" : "☆ Yıldız kaldırıldı",
-        description: newStarredState ? "Konuşma yıldızlı listesine eklendi" : "Konuşma yıldızlı listesinden çıkarıldı",
+        title: newStarredState ? (locale === 'tr' ? '⭐ Yıldızlandı' : '⭐ Starred') : (locale === 'tr' ? '☆ Yıldız kaldırıldı' : '☆ Unstarred'),
+        description: newStarredState ? (locale === 'tr' ? 'Konuşma yıldızlı listesine eklendi' : 'Conversation added to starred list') : (locale === 'tr' ? 'Konuşma yıldızlı listesinden çıkarıldı' : 'Conversation removed from starred list'),
       });
     } catch (error) {
       console.error('Error toggling star:', error);
@@ -727,8 +738,8 @@ export default function MessagingPage() {
       // await supabase.from('lead_threads').update({ is_archived: newArchivedState }).eq('lead_id', leadId);
       
       toast({
-        title: newArchivedState ? "📁 Arşivlendi" : "📂 Arşivden çıkarıldı",
-        description: newArchivedState ? "Konuşma arşive taşındı" : "Konuşma aktif listeye alındı",
+        title: newArchivedState ? (locale === 'tr' ? '📁 Arşivlendi' : '📁 Archived') : (locale === 'tr' ? '📂 Arşivden çıkarıldı' : '📂 Unarchived'),
+        description: newArchivedState ? (locale === 'tr' ? 'Konuşma arşive taşındı' : 'Conversation moved to archive') : (locale === 'tr' ? 'Konuşma aktif listeye alındı' : 'Conversation returned to active list'),
       });
       
       // If archived, deselect the thread
@@ -852,9 +863,9 @@ export default function MessagingPage() {
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
-        title: "❌ Hata",
-        description: "Mesaj gönderilemedi. Lütfen tekrar deneyin.",
-        variant: "destructive"
+        title: locale === 'tr' ? '❌ Hata' : '❌ Error',
+        description: locale === 'tr' ? 'Mesaj gönderilemedi. Lütfen tekrar deneyin.' : 'Message could not be sent. Please try again.',
+        variant: 'destructive'
       });
     }
   };
@@ -893,9 +904,9 @@ export default function MessagingPage() {
                 </div>
                 <div>
                   <h1 className="text-lg font-medium text-gray-900">
-                    WhatsApp Business
+                    {t.messaging.headerTitle}
                   </h1>
-                  <p className="text-xs text-gray-500">Mesajlaşma Merkezi</p>
+                  <p className="text-xs text-gray-500">{t.messaging.headerSubtitle}</p>
                 </div>
               </div>
               
@@ -906,7 +917,7 @@ export default function MessagingPage() {
                   onChange={(e) => setSelectedWhatsAppNumber(e.target.value)}
                   className="text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 >
-                  <option value="all">Tüm Hatlar</option>
+                  <option value="all">{t.messaging.allLines}</option>
                   {whatsappNumbers.map(num => (
                     <option key={num.id} value={num.phone_number_id}>
                       {num.verified_name} • {num.display_phone_number}
@@ -926,7 +937,7 @@ export default function MessagingPage() {
                       "h-2 w-2 rounded-full",
                       num.status === 'CONNECTED' ? 'bg-green-500' : 'bg-gray-400'
                     )} />
-                    <span className="text-gray-600">Bağlı</span>
+                    <span className="text-gray-600">{t.messaging.connected}</span>
                   </div>
                 ))}
               </div>
@@ -938,10 +949,20 @@ export default function MessagingPage() {
                     <span className="h-6 px-2 bg-green-500 text-white rounded-full text-xs font-medium flex items-center">
                       {threads.filter(t => t.unread_count > 0).length}
                     </span>
-                    <span className="text-gray-600">yeni mesaj</span>
+                    <span className="text-gray-600">{t.messaging.newMessages}</span>
                   </div>
                 )}
-                <button className="text-gray-600 hover:text-gray-900 transition-colors">
+                <button 
+                  className="text-green-600 hover:text-green-700 transition-colors"
+                  title="WhatsApp Test Console"
+                  onClick={() => window.location.href = '/messaging/whatsapp-test'}
+                >
+                  <Zap className="h-5 w-5" />
+                </button>
+                <button 
+                  className="text-gray-600 hover:text-gray-900 transition-colors"
+                  onClick={() => window.location.href = '/messaging/whatsapp-settings'}
+                >
                   <Settings className="h-5 w-5" />
                 </button>
               </div>
@@ -960,7 +981,7 @@ export default function MessagingPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
-                placeholder="Kişi veya mesaj ara..."
+                placeholder={t.messaging.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-10 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -984,7 +1005,7 @@ export default function MessagingPage() {
                     : "bg-white text-gray-600 hover:bg-gray-100"
                 )}
               >
-                Tümü
+                {t.messaging.channelAll}
               </button>
               <button
                 onClick={() => setActiveChannel('whatsapp')}
@@ -1019,7 +1040,7 @@ export default function MessagingPage() {
                 className="h-7 text-xs gap-1.5"
               >
                 <CircleDot className="h-3 w-3" />
-                Okunmamış
+                {t.messaging.quickUnread}
                 {threads.filter(t => t.unread_count > 0).length > 0 && (
                   <Badge variant="secondary" className="ml-1 h-4 px-1">
                     {threads.filter(t => t.unread_count > 0).length}
@@ -1033,7 +1054,7 @@ export default function MessagingPage() {
                 className="h-7 text-xs gap-1.5"
               >
                 <Star className="h-3 w-3" />
-                Yıldızlı
+                {t.messaging.quickStarred}
               </Button>
               <Button
                 variant={showArchivedOnly ? "default" : "outline"}
@@ -1042,7 +1063,7 @@ export default function MessagingPage() {
                 className="h-7 text-xs gap-1.5"
               >
                 <Archive className="h-3 w-3" />
-                Arşiv
+                {t.messaging.quickArchived}
               </Button>
             </div>
 
@@ -1056,7 +1077,7 @@ export default function MessagingPage() {
                   className="space-y-3 overflow-hidden"
                 >
                   <div className="space-y-2">
-                    <label className="text-xs font-medium text-muted-foreground">Etiketler</label>
+                    <label className="text-xs font-medium text-muted-foreground">{t.messaging.advancedFilters.tags}</label>
                     <div className="flex flex-wrap gap-1">
                       {availableTags.map(tag => (
                         <Badge
@@ -1081,17 +1102,17 @@ export default function MessagingPage() {
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-xs font-medium text-muted-foreground">Öncelik</label>
+                    <label className="text-xs font-medium text-muted-foreground">{t.messaging.advancedFilters.priority}</label>
                     <select
                       value={selectedPriority}
                       onChange={(e) => setSelectedPriority(e.target.value)}
                       className="w-full text-xs bg-background border rounded-md px-2 py-1.5"
                     >
-                      <option value="all">Tüm Öncelikler</option>
-                      <option value="urgent">Acil</option>
-                      <option value="high">Yüksek</option>
-                      <option value="medium">Orta</option>
-                      <option value="low">Düşük</option>
+                      <option value="all">{t.messaging.advancedFilters.allPriorities}</option>
+                      <option value="urgent">{t.messaging.advancedFilters.urgent}</option>
+                      <option value="high">{t.messaging.advancedFilters.high}</option>
+                      <option value="medium">{t.messaging.advancedFilters.medium}</option>
+                      <option value="low">{t.messaging.advancedFilters.low}</option>
                     </select>
                   </div>
                 </motion.div>
@@ -1122,9 +1143,9 @@ export default function MessagingPage() {
                   <div className="h-14 w-14 rounded-full bg-gray-100 flex items-center justify-center mb-3">
                     <MessageSquare className="h-7 w-7 text-gray-400" />
                   </div>
-                  <p className="text-sm font-medium text-gray-900">Mesaj bulunamadı</p>
+                  <p className="text-sm font-medium text-gray-900">{t.messaging.emptyTitle}</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Arama kriterlerinizi değiştirip tekrar deneyin
+                    {t.messaging.emptyDesc}
                   </p>
                 </div>
               ) : (
@@ -1221,9 +1242,9 @@ export default function MessagingPage() {
                                 </div>
                               </div>
                               <div className="flex flex-col items-end gap-1">
-                                <span className="text-xs text-muted-foreground">
-                                  {thread.last_message && formatMessageDate(thread.last_message.created_at)}
-                                </span>
+                  <span className="text-xs text-muted-foreground">
+                    {thread.last_message && formatMessageDate(thread.last_message.created_at)}
+                  </span>
                                 {thread.unread_count > 0 && (
                                   <span className="text-xs font-medium bg-green-500 text-white rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center">
                                     {thread.unread_count}
@@ -1243,11 +1264,11 @@ export default function MessagingPage() {
                                     )} />
                                   )}
                                   <p className="text-sm text-gray-600 truncate">
-                                    {thread.last_message.type === 'image' && '🖼️ Fotoğraf'}
-                                    {thread.last_message.type === 'video' && '🎥 Video'}
-                                    {thread.last_message.type === 'audio' && '🎵 Ses mesajı'}
-                                    {thread.last_message.type === 'document' && '📄 Doküman'}
-                                    {thread.last_message.type === 'location' && '📍 Konum'}
+                                     {thread.last_message.type === 'image' && (locale === 'tr' ? '🖼️ Fotoğraf' : '🖼️ Photo')}
+                                     {thread.last_message.type === 'video' && '🎥 Video'}
+                                     {thread.last_message.type === 'audio' && (locale === 'tr' ? '🎵 Ses mesajı' : '🎵 Voice message')}
+                                     {thread.last_message.type === 'document' && (locale === 'tr' ? '📄 Doküman' : '📄 Document')}
+                                     {thread.last_message.type === 'location' && (locale === 'tr' ? '📍 Konum' : '📍 Location')}
                                     {thread.last_message.type === 'text' && thread.last_message.content}
                                   </p>
                                 </div>
@@ -1306,7 +1327,7 @@ export default function MessagingPage() {
                             
                             {/* Dropdown Menu */}
                             {selectedTagThread === thread.lead_id && (
-                              <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border z-50">
+                               <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border z-50">
                                 <button
                                   className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm flex items-center gap-2"
                                   onClick={(e) => {
@@ -1316,7 +1337,7 @@ export default function MessagingPage() {
                                   }}
                                 >
                                   {thread.is_starred ? <StarOff className="h-4 w-4" /> : <Star className="h-4 w-4" />}
-                                  {thread.is_starred ? 'Yıldızı kaldır' : 'Yıldızla'}
+                                  {thread.is_starred ? (locale === 'tr' ? 'Yıldızı kaldır' : 'Unstar') : (locale === 'tr' ? 'Yıldızla' : 'Star')}
                                 </button>
                                 <button
                                   className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm flex items-center gap-2"
@@ -1327,7 +1348,7 @@ export default function MessagingPage() {
                                   }}
                                 >
                                   {thread.is_muted ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-                                  {thread.is_muted ? 'Sesi aç' : 'Sessize al'}
+                                  {thread.is_muted ? (locale === 'tr' ? 'Sesi aç' : 'Unmute') : (locale === 'tr' ? 'Sessize al' : 'Mute')}
                                 </button>
                                 <button
                                   className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm flex items-center gap-2"
@@ -1338,7 +1359,7 @@ export default function MessagingPage() {
                                   }}
                                 >
                                   <Archive className="h-4 w-4" />
-                                  {thread.is_archived ? 'Arşivden çıkar' : 'Arşivle'}
+                                  {thread.is_archived ? (locale === 'tr' ? 'Arşivden çıkar' : 'Unarchive') : (locale === 'tr' ? 'Arşivle' : 'Archive')}
                                 </button>
                                 <button
                                   className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm flex items-center gap-2"
@@ -1349,11 +1370,11 @@ export default function MessagingPage() {
                                   }}
                                 >
                                   <Check className="h-4 w-4" />
-                                  Okundu işaretle
+                                  {locale === 'tr' ? 'Okundu işaretle' : 'Mark as read'}
                                 </button>
                                 <div className="h-px bg-gray-200" />
                                 <div className="p-2">
-                                  <p className="text-xs font-medium text-gray-500 mb-1">Etiketler</p>
+                                  <p className="text-xs font-medium text-gray-500 mb-1">{t.messaging.advancedFilters.tags}</p>
                                   <div className="flex flex-wrap gap-1">
                                     {availableTags.map(tag => (
                                       <button
@@ -1397,7 +1418,7 @@ export default function MessagingPage() {
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">
-                    {selectedThreadIds.length} seçili
+                    {selectedThreadIds.length} {locale === 'tr' ? 'seçili' : 'selected'}
                   </span>
                   <div className="flex items-center gap-2">
                     <Button
@@ -1409,7 +1430,7 @@ export default function MessagingPage() {
                       }}
                     >
                       <Check className="h-4 w-4 mr-1" />
-                      Okundu
+                      {locale === 'tr' ? 'Okundu' : 'Mark read'}
                     </Button>
                     <Button
                       variant="ghost"
@@ -1420,14 +1441,14 @@ export default function MessagingPage() {
                       }}
                     >
                       <Archive className="h-4 w-4 mr-1" />
-                      Arşivle
+                      {locale === 'tr' ? 'Arşivle' : 'Archive'}
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setSelectedThreadIds([])}
                     >
-                      İptal
+                      {locale === 'tr' ? 'İptal' : 'Cancel'}
                     </Button>
                   </div>
                 </div>
@@ -1456,7 +1477,7 @@ export default function MessagingPage() {
                       {selectedThread.lead.is_online && (
                         <span className="text-xs text-green-600 flex items-center gap-1.5">
                           <div className="h-2 w-2 bg-green-500 rounded-full" />
-                          Çevrimiçi
+                          {locale === 'tr' ? 'Çevrimiçi' : 'Online'}
                         </span>
                       )}
                     </div>
@@ -1476,7 +1497,7 @@ export default function MessagingPage() {
                       {!selectedThread.lead.is_online && selectedThread.lead.last_seen && (
                         <>
                           <span>•</span>
-                          <span>Son görülme: {selectedThread.lead.last_seen}</span>
+                          <span>{locale === 'tr' ? 'Son görülme' : 'Last seen'}: {selectedThread.lead.last_seen}</span>
                         </>
                       )}
                     </div>
@@ -1488,7 +1509,7 @@ export default function MessagingPage() {
                   {/* Search in messages */}
                   <div className="relative">
                     <Input
-                      placeholder="Mesajlarda ara..."
+                      placeholder={locale === 'tr' ? 'Mesajlarda ara...' : 'Search in messages...'}
                       value={messageSearchQuery}
                       onChange={(e) => setMessageSearchQuery(e.target.value)}
                       className="w-48 h-8 text-xs pl-8"
@@ -1561,7 +1582,7 @@ export default function MessagingPage() {
                   {/* Date Separator */}
                   <div className="flex items-center gap-4 my-4">
                     <div className="flex-1 h-px bg-gray-200" />
-                    <span className="text-xs text-gray-500 px-2">Bugün</span>
+                     <span className="text-xs text-gray-500 px-2">{t.messaging.today}</span>
                     <div className="flex-1 h-px bg-gray-200" />
                   </div>
                   
@@ -1689,7 +1710,7 @@ export default function MessagingPage() {
                                   </div>
                                 </div>
                                 <div>
-                                  <p className="text-sm font-medium">{message.metadata.location.name || 'Konum'}</p>
+                      <p className="text-sm font-medium">{message.metadata.location.name || (locale === 'tr' ? 'Konum' : 'Location')}</p>
                                   <p className="text-xs opacity-70">
                                     {message.metadata.location.lat.toFixed(6)}, {message.metadata.location.lng.toFixed(6)}
                                   </p>
@@ -1805,7 +1826,7 @@ export default function MessagingPage() {
                     className="border-t bg-background/80 p-3"
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-muted-foreground">Hızlı Yanıtlar</span>
+                       <span className="text-xs font-medium text-muted-foreground">{t.messaging.quickReplies}</span>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -1868,8 +1889,8 @@ export default function MessagingPage() {
                             className="w-full justify-start gap-2"
                             onClick={() => handleFileAttachment('image')}
                           >
-                            <ImageIcon className="h-4 w-4" />
-                            Fotoğraf
+                           <ImageIcon className="h-4 w-4" />
+                           {locale === 'tr' ? 'Fotoğraf' : 'Photo'}
                           </Button>
                           <Button
                             variant="ghost"
@@ -1886,8 +1907,8 @@ export default function MessagingPage() {
                             className="w-full justify-start gap-2"
                             onClick={() => handleFileAttachment('document')}
                           >
-                            <FileText className="h-4 w-4" />
-                            Doküman
+                           <FileText className="h-4 w-4" />
+                           {locale === 'tr' ? 'Doküman' : 'Document'}
                           </Button>
                           <Separator className="my-1" />
                           <Button
@@ -1895,8 +1916,8 @@ export default function MessagingPage() {
                             size="sm"
                             className="w-full justify-start gap-2"
                           >
-                            <MapPin className="h-4 w-4" />
-                            Konum
+                           <MapPin className="h-4 w-4" />
+                           {locale === 'tr' ? 'Konum' : 'Location'}
                           </Button>
                         </motion.div>
                       )}
@@ -1907,7 +1928,7 @@ export default function MessagingPage() {
                   <div className="flex-1 relative">
                     <Textarea
                       ref={textareaRef}
-                      placeholder="Bir mesaj yazın..."
+                      placeholder={t.messaging.messagePlaceholder}
                       value={messageText}
                       onChange={(e) => setMessageText(e.target.value)}
                       onKeyDown={(e) => {
@@ -1971,8 +1992,8 @@ export default function MessagingPage() {
                     className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-green-600 transition-colors"
                     onClick={() => setShowQuickReplies(!showQuickReplies)}
                   >
-                    <Zap className="h-4 w-4" />
-                    Hızlı Yanıtlar
+                     <Zap className="h-4 w-4" />
+                     {t.messaging.quickReplies}
                   </button>
                 </div>
               </div>
@@ -1999,9 +2020,9 @@ export default function MessagingPage() {
                   <MessageSquare className="h-10 w-10 text-gray-400" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-medium text-gray-900">Sohbet seçin</h3>
+                  <h3 className="text-xl font-medium text-gray-900">{t.messaging.selectChatTitle}</h3>
                   <p className="text-sm text-gray-500 max-w-sm">
-                    Sol taraftaki listeden bir sohbet seçin veya yeni bir sohbet başlatın
+                    {t.messaging.selectChatDesc}
                   </p>
                 </div>
               </div>

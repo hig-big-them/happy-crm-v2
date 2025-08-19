@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useI18n } from '@/lib/i18n/client'
 import { Send, MessageSquare, Phone, Mail, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -35,6 +36,7 @@ export default function MessageComposer({
   defaultEmail, 
   onMessageSent 
 }: MessageComposerProps) {
+  const { locale } = useI18n()
   const [loading, setLoading] = useState(false)
   const [templates, setTemplates] = useState<TwilioContentTemplate[]>([])
   const [selectedTemplate, setSelectedTemplate] = useState<TwilioContentTemplate | null>(null)
@@ -97,8 +99,8 @@ export default function MessageComposer({
   const handleSendSMS = async () => {
     if (!smsData.recipient_phone) {
       toast({
-        title: 'Hata',
-        description: 'Telefon numarası gerekli',
+        title: locale === 'tr' ? 'Hata' : 'Error',
+        description: locale === 'tr' ? 'Telefon numarası gerekli' : 'Phone number is required',
         variant: 'destructive'
       })
       return
@@ -106,8 +108,8 @@ export default function MessageComposer({
 
     if (!smsData.content_sid && !smsData.custom_message) {
       toast({
-        title: 'Hata',
-        description: 'Template seçin veya özel mesaj yazın',
+        title: locale === 'tr' ? 'Hata' : 'Error',
+        description: locale === 'tr' ? 'Template seçin veya özel mesaj yazın' : 'Select a template or write a custom message',
         variant: 'destructive'
       })
       return
@@ -125,8 +127,8 @@ export default function MessageComposer({
 
       if (result?.success) {
         toast({
-          title: 'Başarılı',
-          description: 'SMS gönderildi'
+          title: locale === 'tr' ? 'Başarılı' : 'Success',
+          description: locale === 'tr' ? 'SMS gönderildi' : 'SMS sent'
         })
         setSmsData({ ...smsData, custom_message: '', content_sid: '' })
         setSelectedTemplate(null)
@@ -135,8 +137,8 @@ export default function MessageComposer({
       }
     } catch (error) {
       toast({
-        title: 'Hata',
-        description: 'SMS gönderilirken hata oluştu',
+        title: locale === 'tr' ? 'Hata' : 'Error',
+        description: locale === 'tr' ? 'SMS gönderilirken hata oluştu' : 'Failed to send SMS',
         variant: 'destructive'
       })
     } finally {
@@ -147,8 +149,8 @@ export default function MessageComposer({
   const handleSendWhatsApp = async () => {
     if (!whatsappData.recipient_phone) {
       toast({
-        title: 'Hata',
-        description: 'Telefon numarası gerekli',
+        title: locale === 'tr' ? 'Hata' : 'Error',
+        description: locale === 'tr' ? 'Telefon numarası gerekli' : 'Phone number is required',
         variant: 'destructive'
       })
       return
@@ -156,8 +158,8 @@ export default function MessageComposer({
 
     if (!whatsappData.content_sid && !whatsappData.custom_message) {
       toast({
-        title: 'Hata',
-        description: 'Template seçin veya özel mesaj yazın',
+        title: locale === 'tr' ? 'Hata' : 'Error',
+        description: locale === 'tr' ? 'Template seçin veya özel mesaj yazın' : 'Select a template or write a custom message',
         variant: 'destructive'
       })
       return
@@ -175,8 +177,8 @@ export default function MessageComposer({
 
       if (result?.success) {
         toast({
-          title: 'Başarılı',
-          description: 'WhatsApp mesajı gönderildi'
+          title: locale === 'tr' ? 'Başarılı' : 'Success',
+          description: locale === 'tr' ? 'WhatsApp mesajı gönderildi' : 'WhatsApp message sent'
         })
         setWhatsappData({ ...whatsappData, custom_message: '', content_sid: '' })
         setSelectedTemplate(null)
@@ -185,8 +187,8 @@ export default function MessageComposer({
       }
     } catch (error) {
       toast({
-        title: 'Hata',
-        description: 'WhatsApp mesajı gönderilirken hata oluştu',
+        title: locale === 'tr' ? 'Hata' : 'Error',
+        description: locale === 'tr' ? 'WhatsApp mesajı gönderilirken hata oluştu' : 'Failed to send WhatsApp message',
         variant: 'destructive'
       })
     } finally {
@@ -197,8 +199,8 @@ export default function MessageComposer({
   const handleSendEmail = async () => {
     if (!emailData.recipient_email || !emailData.subject || !emailData.content) {
       toast({
-        title: 'Hata',
-        description: 'Tüm email alanları gerekli',
+        title: locale === 'tr' ? 'Hata' : 'Error',
+        description: locale === 'tr' ? 'Tüm email alanları gerekli' : 'All email fields are required',
         variant: 'destructive'
       })
       return
@@ -215,16 +217,16 @@ export default function MessageComposer({
 
       if (result?.success) {
         toast({
-          title: 'Başarılı',
-          description: 'E-posta gönderildi'
+          title: locale === 'tr' ? 'Başarılı' : 'Success',
+          description: locale === 'tr' ? 'E-posta gönderildi' : 'Email sent'
         })
         setEmailData({ recipient_email: defaultEmail || '', subject: '', content: '' })
         onMessageSent?.()
       }
     } catch (error) {
       toast({
-        title: 'Hata',
-        description: 'E-posta gönderilirken hata oluştu',
+        title: locale === 'tr' ? 'Hata' : 'Error',
+        description: locale === 'tr' ? 'E-posta gönderilirken hata oluştu' : 'Failed to send email',
         variant: 'destructive'
       })
     } finally {
@@ -235,8 +237,8 @@ export default function MessageComposer({
   const handleAddNote = async () => {
     if (!noteData.content) {
       toast({
-        title: 'Hata',
-        description: 'Not içeriği gerekli',
+        title: locale === 'tr' ? 'Hata' : 'Error',
+        description: locale === 'tr' ? 'Not içeriği gerekli' : 'Note content is required',
         variant: 'destructive'
       })
       return
@@ -253,16 +255,16 @@ export default function MessageComposer({
 
       if (result?.success) {
         toast({
-          title: 'Başarılı',
-          description: 'Not eklendi'
+          title: locale === 'tr' ? 'Başarılı' : 'Success',
+          description: locale === 'tr' ? 'Not eklendi' : 'Note added'
         })
         setNoteData({ content: '' })
         onMessageSent?.()
       }
     } catch (error) {
       toast({
-        title: 'Hata',
-        description: 'Not eklenirken hata oluştu',
+        title: locale === 'tr' ? 'Hata' : 'Error',
+        description: locale === 'tr' ? 'Not eklenirken hata oluştu' : 'Failed to add note',
         variant: 'destructive'
       })
     } finally {
@@ -286,10 +288,10 @@ export default function MessageComposer({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5" />
-          Mesaj Gönder
+          {locale === 'tr' ? 'Mesaj Gönder' : 'Send Message'}
         </CardTitle>
         <CardDescription>
-          {leadName} ile iletişime geçin
+          {locale === 'tr' ? `${leadName} ile iletişime geçin` : `Contact ${leadName}`}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -315,7 +317,7 @@ export default function MessageComposer({
 
           <TabsContent value="sms" className="space-y-4">
             <div>
-              <Label htmlFor="sms-phone">Telefon Numarası</Label>
+              <Label htmlFor="sms-phone">{locale === 'tr' ? 'Telefon Numarası' : 'Phone Number'}</Label>
               <Input
                 id="sms-phone"
                 type="tel"
@@ -326,13 +328,13 @@ export default function MessageComposer({
             </div>
 
             <div>
-              <Label htmlFor="sms-template">Template Seç</Label>
+              <Label htmlFor="sms-template">{locale === 'tr' ? 'Template Seç' : 'Select Template'}</Label>
               <Select 
                 value={smsData.content_sid} 
                 onValueChange={(value) => handleTemplateSelect(value, 'sms')}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Template seçin (isteğe bağlı)" />
+                  <SelectValue placeholder={locale === 'tr' ? 'Template seçin (isteğe bağlı)' : 'Select template (optional)'} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Template kullanma</SelectItem>
@@ -350,7 +352,7 @@ export default function MessageComposer({
 
             {selectedTemplate && selectedTemplate.variables && selectedTemplate.variables.length > 0 && (
               <div className="space-y-2">
-                <Label>Template Değişkenleri</Label>
+                <Label>{locale === 'tr' ? 'Template Değişkenleri' : 'Template Variables'}</Label>
                 {selectedTemplate.variables.map((variable) => (
                   <div key={variable}>
                     <Label htmlFor={`var-${variable}`} className="text-sm">
@@ -363,7 +365,7 @@ export default function MessageComposer({
                         ...templateVariables,
                         [variable]: e.target.value
                       })}
-                      placeholder={`${variable} değeri`}
+                      placeholder={locale === 'tr' ? `${variable} değeri` : `${variable} value`}
                     />
                   </div>
                 ))}
@@ -371,25 +373,25 @@ export default function MessageComposer({
             )}
 
             <div>
-              <Label htmlFor="sms-message">Özel Mesaj</Label>
+              <Label htmlFor="sms-message">{locale === 'tr' ? 'Özel Mesaj' : 'Custom Message'}</Label>
               <Textarea
                 id="sms-message"
                 value={smsData.custom_message}
                 onChange={(e) => setSmsData({ ...smsData, custom_message: e.target.value })}
-                placeholder="Template kullanmıyorsanız buraya mesajınızı yazın..."
+                placeholder={locale === 'tr' ? 'Template kullanmıyorsanız buraya mesajınızı yazın...' : 'Write your message here if not using a template...'}
                 rows={3}
               />
             </div>
 
             <Button onClick={handleSendSMS} disabled={loading} className="w-full">
               <Send className="mr-2 h-4 w-4" />
-              {loading ? 'Gönderiliyor...' : 'SMS Gönder'}
+              {loading ? (locale === 'tr' ? 'Gönderiliyor...' : 'Sending...') : (locale === 'tr' ? 'SMS Gönder' : 'Send SMS')}
             </Button>
           </TabsContent>
 
           <TabsContent value="whatsapp" className="space-y-4">
             <div>
-              <Label htmlFor="wa-phone">Telefon Numarası</Label>
+              <Label htmlFor="wa-phone">{locale === 'tr' ? 'Telefon Numarası' : 'Phone Number'}</Label>
               <Input
                 id="wa-phone"
                 type="tel"
@@ -400,13 +402,13 @@ export default function MessageComposer({
             </div>
 
             <div>
-              <Label htmlFor="wa-template">Template Seç</Label>
+              <Label htmlFor="wa-template">{locale === 'tr' ? 'Template Seç' : 'Select Template'}</Label>
               <Select 
                 value={whatsappData.content_sid} 
                 onValueChange={(value) => handleTemplateSelect(value, 'whatsapp')}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Template seçin (isteğe bağlı)" />
+                  <SelectValue placeholder={locale === 'tr' ? 'Template seçin (isteğe bağlı)' : 'Select template (optional)'} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Template kullanma</SelectItem>
@@ -424,7 +426,7 @@ export default function MessageComposer({
 
             {selectedTemplate && selectedTemplate.variables && selectedTemplate.variables.length > 0 && (
               <div className="space-y-2">
-                <Label>Template Değişkenleri</Label>
+                <Label>{locale === 'tr' ? 'Template Değişkenleri' : 'Template Variables'}</Label>
                 {selectedTemplate.variables.map((variable) => (
                   <div key={variable}>
                     <Label htmlFor={`wa-var-${variable}`} className="text-sm">
@@ -437,7 +439,7 @@ export default function MessageComposer({
                         ...templateVariables,
                         [variable]: e.target.value
                       })}
-                      placeholder={`${variable} değeri`}
+                      placeholder={locale === 'tr' ? `${variable} değeri` : `${variable} value`}
                     />
                   </div>
                 ))}
@@ -445,25 +447,25 @@ export default function MessageComposer({
             )}
 
             <div>
-              <Label htmlFor="wa-message">Özel Mesaj</Label>
+              <Label htmlFor="wa-message">{locale === 'tr' ? 'Özel Mesaj' : 'Custom Message'}</Label>
               <Textarea
                 id="wa-message"
                 value={whatsappData.custom_message}
                 onChange={(e) => setWhatsappData({ ...whatsappData, custom_message: e.target.value })}
-                placeholder="Template kullanmıyorsanız buraya mesajınızı yazın..."
+                placeholder={locale === 'tr' ? 'Template kullanmıyorsanız buraya mesajınızı yazın...' : 'Write your message here if not using a template...'}
                 rows={3}
               />
             </div>
 
             <Button onClick={handleSendWhatsApp} disabled={loading} className="w-full">
               <Send className="mr-2 h-4 w-4" />
-              {loading ? 'Gönderiliyor...' : 'WhatsApp Gönder'}
+              {loading ? (locale === 'tr' ? 'Gönderiliyor...' : 'Sending...') : (locale === 'tr' ? 'WhatsApp Gönder' : 'Send WhatsApp')}
             </Button>
           </TabsContent>
 
           <TabsContent value="email" className="space-y-4">
             <div>
-              <Label htmlFor="email-to">E-posta Adresi</Label>
+              <Label htmlFor="email-to">{locale === 'tr' ? 'E-posta Adresi' : 'Email Address'}</Label>
               <Input
                 id="email-to"
                 type="email"
@@ -474,47 +476,47 @@ export default function MessageComposer({
             </div>
 
             <div>
-              <Label htmlFor="email-subject">Konu</Label>
+              <Label htmlFor="email-subject">{locale === 'tr' ? 'Konu' : 'Subject'}</Label>
               <Input
                 id="email-subject"
                 value={emailData.subject}
                 onChange={(e) => setEmailData({ ...emailData, subject: e.target.value })}
-                placeholder="E-posta konusu"
+                placeholder={locale === 'tr' ? 'E-posta konusu' : 'Email subject'}
               />
             </div>
 
             <div>
-              <Label htmlFor="email-content">İçerik</Label>
+              <Label htmlFor="email-content">{locale === 'tr' ? 'İçerik' : 'Content'}</Label>
               <Textarea
                 id="email-content"
                 value={emailData.content}
                 onChange={(e) => setEmailData({ ...emailData, content: e.target.value })}
-                placeholder="E-posta içeriği..."
+                placeholder={locale === 'tr' ? 'E-posta içeriği...' : 'Email content...'}
                 rows={6}
               />
             </div>
 
             <Button onClick={handleSendEmail} disabled={loading} className="w-full">
               <Send className="mr-2 h-4 w-4" />
-              {loading ? 'Gönderiliyor...' : 'E-posta Gönder'}
+              {loading ? (locale === 'tr' ? 'Gönderiliyor...' : 'Sending...') : (locale === 'tr' ? 'E-posta Gönder' : 'Send Email')}
             </Button>
           </TabsContent>
 
           <TabsContent value="note" className="space-y-4">
             <div>
-              <Label htmlFor="note-content">Not</Label>
+              <Label htmlFor="note-content">{locale === 'tr' ? 'Not' : 'Note'}</Label>
               <Textarea
                 id="note-content"
                 value={noteData.content}
                 onChange={(e) => setNoteData({ content: e.target.value })}
-                placeholder="Lead hakkında not ekleyin..."
+                placeholder={locale === 'tr' ? 'Lead hakkında not ekleyin...' : 'Add a note about the lead...'}
                 rows={4}
               />
             </div>
 
             <Button onClick={handleAddNote} disabled={loading} className="w-full">
               <FileText className="mr-2 h-4 w-4" />
-              {loading ? 'Ekleniyor...' : 'Not Ekle'}
+              {loading ? (locale === 'tr' ? 'Ekleniyor...' : 'Saving...') : (locale === 'tr' ? 'Not Ekle' : 'Add Note')}
             </Button>
           </TabsContent>
         </Tabs>

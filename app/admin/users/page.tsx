@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import UserSearch from "./_components/user-search";
 import { createClient } from "../../../lib/supabase/client";
 import { deleteUser } from "../../../lib/actions/user-actions";
+import { useI18n } from "@/lib/i18n/client";
 
 // Kullanıcı ajanstan çıkarma işlemi için
 import { removeUserFromAgency } from "../../../lib/actions/agency-actions";
@@ -37,6 +38,7 @@ interface UserWithAgencies extends UserProfile {
 
 export default function UsersList() {
   const router = useRouter();
+  const { t, locale } = useI18n();
   const [users, setUsers] = useState<UserWithAgencies[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -102,8 +104,8 @@ export default function UsersList() {
       setError(null);
     } catch (error: any) {
       console.error('Kullanıcılar yüklenirken hata:', error);
-      setError('Kullanıcı verileri yüklenemedi');
-      toast.error('Kullanıcı verileri yüklenemedi: ' + error.message);
+      setError(locale === 'tr' ? 'Kullanıcı verileri yüklenemedi' : 'Failed to load users');
+      toast.error((locale === 'tr' ? 'Kullanıcı verileri yüklenemedi: ' : 'Failed to load users: ') + error.message);
     } finally {
       setIsLoading(false);
     }
@@ -119,12 +121,12 @@ export default function UsersList() {
         userId
       });
       
-      if (result.serverError) {
-        toast.error(`Kullanıcı ajanstan çıkarılamadı: ${result.serverError}`);
+       if (result.serverError) {
+        toast.error((locale === 'tr' ? 'Kullanıcı ajanstan çıkarılamadı: ' : 'Could not remove from agency: ') + result.serverError);
         return;
       }
       
-      toast.success('Kullanıcı ajanstan başarıyla çıkarıldı');
+      toast.success(locale === 'tr' ? 'Kullanıcı ajanstan başarıyla çıkarıldı' : 'Removed from agency');
       
       // UI'ı güncelle
       setUsers(currentUsers => 
@@ -143,8 +145,8 @@ export default function UsersList() {
       loadUsers();
       
     } catch (error: any) {
-      console.error('Kullanıcı ajanstan çıkarılırken hata:', error);
-      toast.error('İşlem sırasında bir hata oluştu');
+       console.error('Kullanıcı ajanstan çıkarılırken hata:', error);
+       toast.error(locale === 'tr' ? 'İşlem sırasında bir hata oluştu' : 'An error occurred');
     } finally {
       setProcessingUser(null);
     }
@@ -192,8 +194,8 @@ export default function UsersList() {
         await loadUsers();
         
       } catch (error: any) {
-        console.error('💥 [USER-MGMT] Auth check error:', error);
-        setError('Oturum kontrolü sırasında bir hata oluştu');
+         console.error('💥 [USER-MGMT] Auth check error:', error);
+         setError(locale === 'tr' ? 'Oturum kontrolü sırasında bir hata oluştu' : 'An error occurred while checking session');
       }
     }
     
@@ -230,19 +232,19 @@ export default function UsersList() {
   return (
     <div className="container mx-auto py-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Kullanıcı Yönetimi</h1>
+        <h1 className="text-2xl font-bold">{t.admin?.users?.title || (locale === 'tr' ? 'Kullanıcı Yönetimi' : 'User Management')}</h1>
         <Button asChild>
           <Link href="/admin/users/new">
-            <Plus className="h-4 w-4 mr-2" /> Yeni Kullanıcı
+            <Plus className="h-4 w-4 mr-2" /> {t.admin?.users?.newUser || (locale === 'tr' ? 'Yeni Kullanıcı' : 'New User')}
           </Link>
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Tüm Kullanıcılar</CardTitle>
+          <CardTitle>{t.admin?.users?.allUsers || (locale === 'tr' ? 'Tüm Kullanıcılar' : 'All Users')}</CardTitle>
           <CardDescription>
-            Sistem kullanıcılarını görüntüleyin ve yönetin. Yeni kullanıcı eklemek için sağ üstteki butonu kullanabilirsiniz.
+            {locale === 'tr' ? 'Sistem kullanıcılarını görüntüleyin ve yönetin. Yeni kullanıcı eklemek için sağ üstteki butonu kullanabilirsiniz.' : 'View and manage system users. Use the button to add a new user.'}
           </CardDescription>
         </CardHeader>
         
@@ -250,7 +252,7 @@ export default function UsersList() {
           <div className="mb-4">
             <Button onClick={() => loadUsers()} variant="outline" size="sm">
               <Loader2 className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Listeyi Yenile
+              {t.admin?.users?.refreshList || (locale === 'tr' ? 'Listeyi Yenile' : 'Refresh List')}
             </Button>
           </div>
           
@@ -267,18 +269,18 @@ export default function UsersList() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Kullanıcı</TableHead>
-                  <TableHead>Rol</TableHead>
-                  <TableHead>Ajanslar</TableHead>
-                  <TableHead>Kayıt Tarihi</TableHead>
-                  <TableHead className="text-right">İşlemler</TableHead>
+                  <TableHead>{t.admin?.users?.table.user || (locale === 'tr' ? 'Kullanıcı' : 'User')}</TableHead>
+                  <TableHead>{t.admin?.users?.table.role || (locale === 'tr' ? 'Rol' : 'Role')}</TableHead>
+                  <TableHead>{t.admin?.users?.table.agencies || (locale === 'tr' ? 'Ajanslar' : 'Agencies')}</TableHead>
+                  <TableHead>{t.admin?.users?.table.createdAt || (locale === 'tr' ? 'Kayıt Tarihi' : 'Created')}</TableHead>
+                  <TableHead className="text-right">{t.admin?.users?.table.actions || (locale === 'tr' ? 'İşlemler' : 'Actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
-                      Kullanıcı bulunamadı
+                      {t.admin?.users?.table.noUsers || (locale === 'tr' ? 'Kullanıcı bulunamadı' : 'No users found')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -287,12 +289,12 @@ export default function UsersList() {
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
                           <UserIcon className="h-4 w-4 text-muted-foreground" />
-                          <div>{user.username || "Kullanıcı adı yok"}</div>
+                          <div>{user.username || (t.admin?.users?.table.noUsername || (locale === 'tr' ? 'Kullanıcı adı yok' : 'No username'))}</div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant={user.role === 'superuser' ? 'default' : 'secondary'}>
-                          {user.role === 'superuser' ? 'Yönetici' : 'Ajans'}
+                          {user.role === 'superuser' ? (t.admin?.users?.table.manager || (locale === 'tr' ? 'Yönetici' : 'Admin')) : (t.admin?.users?.table.agent || (locale === 'tr' ? 'Ajans' : 'Agency'))}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -309,7 +311,7 @@ export default function UsersList() {
                                   className="h-5 w-5 text-destructive"
                                   disabled={processingUser === user.id}
                                   onClick={() => handleRemoveFromAgency(user.id, agency.agency_id)}
-                                  title="Bu ajanstan çıkar"
+                                  title={(t.admin?.users?.table.removeFromAgency || (locale === 'tr' ? 'Bu ajanstan çıkar' : 'Remove from this agency'))}
                                 >
                                   {processingUser === user.id ? (
                                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -321,7 +323,7 @@ export default function UsersList() {
                             ))}
                           </div>
                         ) : (
-                          <span className="text-muted-foreground text-sm">Ajans üyeliği yok</span>
+                          <span className="text-muted-foreground text-sm">{t.admin?.users?.table.noAgencyMembership || (locale === 'tr' ? 'Ajans üyeliği yok' : 'No agency membership')}</span>
                         )}
                       </TableCell>
                       <TableCell>

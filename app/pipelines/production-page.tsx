@@ -48,6 +48,7 @@ import {
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n/client";
 
 // Types
 interface Pipeline {
@@ -117,6 +118,7 @@ const priorityConfig = {
 };
 
 export default function PipelineProductionPage() {
+  const { t, locale } = useI18n();
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [selectedPipeline, setSelectedPipeline] = useState<Pipeline | null>(null);
   const [stages, setStages] = useState<Stage[]>([]);
@@ -183,9 +185,9 @@ export default function PipelineProductionPage() {
     } catch (error) {
       console.error('Error loading pipelines:', error);
       toast({
-        title: "Hata",
-        description: "Pipeline'lar yüklenirken hata oluştu",
-        variant: "destructive"
+        title: locale === 'tr' ? 'Hata' : 'Error',
+        description: locale === 'tr' ? "Pipeline'lar yüklenirken hata oluştu" : 'Failed to load pipelines',
+        variant: 'destructive'
       });
     } finally {
       setLoading(false);
@@ -456,7 +458,7 @@ export default function PipelineProductionPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold">Pipeline Yönetimi</h1>
+              <h1 className="text-2xl font-bold">{locale === 'tr' ? 'Pipeline Yönetimi' : 'Pipeline Management'}</h1>
               {selectedPipeline && (
                 <div className="flex items-center gap-2">
                   <ChevronRight className="h-4 w-4 text-gray-400" />
@@ -484,15 +486,15 @@ export default function PipelineProductionPage() {
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => setShowCreatePipeline(true)}>
                 <Plus className="h-4 w-4 mr-1" />
-                Pipeline
+                {locale === 'tr' ? 'Pipeline' : 'Pipeline'}
               </Button>
               <Button variant="outline" size="sm" onClick={() => setShowCreateStage(true)}>
                 <Plus className="h-4 w-4 mr-1" />
-                Aşama
+                {locale === 'tr' ? 'Aşama' : 'Stage'}
               </Button>
               <Button size="sm" onClick={() => setShowCreateLead(true)}>
                 <Plus className="h-4 w-4 mr-1" />
-                Lead Ekle
+                {locale === 'tr' ? 'Lead Ekle' : 'Add Lead'}
               </Button>
             </div>
           </div>
@@ -502,17 +504,17 @@ export default function PipelineProductionPage() {
             <div className="flex items-center gap-6 mt-4 text-sm">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-gray-500" />
-                <span className="text-gray-600">Toplam Lead:</span>
+                <span className="text-gray-600">{locale === 'tr' ? 'Toplam Lead:' : 'Total Leads:'}</span>
                 <span className="font-medium">{selectedPipeline.lead_count}</span>
               </div>
               <div className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-gray-500" />
-                <span className="text-gray-600">Toplam Değer:</span>
-                <span className="font-medium">₺{selectedPipeline.total_value?.toLocaleString('tr-TR')}</span>
+                <span className="text-gray-600">{locale === 'tr' ? 'Toplam Değer:' : 'Total Value:'}</span>
+                <span className="font-medium">{locale === 'tr' ? `₺${selectedPipeline.total_value?.toLocaleString('tr-TR')}` : `$${selectedPipeline.total_value?.toLocaleString('en-US')}`}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Activity className="h-4 w-4 text-gray-500" />
-                <span className="text-gray-600">Dönüşüm:</span>
+                <span className="text-gray-600">{locale === 'tr' ? 'Dönüşüm:' : 'Conversion:'}</span>
                 <span className="font-medium">%32</span>
               </div>
             </div>
@@ -527,7 +529,7 @@ export default function PipelineProductionPage() {
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Lead ara..."
+                placeholder={locale === 'tr' ? 'Lead ara...' : 'Search leads...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -536,23 +538,23 @@ export default function PipelineProductionPage() {
             
             <Select value={filterPriority} onValueChange={setFilterPriority}>
               <SelectTrigger className="w-32">
-                <SelectValue placeholder="Öncelik" />
+                <SelectValue placeholder={locale === 'tr' ? 'Öncelik' : 'Priority'} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tüm Öncelikler</SelectItem>
-                <SelectItem value="urgent">Acil</SelectItem>
-                <SelectItem value="high">Yüksek</SelectItem>
-                <SelectItem value="medium">Orta</SelectItem>
-                <SelectItem value="low">Düşük</SelectItem>
+                <SelectItem value="all">{locale === 'tr' ? 'Tüm Öncelikler' : 'All Priorities'}</SelectItem>
+                <SelectItem value="urgent">{locale === 'tr' ? 'Acil' : 'Urgent'}</SelectItem>
+                <SelectItem value="high">{locale === 'tr' ? 'Yüksek' : 'High'}</SelectItem>
+                <SelectItem value="medium">{locale === 'tr' ? 'Orta' : 'Medium'}</SelectItem>
+                <SelectItem value="low">{locale === 'tr' ? 'Düşük' : 'Low'}</SelectItem>
               </SelectContent>
             </Select>
 
             <Select value={filterAssignee} onValueChange={setFilterAssignee}>
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="Atanan" />
+                <SelectValue placeholder={locale === 'tr' ? 'Atanan' : 'Assignee'} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Herkes</SelectItem>
+                <SelectItem value="all">{locale === 'tr' ? 'Herkes' : 'All'}</SelectItem>
                 {assignees.map(assignee => (
                   <SelectItem key={assignee} value={assignee}>
                     {assignee}
@@ -572,7 +574,7 @@ export default function PipelineProductionPage() {
                 }}
               >
                 <X className="h-4 w-4 mr-1" />
-                Temizle
+                {locale === 'tr' ? 'Temizle' : 'Clear'}
               </Button>
             )}
           </div>
@@ -585,7 +587,7 @@ export default function PipelineProductionPage() {
           <div className="flex items-center justify-center h-96">
             <div className="text-center space-y-4">
               <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
-              <p className="text-gray-600">Yükleniyor...</p>
+              <p className="text-gray-600">{locale === 'tr' ? 'Yükleniyor...' : 'Loading...'}</p>
             </div>
           </div>
         ) : (
@@ -617,9 +619,9 @@ export default function PipelineProductionPage() {
                             <MoreVertical className="h-4 w-4 text-gray-600" />
                           </button>
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">
-                          ₺{stageValue.toLocaleString('tr-TR')}
-                        </p>
+                         <p className="text-sm text-gray-600 mt-1">
+                           {locale === 'tr' ? `₺${stageValue.toLocaleString('tr-TR')}` : `$${stageValue.toLocaleString('en-US')}`}
+                         </p>
                       </CardHeader>
                       
                       <Droppable droppableId={stage.id}>
@@ -722,10 +724,10 @@ export default function PipelineProductionPage() {
       <Dialog open={showCreatePipeline} onOpenChange={setShowCreatePipeline}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Yeni Pipeline Oluştur</DialogTitle>
-            <DialogDescription>
-              Yeni bir satış süreci oluşturun
-            </DialogDescription>
+             <DialogTitle>{locale === 'tr' ? 'Yeni Pipeline Oluştur' : 'Create New Pipeline'}</DialogTitle>
+             <DialogDescription>
+               {locale === 'tr' ? 'Yeni bir satış süreci oluşturun' : 'Create a new sales pipeline'}
+             </DialogDescription>
           </DialogHeader>
           <form onSubmit={(e) => {
             e.preventDefault();
@@ -737,19 +739,19 @@ export default function PipelineProductionPage() {
           }}>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Pipeline Adı</Label>
+                <Label htmlFor="name">{locale === 'tr' ? 'Pipeline Adı' : 'Pipeline Name'}</Label>
                 <Input id="name" name="name" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="description">Açıklama</Label>
+                <Label htmlFor="description">{locale === 'tr' ? 'Açıklama' : 'Description'}</Label>
                 <Textarea id="description" name="description" />
               </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setShowCreatePipeline(false)}>
-                İptal
+                {locale === 'tr' ? 'İptal' : 'Cancel'}
               </Button>
-              <Button type="submit">Oluştur</Button>
+              <Button type="submit">{locale === 'tr' ? 'Oluştur' : 'Create'}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -759,10 +761,10 @@ export default function PipelineProductionPage() {
       <Dialog open={showCreateStage} onOpenChange={setShowCreateStage}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Yeni Aşama Oluştur</DialogTitle>
-            <DialogDescription>
-              {selectedPipeline?.name} için yeni bir aşama ekleyin
-            </DialogDescription>
+             <DialogTitle>{locale === 'tr' ? 'Yeni Aşama Oluştur' : 'Create New Stage'}</DialogTitle>
+             <DialogDescription>
+               {selectedPipeline?.name} {locale === 'tr' ? 'için yeni bir aşama ekleyin' : 'add a new stage for'}
+             </DialogDescription>
           </DialogHeader>
           <form onSubmit={(e) => {
             e.preventDefault();
@@ -774,11 +776,11 @@ export default function PipelineProductionPage() {
           }}>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="stage-name">Aşama Adı</Label>
+                <Label htmlFor="stage-name">{locale === 'tr' ? 'Aşama Adı' : 'Stage Name'}</Label>
                 <Input id="stage-name" name="name" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="color">Renk</Label>
+                <Label htmlFor="color">{locale === 'tr' ? 'Renk' : 'Color'}</Label>
                 <Select name="color" defaultValue="#6B7280">
                   <SelectTrigger>
                     <SelectValue />
@@ -801,9 +803,9 @@ export default function PipelineProductionPage() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setShowCreateStage(false)}>
-                İptal
+                {locale === 'tr' ? 'İptal' : 'Cancel'}
               </Button>
-              <Button type="submit">Oluştur</Button>
+              <Button type="submit">{locale === 'tr' ? 'Oluştur' : 'Create'}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

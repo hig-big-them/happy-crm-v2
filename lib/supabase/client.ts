@@ -1,3 +1,10 @@
+/**
+ * Compatibility entry for browser Supabase client
+ * Re-exports the real browser client used in production.
+ */
+export { createClient as createRealClient } from './client-real'
+export type { SupabaseClient } from './client-real'
+
 // Mock Supabase client for demo mode
 import { type Database } from '../../types/supabase'
 
@@ -81,4 +88,7 @@ export function createClient() {
 }
 
 // Legacy alias
-export const createClientSideSupabase = createClient 
+export const createClientSideSupabase = createClient
+
+// Prefer real client when env vars are present
+// Consumers importing from lib/supabase/client can call createRealClient directly if needed

@@ -7,13 +7,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/utils/supabase/server';
 import crypto from 'crypto';
+import { getDeduplicationService } from '@/lib/services/redis-dedup-service';
 
 // Webhook doğrulama jetonu ve app secret
-const WEBHOOK_VERIFY_TOKEN = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || "$m}LzG+w'xGdh4t2=!Flv1|Kq7-A2";
+const WEBHOOK_VERIFY_TOKEN = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || "HAPPY_CRM_WEBHOOK_VERIFY_TOKEN_2025";
 const WHATSAPP_APP_SECRET = process.env.WHATSAPP_APP_SECRET || "";
 
-// Processed events cache for deduplication (in production use Redis)
-const processedEvents = new Set<string>();
+// Get deduplication service instance
+const dedupService = getDeduplicationService();
 
 // WhatsApp webhook event türleri
 interface WhatsAppWebhookEvent {
@@ -110,9 +111,23 @@ export async function GET(request: NextRequest) {
 
 // Signature validation function
 function verifySignature(payload: string, signature: string): boolean {
+  // SECURITY: Make secret required in production
   if (!WHATSAPP_APP_SECRET) {
-    console.warn('⚠️ WhatsApp App Secret not configured, skipping signature verification');
-    return true; // Skip verification if secret not configured
+    const error = 'CRITICAL: WhatsApp App Secret not configured';
+    console.error(`❌ ${error}`);
+    
+    // In production, always fail if secret is missing
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(error);
+    }
+    
+    // Only allow bypass in development with clear warning
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ DEVELOPMENT MODE: Bypassing signature verification - DO NOT USE IN PRODUCTION');
+      return true;
+    }
+    
+    return false;
   }
 
   try {
@@ -140,7 +155,10 @@ export async function POST(request: NextRequest) {
     const signature = request.headers.get('x-hub-signature-256');
     
     console.log('📥 WhatsApp webhook event received');
-    console.log('📋 Headers:', Object.fromEntries(request.headers.entries()));
+    // SECURITY: Don't log headers in production (may contain sensitive data)
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('📋 Headers:', Object.fromEntries(request.headers.entries()));
+    }
 
     // Signature verification
     if (signature && !verifySignature(body, signature)) {
@@ -156,7 +174,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
     }
 
-    console.log('📦 Webhook data:', JSON.stringify(webhookData, null, 2));
+    // SECURITY: Don't log full payload in production (contains PII)
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('📦 Webhook data:', JSON.stringify(webhookData, null, 2));
+    } else {
+      // Production: Log only non-PII metadata
+      console.log('📦 Webhook received:', {
+        object: webhookData.object,
+        entries: webhookData.entry?.length || 0,
+        timestamp: new Date().toISOString()
+      });
+    }
 
     // WhatsApp object kontrolü
     if (webhookData.object !== 'whatsapp_business_account') {
@@ -169,19 +197,18 @@ export async function POST(request: NextRequest) {
     // Her entry için event'leri işle
     for (const entry of webhookData.entry) {
       for (const change of entry.changes) {
-        // Event deduplication
+        // Event deduplication with persistent storage
         const eventId = `${entry.id}_${change.field}_${entry.time || Date.now()}`;
-        if (processedEvents.has(eventId)) {
+        
+        // Check for duplicate using deduplication service
+        const isDuplicate = await dedupService.isDuplicate(eventId);
+        if (isDuplicate) {
           console.log('⚠️ Duplicate event detected, skipping:', eventId);
           continue;
         }
-        processedEvents.add(eventId);
         
-        // Clean up old events (keep last 1000)
-        if (processedEvents.size > 1000) {
-          const firstEvent = processedEvents.values().next().value;
-          processedEvents.delete(firstEvent);
-        }
+        // Mark as processed
+        await dedupService.markProcessed(eventId);
 
         // Process different webhook fields
         switch (change.field) {

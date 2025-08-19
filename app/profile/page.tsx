@@ -9,10 +9,12 @@ import { Label } from "../../components/ui/label";
 import { Badge } from "../../components/ui/badge";
 import { Loader2, User, Mail, Shield } from "lucide-react";
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n/client";
 
 export default function ProfilePage() {
   const { user, userRole, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const { t, locale } = useI18n();
 
   if (loading) {
     return (
@@ -28,7 +30,7 @@ export default function ProfilePage() {
         <Card>
           <CardContent className="pt-6">
             <p className="text-center text-muted-foreground">
-              Giriş yapmış bir kullanıcı bulunamadı.
+              {t.profile.notLogged}
             </p>
           </CardContent>
         </Card>
@@ -56,10 +58,10 @@ export default function ProfilePage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            <CardTitle>Profil Bilgileri</CardTitle>
+            <CardTitle>{t.profile.title}</CardTitle>
           </div>
           <CardDescription>
-            Hesap bilgilerinizi görüntüleyin ve yönetin
+            {t.profile.desc}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -67,7 +69,7 @@ export default function ProfilePage() {
           <div className="space-y-2">
             <Label htmlFor="email" className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
-              E-posta Adresi
+              {t.profile.email}
             </Label>
             <Input
               id="email"
@@ -82,7 +84,7 @@ export default function ProfilePage() {
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
-              Kullanıcı Rolü
+              {t.profile.role}
             </Label>
             <div>
               <Badge variant={getRoleBadgeVariant(userRole || "user")}>
@@ -93,7 +95,7 @@ export default function ProfilePage() {
 
           {/* User ID */}
           <div className="space-y-2">
-            <Label>Kullanıcı ID</Label>
+            <Label>{t.profile.userId}</Label>
             <Input
               value={user.id}
               disabled
@@ -103,9 +105,9 @@ export default function ProfilePage() {
 
           {/* Account Created */}
           <div className="space-y-2">
-            <Label>Hesap Oluşturulma Tarihi</Label>
+            <Label>{t.profile.createdAt}</Label>
             <Input
-              value={new Date(user.created_at).toLocaleDateString("tr-TR", {
+              value={new Date(user.created_at).toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-US', {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
@@ -120,10 +122,10 @@ export default function ProfilePage() {
           {/* Actions */}
           <div className="flex gap-3 pt-4">
             <Button asChild>
-              <Link href="/account/settings">Hesap Ayarları</Link>
+              <Link href="/account/settings">{t.profile.accountSettings}</Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/account/update-password">Şifre Değiştir</Link>
+              <Link href="/account/update-password">{t.profile.changePassword}</Link>
             </Button>
           </div>
         </CardContent>

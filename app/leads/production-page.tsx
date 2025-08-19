@@ -35,7 +35,8 @@ const formatDate = (date: Date, formatStr: string = 'PPP'): string => {
   return `${day} ${month} ${year}`;
 };
 import { 
-  PlusCircle, 
+  PlusCircle,
+  Plus,
   Loader2, 
   Users, 
   Building, 
@@ -85,6 +86,7 @@ import {
   X
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useI18n } from "@/lib/i18n/client";
 
 // Types
 interface Stage {
@@ -274,26 +276,28 @@ function LeadDetailModal({
                   </Badge>
                 )}
               </DialogTitle>
-              <DialogDescription className="mt-2 space-y-1">
-                {lead.company && (
-                  <div className="flex items-center gap-2">
-                    <Building className="h-4 w-4" />
-                    <span>{lead.company.company_name}</span>
+              <DialogDescription asChild>
+                <div className="mt-2 space-y-1">
+                  {lead.company && (
+                    <div className="flex items-center gap-2">
+                      <Building className="h-4 w-4" />
+                      <span>{lead.company.company_name}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-4 text-sm">
+                    {lead.contact_email && (
+                      <a href={`mailto:${lead.contact_email}`} className="flex items-center gap-1 hover:underline">
+                        <Mail className="h-3 w-3" />
+                        {lead.contact_email}
+                      </a>
+                    )}
+                    {lead.contact_phone && (
+                      <a href={`tel:${lead.contact_phone}`} className="flex items-center gap-1 hover:underline">
+                        <Phone className="h-3 w-3" />
+                        {lead.contact_phone}
+                      </a>
+                    )}
                   </div>
-                )}
-                <div className="flex items-center gap-4 text-sm">
-                  {lead.contact_email && (
-                    <a href={`mailto:${lead.contact_email}`} className="flex items-center gap-1 hover:underline">
-                      <Mail className="h-3 w-3" />
-                      {lead.contact_email}
-                    </a>
-                  )}
-                  {lead.contact_phone && (
-                    <a href={`tel:${lead.contact_phone}`} className="flex items-center gap-1 hover:underline">
-                      <Phone className="h-3 w-3" />
-                      {lead.contact_phone}
-                    </a>
-                  )}
                 </div>
               </DialogDescription>
             </div>
@@ -714,9 +718,9 @@ function LeadFormModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{lead ? 'Lead Düzenle' : 'Yeni Lead Oluştur'}</DialogTitle>
+          <DialogTitle>{lead ? (t.leads?.dialog.editTitle || (locale === 'tr' ? 'Lead Düzenle' : 'Edit Lead')) : (t.leads?.dialog.createTitle || (locale === 'tr' ? 'Yeni Lead Oluştur' : 'Create New Lead'))}</DialogTitle>
           <DialogDescription>
-            Lead bilgilerini {lead ? 'güncelleyin' : 'doldurun'}
+            {lead ? (t.leads?.dialog.editDesc || (locale === 'tr' ? 'Lead bilgilerini güncelleyin' : 'Update the lead details')) : (t.leads?.dialog.createDesc || (locale === 'tr' ? 'Lead bilgilerini doldurun' : 'Fill in the lead details'))}
           </DialogDescription>
         </DialogHeader>
 
@@ -725,17 +729,17 @@ function LeadFormModal({
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="lead_name">Lead Adı *</Label>
+                <Label htmlFor="lead_name">{t.leads?.dialog.leadName || (locale === 'tr' ? 'Lead Adı *' : 'Lead Name *')}</Label>
                 <Input
                   id="lead_name"
                   value={formData.lead_name}
                   onChange={(e) => setFormData(prev => ({ ...prev, lead_name: e.target.value }))}
-                  placeholder="Örn: Ahmet Yılmaz"
+                  placeholder={locale === 'tr' ? 'Örn: Ahmet Yılmaz' : 'e.g., John Doe'}
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="company_id">Şirket</Label>
+                <Label htmlFor="company_id">{t.leads?.dialog.company || (locale === 'tr' ? 'Şirket' : 'Company')}</Label>
                 <Popover open={showCompanySearch} onOpenChange={setShowCompanySearch}>
                   <PopoverTrigger asChild>
                     <Button
@@ -746,14 +750,14 @@ function LeadFormModal({
                     >
                       {formData.company_id
                         ? companies.find(c => c.id === formData.company_id)?.company_name
-                        : "Şirket seçin..."}
+                        : (t.leads?.dialog.companySelect || (locale === 'tr' ? 'Şirket seçin...' : 'Select a company...'))}
                       <Building className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0">
                     <Command>
-                      <CommandInput placeholder="Şirket ara..." />
-                      <CommandEmpty>Şirket bulunamadı.</CommandEmpty>
+                      <CommandInput placeholder={t.leads?.dialog.companySearch || (locale === 'tr' ? 'Şirket ara...' : 'Search company...')} />
+                      <CommandEmpty>{t.leads?.dialog.companyEmpty || (locale === 'tr' ? 'Şirket bulunamadı.' : 'No company found.')}</CommandEmpty>
                       <CommandGroup>
                         {companies.map((company) => (
                           <CommandItem
@@ -781,7 +785,7 @@ function LeadFormModal({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="contact_email">Email</Label>
+                <Label htmlFor="contact_email">{t.leads?.dialog.email || 'Email'}</Label>
                 <Input
                   id="contact_email"
                   type="email"
@@ -792,7 +796,7 @@ function LeadFormModal({
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="contact_phone">Telefon</Label>
+                <Label htmlFor="contact_phone">{t.leads?.dialog.phone || (locale === 'tr' ? 'Telefon' : 'Phone')}</Label>
                 <Input
                   id="contact_phone"
                   value={formData.contact_phone}
@@ -1463,12 +1467,14 @@ export default function LeadsProductionPage() {
     return Array.from(unique);
   }, [leads]);
 
+  const { locale, t } = useI18n()
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-          <p className="text-muted-foreground">Yükleniyor...</p>
+          <p className="text-muted-foreground">{t.leads?.loading || (locale === 'tr' ? 'Yükleniyor...' : 'Loading...')}</p>
         </div>
       </div>
     );
@@ -1481,9 +1487,9 @@ export default function LeadsProductionPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">Müşteri Adayları</h1>
+              <h1 className="text-2xl font-bold">{t.leads?.pageTitle || t.nav.leads}</h1>
               <p className="text-sm text-muted-foreground mt-1">
-                Toplam {filteredLeads.length} lead • {selectedLeads.size} seçili
+                {locale === 'tr' ? 'Toplam' : 'Total'} {filteredLeads.length} lead • {selectedLeads.size} {locale === 'tr' ? 'seçili' : 'selected'}
               </p>
             </div>
             
@@ -1506,7 +1512,7 @@ export default function LeadsProductionPage() {
               </Button>
               <Button size="sm" onClick={handleCreateLead}>
                 <PlusCircle className="h-4 w-4 mr-1" />
-                Yeni Lead
+                {locale === 'tr' ? 'Yeni Lead' : 'New Lead'}
               </Button>
             </div>
           </div>
@@ -1519,7 +1525,7 @@ export default function LeadsProductionPage() {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Toplam Lead</p>
+                <p className="text-sm text-muted-foreground">{locale === 'tr' ? 'Toplam Lead' : 'Total Leads'}</p>
                 <p className="text-2xl font-bold">{stats.totalLeads}</p>
               </div>
               <Users className="h-8 w-8 text-blue-500 opacity-20" />
@@ -1529,7 +1535,7 @@ export default function LeadsProductionPage() {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Toplam Değer</p>
+                <p className="text-sm text-muted-foreground">{locale === 'tr' ? 'Toplam Değer' : 'Total Value'}</p>
                 <p className="text-2xl font-bold">₺{(stats.totalValue / 1000).toFixed(0)}K</p>
               </div>
               <DollarSign className="h-8 w-8 text-green-500 opacity-20" />
@@ -1539,7 +1545,7 @@ export default function LeadsProductionPage() {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Ort. Değer</p>
+                <p className="text-sm text-muted-foreground">{locale === 'tr' ? 'Ort. Değer' : 'Avg. Value'}</p>
                 <p className="text-2xl font-bold">₺{(stats.avgDealSize / 1000).toFixed(0)}K</p>
               </div>
               <BarChart3 className="h-8 w-8 text-purple-500 opacity-20" />
@@ -1549,7 +1555,7 @@ export default function LeadsProductionPage() {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Dönüşüm</p>
+                <p className="text-sm text-muted-foreground">{locale === 'tr' ? 'Dönüşüm' : 'Conversion'}</p>
                 <p className="text-2xl font-bold">{stats.conversionRate.toFixed(0)}%</p>
               </div>
               <PieChart className="h-8 w-8 text-orange-500 opacity-20" />
@@ -1559,7 +1565,7 @@ export default function LeadsProductionPage() {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Bu Ay Yeni</p>
+                <p className="text-sm text-muted-foreground">{locale === 'tr' ? 'Bu Ay Yeni' : 'New This Month'}</p>
                 <p className="text-2xl font-bold">{stats.newLeadsThisMonth}</p>
               </div>
               <TrendingUp className="h-8 w-8 text-indigo-500 opacity-20" />
@@ -1569,7 +1575,7 @@ export default function LeadsProductionPage() {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Bu Ay Kazanılan</p>
+                <p className="text-sm text-muted-foreground">{locale === 'tr' ? 'Bu Ay Kazanılan' : 'Won This Month'}</p>
                 <p className="text-2xl font-bold">{stats.wonDealsThisMonth}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-500 opacity-20" />
@@ -1586,8 +1592,8 @@ export default function LeadsProductionPage() {
                 <div className="flex-1 min-w-[300px]">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Lead, email, telefon veya etiket ara..."
+                   <Input
+                      placeholder={t.leads?.searchPlaceholder || (locale === 'tr' ? 'Lead, email, telefon veya etiket ara...' : 'Search lead, email, phone or tag...')}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-9"
@@ -1597,10 +1603,10 @@ export default function LeadsProductionPage() {
                 
                 <Select value={filterPipeline} onValueChange={setFilterPipeline}>
                   <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="Pipeline" />
+                    <SelectValue placeholder={t.leads?.filters.pipeline || 'Pipeline'} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tüm Pipeline</SelectItem>
+                    <SelectItem value="all">{t.leads?.filters.allPipelines || 'All Pipelines'}</SelectItem>
                     {pipelines.map(pipeline => (
                       <SelectItem key={pipeline.id} value={pipeline.id}>
                         {pipeline.name}
@@ -1611,10 +1617,10 @@ export default function LeadsProductionPage() {
                 
                 <Select value={filterStage} onValueChange={setFilterStage}>
                   <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="Aşama" />
+                    <SelectValue placeholder={t.leads?.filters.stage || 'Stage'} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tüm Aşamalar</SelectItem>
+                    <SelectItem value="all">{t.leads?.filters.allStages || 'All Stages'}</SelectItem>
                     {stages.map(stage => (
                       <SelectItem key={stage.id} value={stage.id}>
                         <div className="flex items-center gap-2">
@@ -1631,10 +1637,10 @@ export default function LeadsProductionPage() {
                 
                 <Select value={filterPriority} onValueChange={setFilterPriority}>
                   <SelectTrigger className="w-[130px]">
-                    <SelectValue placeholder="Öncelik" />
+                    <SelectValue placeholder={t.leads?.filters.priority || 'Priority'} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tüm Öncelikler</SelectItem>
+                    <SelectItem value="all">{t.leads?.filters.allPriorities || 'All Priorities'}</SelectItem>
                     {Object.entries(priorityConfig).map(([key, config]) => (
                       <SelectItem key={key} value={key}>
                         <div className="flex items-center gap-2">
@@ -1651,7 +1657,7 @@ export default function LeadsProductionPage() {
                   onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                 >
                   <SlidersHorizontal className="h-4 w-4 mr-2" />
-                  Gelişmiş Filtreler
+                  {t.leads?.filters.advancedFilters || (locale === 'tr' ? 'Gelişmiş Filtreler' : 'Advanced Filters')}
                 </Button>
               </div>
               
@@ -1660,10 +1666,10 @@ export default function LeadsProductionPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
                   <Select value={filterStatus} onValueChange={setFilterStatus}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Durum" />
+                      <SelectValue placeholder={t.leads?.filters.status || 'Status'} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Tüm Durumlar</SelectItem>
+                      <SelectItem value="all">{t.leads?.filters.allStatuses || 'All Statuses'}</SelectItem>
                       {Object.entries(statusConfig).map(([key, config]) => (
                         <SelectItem key={key} value={key}>
                           <div className="flex items-center gap-2">
@@ -1677,10 +1683,10 @@ export default function LeadsProductionPage() {
                   
                   <Select value={filterSource} onValueChange={setFilterSource}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Kaynak" />
+                      <SelectValue placeholder={t.leads?.filters.source || 'Source'} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Tüm Kaynaklar</SelectItem>
+                      <SelectItem value="all">{t.leads?.filters.allSources || 'All Sources'}</SelectItem>
                       {sources.map(source => (
                         <SelectItem key={source} value={source}>
                           {source}
@@ -1691,10 +1697,10 @@ export default function LeadsProductionPage() {
                   
                   <Select value={filterAssignee} onValueChange={setFilterAssignee}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Atanan" />
+                      <SelectValue placeholder={t.leads?.filters.assignee || 'Assignee'} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Herkes</SelectItem>
+                      <SelectItem value="all">{t.leads?.filters.everyone || 'Everyone'}</SelectItem>
                       {assignees.map(assignee => (
                         <SelectItem key={assignee} value={assignee}>
                           {assignee}
@@ -1707,7 +1713,7 @@ export default function LeadsProductionPage() {
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="justify-start">
                         <CalendarIcon className="h-4 w-4 mr-2" />
-                        Tarih Aralığı
+                        {t.leads?.filters.dateRange || (locale === 'tr' ? 'Tarih Aralığı' : 'Date Range')}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -1736,11 +1742,11 @@ export default function LeadsProductionPage() {
               filterPriority !== 'all' || filterStatus !== 'all' || filterSource !== 'all' || 
               filterAssignee !== 'all' || filterDateRange.start || filterDateRange.end) && (
               <div className="flex items-center gap-2 mt-4 pt-4 border-t">
-                <p className="text-sm text-muted-foreground">Aktif filtreler:</p>
+                <p className="text-sm text-muted-foreground">{t.leads?.activeFilters || (locale === 'tr' ? 'Aktif filtreler:' : 'Active filters:')}</p>
                 <div className="flex flex-wrap gap-2">
                   {searchQuery && (
                     <Badge variant="secondary" className="gap-1">
-                      Arama: {searchQuery}
+                      {(t.leads?.searchLabel || (locale === 'tr' ? 'Arama:' : 'Search:'))} {searchQuery}
                       <button onClick={() => setSearchQuery('')}>
                         <X className="h-3 w-3" />
                       </button>
@@ -1770,7 +1776,7 @@ export default function LeadsProductionPage() {
                     setFilterDateRange({ start: null, end: null });
                   }}
                 >
-                  Tümünü Temizle
+                  {t.leads?.clearAll || (locale === 'tr' ? 'Tümünü Temizle' : 'Clear All')}
                 </Button>
               </div>
             )}
@@ -1783,20 +1789,20 @@ export default function LeadsProductionPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">
-                  {selectedLeads.size} lead seçildi
+                  {selectedLeads.size} {t.leads?.bulk.selectedSuffix || (locale === 'tr' ? 'lead seçildi' : 'leads selected')}
                 </p>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm">
                     <Tag className="h-4 w-4 mr-1" />
-                    Etiket Ekle
+                    {t.leads?.bulk.addTag || (locale === 'tr' ? 'Etiket Ekle' : 'Add Tag')}
                   </Button>
                   <Button variant="outline" size="sm">
                     <UserPlus className="h-4 w-4 mr-1" />
-                    Ata
+                    {t.leads?.bulk.assign || (locale === 'tr' ? 'Ata' : 'Assign')}
                   </Button>
                   <Button variant="outline" size="sm">
                     <Archive className="h-4 w-4 mr-1" />
-                    Arşivle
+                    {t.leads?.bulk.archive || (locale === 'tr' ? 'Arşivle' : 'Archive')}
                   </Button>
                   <Button
                     variant="outline"
@@ -1805,7 +1811,7 @@ export default function LeadsProductionPage() {
                     onClick={handleBulkDelete}
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
-                    Sil
+                    {t.leads?.bulk.delete || (locale === 'tr' ? 'Sil' : 'Delete')}
                   </Button>
                 </div>
               </div>
@@ -1829,35 +1835,35 @@ export default function LeadsProductionPage() {
                   onClick={() => handleSort('lead_name')}
                 >
                   <div className="flex items-center gap-1">
-                    Lead Adı
+                    {t.leads?.table.leadName || (locale === 'tr' ? 'Lead Adı' : 'Lead Name')}
                     <ArrowUpDown className="h-4 w-4" />
                   </div>
                 </TableHead>
-                <TableHead>Şirket</TableHead>
-                <TableHead>Pipeline/Aşama</TableHead>
+                <TableHead>{t.leads?.table.company || (locale === 'tr' ? 'Şirket' : 'Company')}</TableHead>
+                <TableHead>{t.leads?.table.pipelineStage || (locale === 'tr' ? 'Pipeline/Aşama' : 'Pipeline/Stage')}</TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-gray-50"
                   onClick={() => handleSort('lead_value')}
                 >
                   <div className="flex items-center gap-1">
-                    Değer
+                    {t.leads?.table.value || (locale === 'tr' ? 'Değer' : 'Value')}
                     <ArrowUpDown className="h-4 w-4" />
                   </div>
                 </TableHead>
-                <TableHead>Öncelik</TableHead>
-                <TableHead>Durum</TableHead>
-                <TableHead>Atanan</TableHead>
+                <TableHead>{t.leads?.table.priority || (locale === 'tr' ? 'Öncelik' : 'Priority')}</TableHead>
+                <TableHead>{t.leads?.table.status || (locale === 'tr' ? 'Durum' : 'Status')}</TableHead>
+                <TableHead>{t.leads?.table.assignee || (locale === 'tr' ? 'Atanan' : 'Assignee')}</TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-gray-50"
                   onClick={() => handleSort('created_at')}
                 >
                   <div className="flex items-center gap-1">
-                    Oluşturma
+                    {t.leads?.table.createdAt || (locale === 'tr' ? 'Oluşturma' : 'Created')}
                     <ArrowUpDown className="h-4 w-4" />
                   </div>
                 </TableHead>
-                <TableHead>Aktivite</TableHead>
-                <TableHead className="text-right">İşlemler</TableHead>
+                <TableHead>{t.leads?.table.activity || (locale === 'tr' ? 'Aktivite' : 'Activity')}</TableHead>
+                <TableHead className="text-right">{t.leads?.table.actions || (locale === 'tr' ? 'İşlemler' : 'Actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1989,8 +1995,8 @@ export default function LeadsProductionPage() {
                             className="w-full justify-start"
                             onClick={() => handleEditLead(lead)}
                           >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Düzenle
+                          <Edit className="h-4 w-4 mr-2" />
+                          {t.leads?.table.edit || (locale === 'tr' ? 'Düzenle' : 'Edit')}
                           </Button>
                           <Button
                             variant="ghost"
@@ -1998,8 +2004,8 @@ export default function LeadsProductionPage() {
                             className="w-full justify-start"
                             onClick={() => window.open(`/leads/${lead.id}/timeline`, '_blank')}
                           >
-                            <Activity className="h-4 w-4 mr-2" />
-                            Timeline
+                          <Activity className="h-4 w-4 mr-2" />
+                          {t.leads?.table.timeline || 'Timeline'}
                           </Button>
                           <Separator className="my-1" />
                           <Button

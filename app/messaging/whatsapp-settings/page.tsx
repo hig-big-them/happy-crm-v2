@@ -1,0 +1,1108 @@
+"use client";
+
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { 
+  MessageSquare, 
+  Settings, 
+  Shield, 
+  AlertCircle, 
+  CheckCircle,
+  Phone,
+  Key,
+  Link,
+  Globe,
+  Webhook,
+  Server,
+  Info,
+  Copy,
+  Eye,
+  EyeOff,
+  Save,
+  RefreshCw,
+  TestTube,
+  Plus,
+  Trash2,
+  Edit2,
+  Check,
+  X,
+  Loader2,
+  Smartphone,
+  Building2,
+  User,
+  Hash,
+  FileText,
+  Clock,
+  Activity,
+  Zap,
+  Database,
+  Cloud,
+  Lock,
+  Unlock,
+  Send,
+  ChevronRight,
+  AlertTriangle,
+  HelpCircle
+} from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
+import { createClient } from '@/lib/supabase/client';
+import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n/client';
+
+// WhatsApp Cloud API Configuration Types
+interface WhatsAppConfig {
+  id: string;
+  phone_number_id: string;
+  display_phone_number: string;
+  verified_name: string;
+  business_account_id: string;
+  access_token: string;
+  api_version: string;
+  webhook_url: string;
+  webhook_verify_token: string;
+  is_active: boolean;
+  is_primary: boolean;
+  quality_rating: 'GREEN' | 'YELLOW' | 'RED' | 'UNKNOWN';
+  status: 'CONNECTED' | 'DISCONNECTED' | 'PENDING' | 'ERROR';
+  messaging_limit_tier: string;
+  max_phone_numbers: number;
+  namespace: string;
+  certificate: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface WebhookEvent {
+  id: string;
+  event_type: string;
+  description: string;
+  is_enabled: boolean;
+}
+
+interface MessageTemplate {
+  id: string;
+  name: string;
+  category: string;
+  language: string;
+  status: 'APPROVED' | 'PENDING' | 'REJECTED';
+  components: any[];
+}
+
+export default function WhatsAppSettingsPage() {
+  const { locale } = useI18n()
+  const [configs, setConfigs] = useState<WhatsAppConfig[]>([]);
+  const [selectedConfig, setSelectedConfig] = useState<WhatsAppConfig | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [showTokens, setShowTokens] = useState<{ [key: string]: boolean }>({});
+  const [loading, setLoading] = useState(false);
+  const [testingConnection, setTestingConnection] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('numbers');
+  const [templates, setTemplates] = useState<MessageTemplate[]>([]);
+  
+  const supabase = createClient();
+
+  // Default webhook events
+  const webhookEvents: WebhookEvent[] = [
+    { id: '1', event_type: 'messages', description: 'Gelen mesajlar', is_enabled: true },
+    { id: '2', event_type: 'message_status', description: 'Mesaj durumu güncellemeleri', is_enabled: true },
+    { id: '3', event_type: 'message_template_status_update', description: 'Şablon durumu güncellemeleri', is_enabled: true },
+    { id: '4', event_type: 'phone_number_name_update', description: 'Telefon numarası adı güncellemeleri', is_enabled: false },
+    { id: '5', event_type: 'account_review_update', description: 'Hesap inceleme güncellemeleri', is_enabled: true },
+    { id: '6', event_type: 'phone_number_quality_update', description: 'Numara kalite güncellemeleri', is_enabled: true },
+  ];
+
+  // Load configurations
+  useEffect(() => {
+    loadConfigurations();
+    loadTemplates();
+  }, []);
+
+  const loadConfigurations = async () => {
+    try {
+      setLoading(true);
+      
+      // For now, load from localStorage or use defaults
+      const savedConfigs = localStorage.getItem('whatsapp_configs');
+      if (savedConfigs) {
+        setConfigs(JSON.parse(savedConfigs));
+      } else {
+        // Default empty configuration
+        setConfigs([
+          {
+            id: '1',
+            phone_number_id: '',
+            display_phone_number: '+90 532 799 42 23',
+            verified_name: 'Happy CRM Ana Hat',
+            business_account_id: '',
+            access_token: '',
+            api_version: 'v21.0',
+            webhook_url: `${window.location.origin}/api/webhooks/whatsapp`,
+            webhook_verify_token: generateVerifyToken(),
+            is_active: false,
+            is_primary: true,
+            quality_rating: 'UNKNOWN',
+            status: 'PENDING',
+            messaging_limit_tier: '1',
+            max_phone_numbers: 2,
+            namespace: '',
+            certificate: '',
+          }
+        ]);
+      }
+    } catch (error) {
+      console.error('Error loading configurations:', error);
+      toast({
+        title: locale === 'tr' ? 'Hata' : 'Error',
+        description: locale === 'tr' ? 'Yapılandırmalar yüklenirken hata oluştu' : 'Failed to load configurations',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadTemplates = async () => {
+    // Mock templates for now
+    setTemplates([
+      {
+        id: '1',
+        name: 'appointment_reminder',
+        category: 'UTILITY',
+        language: 'tr',
+        status: 'APPROVED',
+        components: []
+      },
+      {
+        id: '2',
+        name: 'welcome_message',
+        category: 'MARKETING',
+        language: 'tr',
+        status: 'APPROVED',
+        components: []
+      }
+    ]);
+  };
+
+  const generateVerifyToken = () => {
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  };
+
+  const saveConfiguration = async (config: WhatsAppConfig) => {
+    try {
+      setLoading(true);
+      
+      // Update configs
+      const updatedConfigs = configs.map(c => c.id === config.id ? config : c);
+      setConfigs(updatedConfigs);
+      
+      // Save to localStorage for now
+      localStorage.setItem('whatsapp_configs', JSON.stringify(updatedConfigs));
+      
+      // TODO: Save to Supabase
+      // await supabase.from('whatsapp_configs').upsert(config);
+      
+      toast({
+        title: locale === 'tr' ? 'Başarılı' : 'Success',
+        description: locale === 'tr' ? 'WhatsApp yapılandırması kaydedildi' : 'WhatsApp configuration saved',
+      });
+      
+      setIsEditing(false);
+      setSelectedConfig(config);
+    } catch (error) {
+      console.error('Error saving configuration:', error);
+      toast({
+        title: locale === 'tr' ? 'Hata' : 'Error',
+        description: locale === 'tr' ? 'Yapılandırma kaydedilirken hata oluştu' : 'Failed to save configuration',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addNewNumber = () => {
+    const newConfig: WhatsAppConfig = {
+      id: Date.now().toString(),
+      phone_number_id: '',
+      display_phone_number: '',
+      verified_name: '',
+      business_account_id: '',
+      access_token: '',
+      api_version: 'v21.0',
+      webhook_url: `${window.location.origin}/api/webhooks/whatsapp`,
+      webhook_verify_token: generateVerifyToken(),
+      is_active: false,
+      is_primary: configs.length === 0,
+      quality_rating: 'UNKNOWN',
+      status: 'PENDING',
+      messaging_limit_tier: '1',
+      max_phone_numbers: 2,
+      namespace: '',
+      certificate: '',
+    };
+    
+    setConfigs([...configs, newConfig]);
+    setSelectedConfig(newConfig);
+    setIsEditing(true);
+  };
+
+  const deleteConfiguration = async (configId: string) => {
+    try {
+      const updatedConfigs = configs.filter(c => c.id !== configId);
+      setConfigs(updatedConfigs);
+      localStorage.setItem('whatsapp_configs', JSON.stringify(updatedConfigs));
+      
+      if (selectedConfig?.id === configId) {
+        setSelectedConfig(null);
+      }
+      
+      toast({
+        title: locale === 'tr' ? 'Başarılı' : 'Success',
+        description: locale === 'tr' ? 'Numara yapılandırması silindi' : 'Number configuration deleted',
+      });
+    } catch (error) {
+      console.error('Error deleting configuration:', error);
+      toast({
+        title: locale === 'tr' ? 'Hata' : 'Error',
+        description: locale === 'tr' ? 'Yapılandırma silinirken hata oluştu' : 'Failed to delete configuration',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const testConnection = async (config: WhatsAppConfig) => {
+    try {
+      setTestingConnection(config.id);
+      
+      // Simulate API test
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // TODO: Actual API test
+      // const response = await fetch(`https://graph.facebook.com/${config.api_version}/${config.phone_number_id}`, {
+      //   headers: {
+      //     'Authorization': `Bearer ${config.access_token}`
+      //   }
+      // });
+      
+      toast({
+        title: locale === 'tr' ? 'Test Başarılı' : 'Test Succeeded',
+        description: locale === 'tr' ? `${config.verified_name} bağlantısı başarılı` : `Connection succeeded for ${config.verified_name}`,
+      });
+      
+      // Update status
+      const updatedConfig = { ...config, status: 'CONNECTED' as const };
+      saveConfiguration(updatedConfig);
+    } catch (error) {
+      console.error('Error testing connection:', error);
+      toast({
+        title: locale === 'tr' ? 'Test Başarısız' : 'Test Failed',
+        description: locale === 'tr' ? 'API bağlantısı kurulamadı' : 'Failed to establish API connection',
+        variant: 'destructive'
+      });
+    } finally {
+      setTestingConnection(null);
+    }
+  };
+
+  const sendTestMessage = async (config: WhatsAppConfig) => {
+    try {
+      setTestingConnection(config.id);
+      
+      // TODO: Send actual test message
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      toast({
+        title: locale === 'tr' ? 'Test Mesajı Gönderildi' : 'Test Message Sent',
+        description: locale === 'tr' ? 'Test mesajı başarıyla gönderildi' : 'Test message sent successfully',
+      });
+    } catch (error) {
+      console.error('Error sending test message:', error);
+      toast({
+        title: locale === 'tr' ? 'Hata' : 'Error',
+        description: locale === 'tr' ? 'Test mesajı gönderilemedi' : 'Failed to send test message',
+        variant: 'destructive'
+      });
+    } finally {
+      setTestingConnection(null);
+    }
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: locale === 'tr' ? 'Kopyalandı' : 'Copied',
+      description: locale === 'tr' ? `${label} panoya kopyalandı` : `${label} copied to clipboard`,
+    });
+  };
+
+  return (
+    <div className="container mx-auto py-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <MessageSquare className="h-6 w-6 text-green-600" />
+            {locale === 'tr' ? 'WhatsApp Cloud API Ayarları' : 'WhatsApp Cloud API Settings'}
+          </h1>
+          <p className="text-muted-foreground">
+            {locale === 'tr' ? 'WhatsApp Business API yapılandırmasını yönetin' : 'Manage your WhatsApp Business API configuration'}
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={loadConfigurations}
+            disabled={loading}
+          >
+            <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
+            {locale === 'tr' ? 'Yenile' : 'Refresh'}
+          </Button>
+          <Button onClick={addNewNumber}>
+            <Plus className="h-4 w-4 mr-2" />
+            {locale === 'tr' ? 'Yeni Numara Ekle' : 'Add Number'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="grid grid-cols-12 gap-6">
+        {/* Left Sidebar - Phone Numbers List */}
+        <div className="col-span-3 space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">{locale === 'tr' ? 'Telefon Numaraları' : 'Phone Numbers'}</CardTitle>
+              <CardDescription>
+                {locale === 'tr' ? `${configs.length} numara yapılandırıldı` : `${configs.length} number(s) configured`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ScrollArea className="h-[500px]">
+                <div className="p-4 space-y-2">
+                  {configs.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Phone className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p className="text-sm">{locale === 'tr' ? 'Henüz numara eklenmedi' : 'No numbers yet'}</p>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        onClick={addNewNumber}
+                        className="mt-2"
+                      >
+                        {locale === 'tr' ? 'İlk numarayı ekle' : 'Add first number'}
+                      </Button>
+                    </div>
+                  ) : (
+                    configs.map(config => (
+                      <button
+                        key={config.id}
+                        onClick={() => {
+                          setSelectedConfig(config);
+                          setIsEditing(false);
+                        }}
+                        className={cn(
+                          "w-full text-left p-3 rounded-lg border transition-all",
+                          selectedConfig?.id === config.id
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:bg-accent"
+                        )}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium text-sm">
+                                {config.display_phone_number || (locale === 'tr' ? 'Numara girilmedi' : 'No number')}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {config.verified_name || (locale === 'tr' ? 'İsim belirtilmedi' : 'No name')}
+                            </p>
+                            <div className="flex items-center gap-2">
+                              {config.is_primary && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {locale === 'tr' ? 'Birincil' : 'Primary'}
+                                </Badge>
+                              )}
+                              <Badge
+                                variant={config.status === 'CONNECTED' ? 'default' : 'secondary'}
+                                className={cn(
+                                  "text-xs",
+                                  config.status === 'CONNECTED' && "bg-green-600",
+                                  config.status === 'ERROR' && "bg-destructive"
+                                )}
+                              >
+                                {config.status === 'CONNECTED' && <CheckCircle className="h-3 w-3 mr-1" />}
+                                {config.status === 'ERROR' && <AlertCircle className="h-3 w-3 mr-1" />}
+                                {config.status}
+                              </Badge>
+                            </div>
+                          </div>
+                          {config.quality_rating !== 'UNKNOWN' && (
+                            <div className={cn(
+                              "h-2 w-2 rounded-full mt-1",
+                              config.quality_rating === 'GREEN' && "bg-green-500",
+                              config.quality_rating === 'YELLOW' && "bg-yellow-500",
+                              config.quality_rating === 'RED' && "bg-red-500"
+                            )} />
+                          )}
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          {/* Quick Stats */}
+          <Card>
+              <CardHeader className="pb-3">
+              <CardTitle className="text-sm">{locale === 'tr' ? 'Genel Durum' : 'Overview'}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">{locale === 'tr' ? 'Toplam Numara' : 'Total Numbers'}</span>
+                <span className="font-medium">{configs.length}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">{locale === 'tr' ? 'Aktif' : 'Active'}</span>
+                <span className="font-medium text-green-600">
+                  {configs.filter(c => c.is_active).length}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">{locale === 'tr' ? 'Bağlı' : 'Connected'}</span>
+                <span className="font-medium">
+                  {configs.filter(c => c.status === 'CONNECTED').length}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Content - Configuration Details */}
+        <div className="col-span-9">
+          {selectedConfig ? (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="flex items-center gap-2">
+                      {isEditing ? (
+                        <>
+                          <Edit2 className="h-5 w-5" />
+                          {locale === 'tr' ? 'Yapılandırmayı Düzenle' : 'Edit Configuration'}
+                        </>
+                      ) : (
+                        <>
+                          <Settings className="h-5 w-5" />
+                          {selectedConfig.verified_name || (locale === 'tr' ? 'Yapılandırma Detayları' : 'Configuration Details')}
+                        </>
+                      )}
+                    </CardTitle>
+                    <CardDescription>
+                      {selectedConfig.display_phone_number || (locale === 'tr' ? 'Telefon numarası henüz girilmedi' : 'Phone number not set')}
+                    </CardDescription>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    {!isEditing ? (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => testConnection(selectedConfig)}
+                          disabled={testingConnection === selectedConfig.id}
+                        >
+                          {testingConnection === selectedConfig.id ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <TestTube className="h-4 w-4 mr-2" />
+                          )}
+                          {locale === 'tr' ? 'Bağlantıyı Test Et' : 'Test Connection'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsEditing(true)}
+                        >
+                          <Edit2 className="h-4 w-4 mr-2" />
+                          {locale === 'tr' ? 'Düzenle' : 'Edit'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteConfiguration(selectedConfig.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setIsEditing(false);
+                            loadConfigurations();
+                          }}
+                        >
+                          <X className="h-4 w-4 mr-2" />
+                          {locale === 'tr' ? 'İptal' : 'Cancel'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => saveConfiguration(selectedConfig)}
+                          disabled={loading}
+                        >
+                          {loading ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Save className="h-4 w-4 mr-2" />
+                          )}
+                          {locale === 'tr' ? 'Kaydet' : 'Save'}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              
+              <CardContent>
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="basic">{locale === 'tr' ? 'Temel Bilgiler' : 'Basic Info'}</TabsTrigger>
+                    <TabsTrigger value="api">{locale === 'tr' ? 'API Ayarları' : 'API Settings'}</TabsTrigger>
+                    <TabsTrigger value="webhook">Webhook</TabsTrigger>
+                    <TabsTrigger value="templates">{locale === 'tr' ? 'Şablonlar' : 'Templates'}</TabsTrigger>
+                  </TabsList>
+                  
+                  {/* Basic Information Tab */}
+                  <TabsContent value="basic" className="space-y-4 mt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">{locale === 'tr' ? 'Telefon Numarası' : 'Phone Number'}</Label>
+                        <Input
+                          id="phone"
+                          value={selectedConfig.display_phone_number}
+                          onChange={(e) => setSelectedConfig({
+                            ...selectedConfig,
+                            display_phone_number: e.target.value
+                          })}
+                          placeholder={locale === 'tr' ? '+90 5XX XXX XX XX' : '+90 5XX XXX XX XX'}
+                          disabled={!isEditing}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="name">{locale === 'tr' ? 'Doğrulanmış İsim' : 'Verified Name'}</Label>
+                        <Input
+                          id="name"
+                          value={selectedConfig.verified_name}
+                          onChange={(e) => setSelectedConfig({
+                            ...selectedConfig,
+                            verified_name: e.target.value
+                          })}
+                          placeholder={locale === 'tr' ? 'İşletme Adı' : 'Business Name'}
+                          disabled={!isEditing}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="phone_id">Phone Number ID</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="phone_id"
+                            value={selectedConfig.phone_number_id}
+                            onChange={(e) => setSelectedConfig({
+                              ...selectedConfig,
+                              phone_number_id: e.target.value
+                            })}
+                             placeholder={locale === 'tr' ? "Meta'dan alınan ID" : 'ID from Meta'}
+                            disabled={!isEditing}
+                          />
+                          {!isEditing && selectedConfig.phone_number_id && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => copyToClipboard(selectedConfig.phone_number_id, 'Phone Number ID')}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="business_id">Business Account ID</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="business_id"
+                            value={selectedConfig.business_account_id}
+                            onChange={(e) => setSelectedConfig({
+                              ...selectedConfig,
+                              business_account_id: e.target.value
+                            })}
+                            placeholder="WhatsApp Business Account ID"
+                            disabled={!isEditing}
+                          />
+                          {!isEditing && selectedConfig.business_account_id && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => copyToClipboard(selectedConfig.business_account_id, 'Business Account ID')}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="namespace">Namespace</Label>
+                        <Input
+                          id="namespace"
+                          value={selectedConfig.namespace}
+                          onChange={(e) => setSelectedConfig({
+                            ...selectedConfig,
+                            namespace: e.target.value
+                          })}
+                          placeholder="Message template namespace"
+                          disabled={!isEditing}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="tier">{locale === 'tr' ? 'Mesajlaşma Limiti' : 'Messaging Limit'}</Label>
+                        <Input
+                          id="tier"
+                          value={selectedConfig.messaging_limit_tier}
+                          onChange={(e) => setSelectedConfig({
+                            ...selectedConfig,
+                            messaging_limit_tier: e.target.value
+                          })}
+                          placeholder="1, 2, 3..."
+                          disabled={!isEditing}
+                        />
+                      </div>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label>{locale === 'tr' ? 'Aktif' : 'Active'}</Label>
+                          <p className="text-xs text-muted-foreground">
+                            {locale === 'tr' ? 'Bu numarayı mesajlaşma için kullan' : 'Use this number for messaging'}
+                          </p>
+                        </div>
+                        <Switch
+                          checked={selectedConfig.is_active}
+                          onCheckedChange={(checked) => setSelectedConfig({
+                            ...selectedConfig,
+                            is_active: checked
+                          })}
+                          disabled={!isEditing}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label>{locale === 'tr' ? 'Birincil Numara' : 'Primary Number'}</Label>
+                          <p className="text-xs text-muted-foreground">
+                            {locale === 'tr' ? 'Varsayılan gönderim numarası olarak kullan' : 'Use as default sending number'}
+                          </p>
+                        </div>
+                        <Switch
+                          checked={selectedConfig.is_primary}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              // Set all others as non-primary
+                              const updatedConfigs = configs.map(c => ({
+                                ...c,
+                                is_primary: c.id === selectedConfig.id
+                              }));
+                              setConfigs(updatedConfigs);
+                            }
+                            setSelectedConfig({
+                              ...selectedConfig,
+                              is_primary: checked
+                            });
+                          }}
+                          disabled={!isEditing}
+                        />
+                      </div>
+                    </div>
+                  </TabsContent>
+                  
+                  {/* API Settings Tab */}
+                  <TabsContent value="api" className="space-y-4 mt-4">
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        {locale === 'tr' ? 'Bu bilgileri Meta for Developers konsolundan alabilirsiniz.' : 'You can obtain these details from the Meta for Developers console.'}
+                        <a 
+                          href="https://developers.facebook.com/apps" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="ml-1 text-primary underline"
+                        >
+                          {locale === 'tr' ? 'Konsola Git' : 'Go to Console'}
+                        </a>
+                      </AlertDescription>
+                    </Alert>
+                    
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="token">Access Token</Label>
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            <Input
+                              id="token"
+                              type={showTokens[selectedConfig.id] ? "text" : "password"}
+                              value={selectedConfig.access_token}
+                              onChange={(e) => setSelectedConfig({
+                                ...selectedConfig,
+                                access_token: e.target.value
+                              })}
+                              placeholder="EAAxxxxx..."
+                              disabled={!isEditing}
+                              className="pr-10"
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="absolute right-0 top-0 h-full px-3"
+                              onClick={() => setShowTokens({
+                                ...showTokens,
+                                [selectedConfig.id]: !showTokens[selectedConfig.id]
+                              })}
+                            >
+                              {showTokens[selectedConfig.id] ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                          {!isEditing && selectedConfig.access_token && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => copyToClipboard(selectedConfig.access_token, 'Access Token')}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                          <p className="text-xs text-muted-foreground">
+                            {locale === 'tr' ? "Kalıcı veya geçici erişim token'ı" : 'Permanent or temporary access token'}
+                          </p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="api_version">API Version</Label>
+                        <Input
+                          id="api_version"
+                          value={selectedConfig.api_version}
+                          onChange={(e) => setSelectedConfig({
+                            ...selectedConfig,
+                            api_version: e.target.value
+                          })}
+                          placeholder="v21.0"
+                          disabled={!isEditing}
+                        />
+                          <p className="text-xs text-muted-foreground">
+                            {locale === 'tr' ? 'Önerilen: v21.0 veya üzeri' : 'Recommended: v21.0 or higher'}
+                          </p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="certificate">Business Verification Certificate</Label>
+                        <Textarea
+                          id="certificate"
+                          value={selectedConfig.certificate}
+                          onChange={(e) => setSelectedConfig({
+                            ...selectedConfig,
+                            certificate: e.target.value
+                          })}
+                          placeholder={locale === 'tr' ? 'İşletme doğrulama sertifikası (opsiyonel)' : 'Business verification certificate (optional)'}
+                          disabled={!isEditing}
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+                    
+                    {!isEditing && selectedConfig.access_token && (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => testConnection(selectedConfig)}
+                          disabled={testingConnection === selectedConfig.id}
+                        >
+                          {testingConnection === selectedConfig.id ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <TestTube className="h-4 w-4 mr-2" />
+                          )}
+                          {locale === 'tr' ? 'API Bağlantısını Test Et' : 'Test API Connection'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => sendTestMessage(selectedConfig)}
+                          disabled={testingConnection === selectedConfig.id}
+                        >
+                          {testingConnection === selectedConfig.id ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4 mr-2" />
+                          )}
+                          {locale === 'tr' ? 'Test Mesajı Gönder' : 'Send Test Message'}
+                        </Button>
+                      </div>
+                    )}
+                  </TabsContent>
+                  
+                  {/* Webhook Settings Tab */}
+                  <TabsContent value="webhook" className="space-y-4 mt-4">
+                    <Alert>
+                      <Webhook className="h-4 w-4" />
+                      <AlertDescription>
+                        {locale === 'tr' ? "Meta'dan gelen webhook bildirimleri için aşağıdaki URL'yi kullanın." : 'Use the URL below for incoming webhooks from Meta.'}
+                      </AlertDescription>
+                    </Alert>
+                    
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Webhook URL</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            value={selectedConfig.webhook_url}
+                            onChange={(e) => setSelectedConfig({
+                              ...selectedConfig,
+                              webhook_url: e.target.value
+                            })}
+                            disabled={!isEditing}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => copyToClipboard(selectedConfig.webhook_url, 'Webhook URL')}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {locale === 'tr' ? "Bu URL'yi Meta konsolu webhook ayarlarına ekleyin" : 'Add this URL to Meta console webhook settings'}
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Verify Token</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            value={selectedConfig.webhook_verify_token}
+                            onChange={(e) => setSelectedConfig({
+                              ...selectedConfig,
+                              webhook_verify_token: e.target.value
+                            })}
+                            disabled={!isEditing}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => copyToClipboard(selectedConfig.webhook_verify_token, 'Verify Token')}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          {isEditing && (
+                            <Button
+                              variant="outline"
+                              onClick={() => setSelectedConfig({
+                                ...selectedConfig,
+                                webhook_verify_token: generateVerifyToken()
+                              })}
+                            >
+                              <RefreshCw className="h-4 w-4 mr-2" />
+                              {locale === 'tr' ? 'Yenile' : 'Regenerate'}
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {locale === 'tr' ? "Webhook doğrulaması için güvenlik token'ı" : 'Security token used for webhook verification'}
+                        </p>
+                      </div>
+                      
+                      <Separator />
+                      
+                      <div className="space-y-3">
+                        <Label>{locale === 'tr' ? 'Webhook Olayları' : 'Webhook Events'}</Label>
+                        <div className="space-y-2">
+                          {webhookEvents.map(event => (
+                            <div key={event.id} className="flex items-center justify-between p-3 border rounded-lg">
+                              <div className="space-y-0.5">
+                                <p className="text-sm font-medium">{event.event_type}</p>
+                                <p className="text-xs text-muted-foreground">{event.description}</p>
+                              </div>
+                              <Switch
+                                checked={event.is_enabled}
+                                disabled={!isEditing}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+                  
+                  {/* Templates Tab */}
+                  <TabsContent value="templates" className="space-y-4 mt-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-sm font-medium">{locale === 'tr' ? 'Mesaj Şablonları' : 'Message Templates'}</h3>
+                        <p className="text-xs text-muted-foreground">
+                          {locale === 'tr' ? 'Meta tarafından onaylanmış mesaj şablonları' : 'Templates approved by Meta'}
+                        </p>
+                      </div>
+                        <Button variant="outline" size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                          {locale === 'tr' ? 'Şablon Ekle' : 'Add Template'}
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {templates.length === 0 ? (
+                        <div className="text-center py-8 border rounded-lg">
+                          <FileText className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground">
+                            {locale === 'tr' ? 'Henüz şablon bulunmuyor' : 'No templates yet'}
+                          </p>
+                        </div>
+                      ) : (
+                        templates.map(template => (
+                          <div key={template.id} className="p-3 border rounded-lg">
+                            <div className="flex items-center justify-between">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-sm">{template.name}</span>
+                                  <Badge
+                                    variant={template.status === 'APPROVED' ? 'default' : 
+                                            template.status === 'PENDING' ? 'secondary' : 'destructive'}
+                                    className="text-xs"
+                                  >
+                                    {template.status}
+                                  </Badge>
+                                </div>
+                                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                  <span>{template.category}</span>
+                                  <span>•</span>
+                                  <span>{template.language}</span>
+                                </div>
+                              </div>
+                              <Button variant="ghost" size="sm">
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <Settings className="h-16 w-16 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">{locale === 'tr' ? 'Numara Seçin' : 'Select a Number'}</h3>
+                <p className="text-sm text-muted-foreground text-center max-w-md">
+                  {locale === 'tr' ? 'Sol taraftan bir telefon numarası seçin veya yeni bir numara ekleyin' : 'Select a phone number from the left or add a new one'}
+                </p>
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={addNewNumber}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {locale === 'tr' ? 'Yeni Numara Ekle' : 'Add Number'}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Help Section */}
+      <Card>
+          <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <HelpCircle className="h-5 w-5" />
+              {locale === 'tr' ? 'Hızlı Yardım' : 'Quick Help'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+                <h4 className="text-sm font-medium">{locale === 'tr' ? '1. Meta Business Hesabı' : '1. Meta Business Account'}</h4>
+                <p className="text-xs text-muted-foreground">
+                  {locale === 'tr' ? "Meta Business Manager'da WhatsApp Business API hesabı oluşturun" : 'Create a WhatsApp Business API account in Meta Business Manager'}
+                </p>
+              <a 
+                href="https://business.facebook.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-xs text-primary underline"
+              >
+                  {locale === 'tr' ? "Business Manager'a Git →" : 'Open Business Manager →'}
+              </a>
+            </div>
+            
+            <div className="space-y-2">
+                <h4 className="text-sm font-medium">{locale === 'tr' ? '2. API Bilgilerini Alın' : '2. Get API Details'}</h4>
+                <p className="text-xs text-muted-foreground">
+                  {locale === 'tr' ? 'Developers konsolundan Phone Number ID ve Access Token alın' : 'Get Phone Number ID and Access Token from Developers console'}
+                </p>
+              <a 
+                href="https://developers.facebook.com/apps" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-xs text-primary underline"
+              >
+                  {locale === 'tr' ? 'Developers Console →' : 'Developers Console →'}
+              </a>
+            </div>
+            
+            <div className="space-y-2">
+                <h4 className="text-sm font-medium">{locale === 'tr' ? '3. Webhook Yapılandırması' : '3. Webhook Configuration'}</h4>
+                <p className="text-xs text-muted-foreground">
+                  {locale === 'tr' ? "Webhook URL ve Verify Token'ı Meta konsoluna ekleyin" : 'Add Webhook URL and Verify Token to Meta console'}
+                </p>
+              <a 
+                href="https://developers.facebook.com/docs/whatsapp/cloud-api/webhooks" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-xs text-primary underline"
+              >
+                  {locale === 'tr' ? 'Dokümantasyon →' : 'Docs →'}
+              </a>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

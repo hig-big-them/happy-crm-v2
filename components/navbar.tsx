@@ -22,7 +22,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "./ui/sheet";
-import { Menu, MessageSquare, Settings, BarChart3, LogOut, User } from "lucide-react";
+import { Menu, MessageSquare, Settings, LogOut, User, Languages } from "lucide-react";
+import { useI18n } from "@/lib/i18n/client";
 
 interface NavbarProps {
   // İsteğe bağlı özellikler ekleyebilirsiniz
@@ -32,6 +33,7 @@ export function Navbar({}: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, userRole, loading: isLoading, signOut } = useMockAuth();
+  const { t, locale, setLocale } = useI18n();
 
   const handleLogout = async () => {
     try {
@@ -44,24 +46,24 @@ export function Navbar({}: NavbarProps) {
 
   // Ana navigasyon linkleri - temiz ve düzenli
   const mainNavItems = [
-    { name: "Dashboard", href: "/dashboard" },
-    { name: "Pipeline", href: "/pipelines" },
-    { name: "Müşteri Adayları", href: "/leads" },
-    { name: "Mesajlaşma", href: "/messaging", icon: MessageSquare },
+    { name: t.nav.dashboard, href: "/dashboard" },
+    { name: t.nav.pipeline, href: "/pipelines" },
+    { name: t.nav.leads, href: "/leads" },
+    { name: t.nav.messaging, href: "/messaging", icon: MessageSquare },
   ];
 
   // Admin menü öğeleri
   const adminNavItems = userRole === "superuser" ? [
     { name: "Yönetim", href: "/admin/agencies" },
-    { name: "Ayarlar", href: "/admin/messaging-settings", icon: Settings },
+    { name: t.common.settings, href: "/admin/messaging-settings", icon: Settings },
   ] : [];
 
   // Mobil navigasyon linkleri
   const mobileNavItems = [
     ...mainNavItems,
     ...adminNavItems,
-    { name: "Profil", href: "/profile" },
-    { name: "Bildirim Ayarları", href: "/notification-settings" },
+    { name: t.common.profile, href: "/profile" },
+    { name: t.nav.notificationSettings, href: "/notification-settings" },
   ];
 
   // Demo mode indicator
@@ -75,7 +77,7 @@ export function Navbar({}: NavbarProps) {
             <span className="font-bold text-xl">Happy CRM</span>
             {isDemoMode && (
               <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                DEMO
+                {t.common.demo}
               </span>
             )}
           </Link>
@@ -102,14 +104,14 @@ export function Navbar({}: NavbarProps) {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="text-sm font-medium">
                       <Settings className="h-4 w-4 mr-2" />
-                      Admin
+                      {t.common.admin}
                       <span className="ml-1 text-xs bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded">
                         {userRole}
                       </span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuLabel>Admin Panel</DropdownMenuLabel>
+                    <DropdownMenuLabel>{t.nav.adminPanel}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     {adminNavItems.map((item) => (
                       <DropdownMenuItem key={item.href} asChild>
@@ -128,6 +130,23 @@ export function Navbar({}: NavbarProps) {
 
         <div className="flex items-center gap-4">
           <ThemeToggle />
+          {/* Language Switcher */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="text-sm font-medium">
+                <Languages className="h-4 w-4 mr-2" />
+                {locale === "tr" ? "Türkçe" : "English"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem onClick={() => setLocale("tr")}>
+                Türkçe {locale === "tr" ? "✓" : ""}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLocale("en")}>
+                English {locale === "en" ? "✓" : ""}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           
           {!isLoading && user ? (
             <DropdownMenu>
@@ -157,13 +176,13 @@ export function Navbar({}: NavbarProps) {
                 <DropdownMenuItem asChild>
                   <Link href="/profile" className="flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    Profil
+                    {t.common.profile}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/settings" className="flex items-center gap-2">
                     <Settings className="h-4 w-4" />
-                    Ayarlar
+                    {t.common.settings}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -172,13 +191,13 @@ export function Navbar({}: NavbarProps) {
                   className="flex items-center gap-2 text-red-600"
                 >
                   <LogOut className="h-4 w-4" />
-                  Çıkış Yap
+                  {t.common.logout}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : !isLoading ? (
             <Button asChild>
-              <Link href="/login">Giriş Yap</Link>
+              <Link href="/login">{t.common.login}</Link>
             </Button>
           ) : null}
 
@@ -192,7 +211,7 @@ export function Navbar({}: NavbarProps) {
               </SheetTrigger>
               <SheetContent side="right">
                 <SheetHeader>
-                  <SheetTitle>Menu</SheetTitle>
+                  <SheetTitle>{t.common.menu}</SheetTitle>
                 </SheetHeader>
                 <nav className="flex flex-col gap-4 mt-4">
                   {mobileNavItems.map((item) => (
@@ -215,7 +234,7 @@ export function Navbar({}: NavbarProps) {
                     className="flex items-center gap-2 text-red-600 mt-4"
                   >
                     <LogOut className="h-4 w-4" />
-                    Çıkış Yap
+                    {t.common.logout}
                   </Button>
                 </nav>
               </SheetContent>

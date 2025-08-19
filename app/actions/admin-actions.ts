@@ -7,7 +7,7 @@ import { z } from "zod";
 import { getUser } from "../../lib/actions/clients";
 import { CreateAgencyUserSchema } from "../../lib/actions/schemas";
 import { createServerActionClient } from "@/lib/utils/supabase/server";
-import { createServiceRoleClient } from "@/lib/utils/supabase/service";
+import { createServiceClient } from "@/lib/utils/supabase/service";
 
 const actionClient = createSafeActionClient();
 
@@ -27,7 +27,7 @@ const adminActionClient = createSafeActionClient({
       throw new Error("Bu işlemi yapma yetkiniz yok! Sadece admin kullanıcılar yapabilir.");
     }
 
-    const supabaseAdmin = createServiceRoleClient();
+    const supabaseAdmin = createServiceClient();
     return { user, role, supabaseAdmin };
   },
 });

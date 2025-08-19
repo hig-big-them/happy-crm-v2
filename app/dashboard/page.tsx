@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { isBypassMode, getBypassUser, mockDashboardData } from '../../lib/utils/bypass-helper'
+import { useI18n } from '@/lib/i18n/client'
 
 interface DashboardStats {
   totalLeads: number
@@ -58,6 +59,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [recentLeads, setRecentLeads] = useState<RecentLead[]>([])
   const [stageStats, setStageStats] = useState<StageStats[]>([])
+  const { t, locale } = useI18n()
 
   useEffect(() => {
     async function checkAuthAndLoadData() {
@@ -241,16 +243,19 @@ export default function Dashboard() {
   }
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('tr-TR', { 
+    const currency = locale === 'tr' ? 'TRY' : 'USD'
+    const loc = locale === 'tr' ? 'tr-TR' : 'en-US'
+    return new Intl.NumberFormat(loc, { 
       style: 'currency', 
-      currency: 'TRY',
+      currency,
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(amount)
   }
 
   const formatDate = (dateString: string) => {
-    return new Intl.DateTimeFormat('tr-TR', { 
+    const loc = locale === 'tr' ? 'tr-TR' : 'en-US'
+    return new Intl.DateTimeFormat(loc, { 
       year: 'numeric', 
       month: 'short', 
       day: 'numeric',
@@ -266,7 +271,7 @@ export default function Dashboard() {
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
           <p className="text-muted-foreground">
-            {authLoading ? 'Kimlik doğrulanıyor...' : 'Dashboard yükleniyor...'}
+            {authLoading ? t.common.loadingAuth : t.common.loading}
           </p>
         </div>
       </div>
@@ -283,22 +288,22 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="text-4xl font-bold tracking-tight">{t.dashboard.title}</h1>
           <p className="text-muted-foreground mt-2">
-            Hoş geldiniz, {user.email}
+            {t.dashboard.welcome(user.email)}
           </p>
         </div>
         <div className="flex gap-2">
           <Button asChild variant="outline">
             <Link href="/pipelines">
               <Building className="h-4 w-4 mr-2" />
-              Pipeline (Şehirler)
+              {t.dashboard.toPipelines}
             </Link>
           </Button>
           <Button asChild>
             <Link href="/leads">
               <Users className="h-4 w-4 mr-2" />
-              Müşteri Adayları
+              {t.dashboard.toLeads}
             </Link>
           </Button>
         </div>
@@ -308,46 +313,47 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Toplam Müşteri Adayı</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.dashboard.stats.totalLeads}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.totalLeads || 0}</div>
             <p className="text-xs text-muted-foreground">
-              Bu ay +{stats?.leadsThisMonth || 0} yeni
+              {t.dashboard.stats.thisMonthAdded(stats?.leadsThisMonth || 0)}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Aktif Pipeline</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.dashboard.stats.activePipelines}</CardTitle>
             <Building className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stageStats.length || 0}</div>
             <p className="text-xs text-muted-foreground">
-              Toplam stage sayısı
+              {t.dashboard.stats.totalStages}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Toplam Değer</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.dashboard.stats.totalValue}</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(stats?.totalValue || 0)}</div>
             <p className="text-xs text-muted-foreground">
-              Tüm pipeline değeri
+              {/* intentionally generic */}
+              {t.dashboard.stats.totalValue}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Dönüşüm Oranı</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.dashboard.stats.conversionRate}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -363,9 +369,9 @@ export default function Dashboard() {
         {/* Pipeline Overview */}
         <Card className="col-span-4">
           <CardHeader>
-            <CardTitle>Pipeline Özeti</CardTitle>
+            <CardTitle>{t.dashboard.stats.pipelineSummaryTitle}</CardTitle>
             <CardDescription>
-              Her aşamadaki müşteri adayları ve toplam değerleri
+              {t.dashboard.stats.pipelineSummaryDesc}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -376,7 +382,7 @@ export default function Dashboard() {
                     <Target className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <p className="font-medium">{stage.name}</p>
-                      <p className="text-sm text-muted-foreground">{stage.count} müşteri adayı</p>
+                      <p className="text-sm text-muted-foreground">{stage.count}</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -389,7 +395,7 @@ export default function Dashboard() {
               {stageStats.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
                   <Target className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>Henüz pipeline verisi yok</p>
+                  <p>{t.dashboard.stats.noPipelineData}</p>
                 </div>
               )}
             </div>
@@ -400,9 +406,9 @@ export default function Dashboard() {
         <Card className="col-span-3">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>Son Müşteri Adayları</CardTitle>
+              <CardTitle>{t.dashboard.stats.recentLeadsTitle}</CardTitle>
               <CardDescription>
-                En son eklenen 5 müşteri adayı
+                {t.dashboard.stats.recentLeadsDesc}
               </CardDescription>
             </div>
             <Button size="sm" asChild>
@@ -452,7 +458,7 @@ export default function Dashboard() {
               {recentLeads.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
                   <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>Henüz müşteri adayı yok</p>
+                  <p>{t.dashboard.stats.noLeads}</p>
                 </div>
               )}
             </div>
@@ -463,9 +469,9 @@ export default function Dashboard() {
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Hızlı İşlemler</CardTitle>
+          <CardTitle>{t.dashboard.quickActionsTitle}</CardTitle>
           <CardDescription>
-            Sık kullanılan işlemlere hızlı erişim
+            {t.dashboard.quickActionsDesc}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -473,21 +479,21 @@ export default function Dashboard() {
             <Button asChild variant="outline" className="h-20 flex-col gap-2">
               <Link href="/leads/new">
                 <Plus className="h-6 w-6" />
-                <span>Yeni Müşteri Adayı</span>
+                <span>{t.dashboard.quickNewLead}</span>
               </Link>
             </Button>
             
             <Button asChild variant="outline" className="h-20 flex-col gap-2">
               <Link href="/pipelines">
                 <Building className="h-6 w-6" />
-                <span>Pipeline Yönetimi</span>
+                <span>{t.dashboard.quickPipelineManage}</span>
               </Link>
             </Button>
             
             <Button asChild variant="outline" className="h-20 flex-col gap-2">
               <Link href="/leads">
                 <Target className="h-6 w-6" />
-                <span>Pipeline Görünümü</span>
+                <span>{t.dashboard.quickPipelineView}</span>
               </Link>
             </Button>
           </div>

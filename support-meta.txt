@@ -1,0 +1,15 @@
+
+John Marc
+·
+Meta Team
+Hi Hugo,
+Apologies for the confusion.
+The Bug Tool platform is specifically designed for developers to report issues encountered while working on the Facebook Platform. Unfortunately, we do not provide support for sandbox related issues through this channel.
+I request you to create a Direct support ticket to report this issue for better investigation and to fast track your issue. You can use the following steps I'm mentioning below to create a direct support ticket:
+Go to the Direct Support home page.
+Click Ask a question.
+Select the relevant topic for your question.
+Fill in the description and remaining fields and click Confirm to submit your question.
+I am sorry that I was not able to assist you with this issue here but hope the information shared help's get started with the next steps.
+Regards,
+John

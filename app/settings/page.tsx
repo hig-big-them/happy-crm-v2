@@ -7,9 +7,11 @@ import { Button } from "../../components/ui/button";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { createClient } from '../../lib/supabase/client';
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n/client";
 
 export default function SettingsPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState<any>(null);
   const supabase = createClient();
@@ -47,26 +49,26 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 container">
-      <h1 className="text-3xl font-bold mb-4">Kullanıcı Ayarları</h1>
+      <h1 className="text-3xl font-bold mb-4">{t.settings.pageTitle}</h1>
       
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Hesap Ayarları</CardTitle>
+            <CardTitle>{t.settings.account.title}</CardTitle>
             <CardDescription>
-              Hesap bilgilerinizi ve şifrenizi buradan yönetebilirsiniz
+              {t.settings.account.desc}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Kullanıcı adınızı değiştirme ve şifrenizi güncelleme gibi işlemleri buradan yapabilirsiniz.
+              {t.settings.account.desc}
             </p>
             <Button 
               variant="outline"
               onClick={() => router.push('/account/settings')}
               className="w-full sm:w-auto flex items-center gap-2"
             >
-              <span>Hesap Ayarlarını Yönet</span>
+              <span>{t.settings.account.cta}</span>
               <ArrowRight className="h-4 w-4" />
             </Button>
           </CardContent>
@@ -74,21 +76,21 @@ export default function SettingsPage() {
         
         <Card>
           <CardHeader>
-            <CardTitle>Bildirim Ayarları</CardTitle>
+            <CardTitle>{t.settings.notifications.title}</CardTitle>
             <CardDescription>
-              Bildirim tercihlerinizi buradan yönetebilirsiniz
+              {t.settings.notifications.desc}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Transfer bildirimleri, arama tercihleri ve diğer bildirim ayarlarınızı buradan düzenleyebilirsiniz.
+              {t.settings.notifications.desc}
             </p>
             <Button 
               variant="outline"
               onClick={() => router.push('/notification-settings')}
               className="w-full sm:w-auto flex items-center gap-2"
             >
-              <span>Bildirim Ayarlarını Yönet</span>
+              <span>{t.settings.notifications.cta}</span>
               <ArrowRight className="h-4 w-4" />
             </Button>
           </CardContent>

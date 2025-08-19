@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import './react-polyfills'
 import { Navbar } from '../components/navbar'
+import { I18nProvider } from '../lib/i18n/client'
+import { getLocaleFromCookie } from '../lib/i18n/server'
 import { Toaster } from '../components/ui/toaster'
 import { ThemeProvider } from '../providers/theme-provider'
 import { MockAuthProvider } from '../components/mock-auth-provider'
@@ -39,13 +41,14 @@ export const viewport = {
   ]
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const locale = await getLocaleFromCookie()
   return (
-    <html lang="tr" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{
           __html: `
@@ -84,14 +87,16 @@ export default function RootLayout({
         >
           <QueryProvider>
             <MockAuthProvider>
-              <Navbar />
-              <main className="flex-grow container mx-auto p-4">
-                {children}
-              </main>
-              {/* İleride bir Footer eklenebilir */}
-              <Toaster />
-              {/* <NotificationPopup /> */}
-              {/* <PWAInstallBanner /> */}
+              <I18nProvider initialLocale={locale}>
+                <Navbar />
+                <main className="flex-grow container mx-auto p-4">
+                  {children}
+                </main>
+                {/* İleride bir Footer eklenebilir */}
+                <Toaster />
+                {/* <NotificationPopup /> */}
+                {/* <PWAInstallBanner /> */}
+              </I18nProvider>
             </MockAuthProvider>
           </QueryProvider>
         </ThemeProvider>

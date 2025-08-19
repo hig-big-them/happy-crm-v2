@@ -25,6 +25,7 @@ import {
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
 import { triggerHaptic } from '@/hooks/use-swipe'
+import { useI18n } from '@/lib/i18n/client'
 
 interface Lead {
   id: string
@@ -90,6 +91,7 @@ export function CompactLeadCard({
   showActions = true,
   className
 }: CompactLeadCardProps) {
+  const { locale } = useI18n()
   const handleAction = (e: React.MouseEvent, action?: () => void) => {
     e.stopPropagation()
     if (action) {
@@ -161,7 +163,7 @@ export function CompactLeadCard({
                     variant="ghost"
                     onClick={(e) => handleAction(e, onTap)}
                     className="h-7 w-7 p-0"
-                    title="Lead Detayları"
+                    title={locale === 'tr' ? 'Lead Detayları' : 'Lead Details'}
                   >
                     <Eye className="h-3.5 w-3.5" />
                   </Button>
@@ -173,7 +175,7 @@ export function CompactLeadCard({
                     variant="ghost"
                     onClick={(e) => handleAction(e, onMessage)}
                     className="h-7 w-7 p-0"
-                    title="Mesaj Gönder"
+                    title={locale === 'tr' ? 'Mesaj Gönder' : 'Send Message'}
                   >
                     <MessageCircle className="h-3.5 w-3.5" />
                   </Button>
@@ -196,28 +198,28 @@ export function CompactLeadCard({
                   {onEdit && (
                     <DropdownMenuItem onClick={onEdit}>
                       <Edit className="h-3.5 w-3.5 mr-2" />
-                      Düzenle
+                      {locale === 'tr' ? 'Düzenle' : 'Edit'}
                     </DropdownMenuItem>
                   )}
                   
                   {onQuickEdit && (
                     <DropdownMenuItem onClick={onQuickEdit}>
                       <Eye className="h-3.5 w-3.5 mr-2" />
-                      Stage Değiştir
+                      {locale === 'tr' ? 'Stage Değiştir' : 'Change Stage'}
                     </DropdownMenuItem>
                   )}
                   
                   {lead.contact_email && onEmail && (
                     <DropdownMenuItem onClick={onEmail}>
                       <Mail className="h-3.5 w-3.5 mr-2" />
-                      E-posta Gönder
+                      {locale === 'tr' ? 'E-posta Gönder' : 'Send Email'}
                     </DropdownMenuItem>
                   )}
                   
                   {onMessage && (
                     <DropdownMenuItem onClick={onMessage}>
                       <MessageCircle className="h-3.5 w-3.5 mr-2" />
-                      Mesaj Gönder
+                      {locale === 'tr' ? 'Mesaj Gönder' : 'Send Message'}
                     </DropdownMenuItem>
                   )}
                   
@@ -229,7 +231,7 @@ export function CompactLeadCard({
                         className="text-destructive"
                       >
                         <Trash2 className="h-3.5 w-3.5 mr-2" />
-                        Sil
+                        {locale === 'tr' ? 'Sil' : 'Delete'}
                       </DropdownMenuItem>
                     </>
                   )}

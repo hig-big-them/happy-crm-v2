@@ -30,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "./dropdown-menu";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { useI18n } from "@/lib/i18n/client";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -46,6 +47,7 @@ export function DataTable<TData, TValue>({
   searchKey,
   searchPlaceholder = "Ara...",
 }: DataTableProps<TData, TValue>) {
+  const { t } = useI18n()
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -88,7 +90,7 @@ export function DataTable<TData, TValue>({
       <div className="flex items-center justify-between">
         {searchKey && (
           <Input
-            placeholder={searchPlaceholder}
+            placeholder={searchPlaceholder || t.common.dataTable?.searchPlaceholder || ""}
             value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
               table.getColumn(searchKey)?.setFilterValue(event.target.value)
@@ -99,7 +101,7 @@ export function DataTable<TData, TValue>({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
-              Sütunlar <ChevronDown className="ml-2 h-4 w-4" />
+              {t.common.dataTable?.columns || 'Columns'} <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -167,7 +169,7 @@ export function DataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  Sonuç bulunamadı.
+                  {t.common.dataTable?.noResults || 'No results.'}
                 </TableCell>
               </TableRow>
             )}
@@ -177,8 +179,12 @@ export function DataTable<TData, TValue>({
       
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} / {" "}
-          {table.getFilteredRowModel().rows.length} satır seçildi.
+          {t.common.dataTable?.rowsSelected
+            ? t.common.dataTable.rowsSelected(
+                table.getFilteredSelectedRowModel().rows.length,
+                table.getFilteredRowModel().rows.length
+              )
+            : ''}
         </div>
         <div className="space-x-2">
           <Button
