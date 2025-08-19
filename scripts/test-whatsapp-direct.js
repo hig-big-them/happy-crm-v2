@@ -3,7 +3,7 @@
  * Test numaranıza gerçek mesaj gönderir
  */
 
-require('dotenv').config();
+require('dotenv').config({ path: '.env.local' });
 
 // Test configuration - Facebook'tan aldığınız değerler
 const CONFIG = {
@@ -97,7 +97,7 @@ async function sendTemplateMessage() {
       console.log('Message ID:', result.messages[0].id);
     } else {
       console.error('❌ Template hatası:', result.error);
-      console.log('Not: hello_world template'i mevcut değilse, önce WhatsApp Business Manager'dan template oluşturun.');
+      console.log('Not: hello_world template\'i mevcut değilse, önce WhatsApp Business Manager\'dan template oluşturun.');
     }
     
     return result;

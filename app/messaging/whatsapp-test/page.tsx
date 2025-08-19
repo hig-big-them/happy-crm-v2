@@ -41,7 +41,8 @@ export default function WhatsAppTestPage() {
         setTimeout(() => setSendStatus('idle'), 3000);
       } else {
         setSendStatus('error');
-        setErrorMessage(data.error || 'Failed to send message');
+        setErrorMessage(data.error || data.details?.message || 'Failed to send message');
+        console.error('WhatsApp API Error:', data);
       }
     } catch (error) {
       setSendStatus('error');
@@ -78,7 +79,8 @@ export default function WhatsAppTestPage() {
         setTimeout(() => setSendStatus('idle'), 3000);
       } else {
         setSendStatus('error');
-        setErrorMessage(data.error || 'Failed to send template message');
+        setErrorMessage(data.error || data.details?.message || 'Failed to send template message');
+        console.error('WhatsApp Template API Error:', data);
       }
     } catch (error) {
       setSendStatus('error');
@@ -198,14 +200,14 @@ export default function WhatsAppTestPage() {
             <div className="p-4 bg-gray-50 rounded-lg">
               <p className="text-sm font-medium mb-2">Webhook URL:</p>
               <code className="text-xs bg-white p-2 rounded block break-all">
-                https://your-domain.com/api/whatsapp/webhook
+                {typeof window !== 'undefined' ? `${window.location.origin}/api/whatsapp/webhook` : 'https://your-domain.com/api/whatsapp/webhook'}
               </code>
             </div>
 
             <div className="p-4 bg-gray-50 rounded-lg">
               <p className="text-sm font-medium mb-2">Verify Token:</p>
               <code className="text-xs bg-white p-2 rounded block">
-                HAPPY_CRM_WEBHOOK_VERIFY_TOKEN
+                {process.env.NEXT_PUBLIC_WHATSAPP_WEBHOOK_VERIFY_TOKEN || 'HAPPY_CRM_WEBHOOK_VERIFY_TOKEN'}
               </code>
             </div>
 
