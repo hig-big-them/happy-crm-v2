@@ -73,8 +73,7 @@ export async function POST(request: NextRequest) {
     
     console.log('📋 Raw body alındı:', rawBody.substring(0, 500) + '...');
     
-    // 🔐 Enhanced webhook validation - geçici olarak devre dışı
-    /*
+    // 🔐 Enhanced webhook validation - gerçek hesap için aktif
     const validation = await whatsappValidator.validateRequest(request, buffer);
     if (!validation.valid) {
       console.error('❌ Webhook validation failed:', validation.errors);
@@ -85,9 +84,8 @@ export async function POST(request: NextRequest) {
     if (validation.warnings.length > 0) {
       console.warn('⚠️ Webhook validation warnings:', validation.warnings);
     }
-    */
     
-    console.log('✅ Webhook validation bypassed for debugging');
+    console.log('✅ Webhook validation successful');
     
     const payload: WebhookPayload = JSON.parse(rawBody);
     

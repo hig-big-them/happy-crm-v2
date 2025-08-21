@@ -132,6 +132,19 @@ import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { useI18n } from '@/lib/i18n/client';
 
 // WhatsApp Business API Types
+interface WhatsAppTemplate {
+  id: string;
+  name: string;
+  status: 'APPROVED' | 'PENDING' | 'REJECTED';
+  category: string;
+  language: string;
+  components: {
+    type: 'HEADER' | 'BODY' | 'FOOTER';
+    text?: string;
+    format?: string;
+  }[];
+}
+
 interface WhatsAppNumber {
   id: string;
   phone_number_id: string;
@@ -233,52 +246,26 @@ export default function MessagingPage() {
   const [showTagManager, setShowTagManager] = useState(false);
   const [selectedTagThread, setSelectedTagThread] = useState<string | null>(null);
   const [showMessageActions, setShowMessageActions] = useState<string | null>(null);
+  const [whatsappTemplates, setWhatsappTemplates] = useState<WhatsAppTemplate[]>([]);
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<WhatsAppTemplate | null>(null);
+  const [templateVariables, setTemplateVariables] = useState<Record<string, string>>({});
   
   const messageEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // WhatsApp Business Numbers Mock Data
+  // WhatsApp Business Numbers - Gerçek API ile entegre
   const whatsappNumbers: WhatsAppNumber[] = [
     {
       id: '1',
-      phone_number_id: '123456789',
-      display_phone_number: '+90 555 111 2222',
-      verified_name: 'Happy CRM Ana Hat',
+      phone_number_id: '793146130539824', // Gerçek Phone Number ID
+      display_phone_number: '+90 532 799 4223',
+      verified_name: 'Happy Smile Clinics',
       quality_rating: 'GREEN',
       status: 'CONNECTED',
       messaging_limit: 1000,
       current_limit: 850
-    },
-    {
-      id: '2',
-      phone_number_id: '223456789',
-      display_phone_number: '+90 555 333 4444',
-      verified_name: 'Happy CRM Destek',
-      quality_rating: 'GREEN',
-      status: 'CONNECTED',
-      messaging_limit: 1000,
-      current_limit: 620
-    },
-    {
-      id: '3',
-      phone_number_id: '323456789',
-      display_phone_number: '+90 555 555 6666',
-      verified_name: 'Happy CRM Satış',
-      quality_rating: 'YELLOW',
-      status: 'CONNECTED',
-      messaging_limit: 500,
-      current_limit: 380
-    },
-    {
-      id: '4',
-      phone_number_id: '423456789',
-      display_phone_number: '+90 555 777 8888',
-      verified_name: 'Happy CRM VIP',
-      quality_rating: 'GREEN',
-      status: 'CONNECTED',
-      messaging_limit: 1000,
-      current_limit: 990
     }
   ];
 
@@ -516,7 +503,69 @@ export default function MessagingPage() {
   // Mesaj thread'lerini yükle
   useEffect(() => {
     loadMessageThreads();
+    loadWhatsAppTemplates();
   }, [activeChannel, showUnreadOnly, showStarredOnly, showArchivedOnly, selectedWhatsAppNumber, selectedTags, selectedPriority]);
+
+  // WhatsApp template'lerini yükle
+  const loadWhatsAppTemplates = async () => {
+    try {
+      const response = await fetch('/api/whatsapp/templates');
+      const result = await response.json();
+      
+      if (result.success) {
+        setWhatsappTemplates(result.templates);
+        console.log('📋 WhatsApp template\'leri yüklendi:', result.templates);
+      } else {
+        console.error('❌ WhatsApp template\'leri yüklenemedi:', result.error);
+      }
+    } catch (error) {
+      console.error('WhatsApp template\'leri yükleme hatası:', error);
+    }
+  };
+
+  // WhatsApp mesajı gönder
+  const sendWhatsAppMessage = async (to: string, message: string, isTemplate: boolean = false, templateName?: string, languageCode?: string) => {
+    try {
+      const endpoint = isTemplate ? '/api/whatsapp/send-template' : '/api/whatsapp/send-test';
+      const body = isTemplate ? {
+        to,
+        templateName: templateName || 'hello_world',
+        languageCode: languageCode || 'en_US'
+      } : {
+        to,
+        message
+      };
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast({
+          title: locale === 'tr' ? 'Başarılı' : 'Success',
+          description: locale === 'tr' ? 'Mesaj başarıyla gönderildi' : 'Message sent successfully',
+        });
+        
+        // Mesaj thread'lerini yenile
+        await loadMessageThreads();
+        return result.messageId;
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error('WhatsApp mesajı gönderme hatası:', error);
+      toast({
+        title: locale === 'tr' ? 'Hata' : 'Error',
+        description: locale === 'tr' ? 'Mesaj gönderilemedi' : 'Failed to send message',
+        variant: 'destructive'
+      });
+      return null;
+    }
+  };
 
   const loadMessageThreads = async () => {
     try {
@@ -822,51 +871,79 @@ export default function MessagingPage() {
         messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
       
-      // TODO: Send via WhatsApp API
-      // const response = await fetch('/api/messaging/whatsapp/send', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     to: selectedThread.lead.contact_phone,
-      //     message: messageText,
-      //     phone_number_id: selectedThread.phone_number_id
-      //   })
-      // });
+      // WhatsApp API ile mesaj gönder
+      if (selectedThread.channel === 'whatsapp' && selectedThread.lead.contact_phone) {
+        const messageId = await sendWhatsAppMessage(
+          selectedThread.lead.contact_phone,
+          messageText.trim()
+        );
+        
+        if (messageId) {
+          // Message ID'yi güncelle
+          setThreads(prev => prev.map(thread => 
+            thread.lead_id === selectedLeadId && thread.messages
+              ? { 
+                  ...thread, 
+                  messages: thread.messages.map(msg => 
+                    msg.id === tempId ? { ...msg, id: messageId, status: 'delivered' } : msg
+                  )
+                }
+              : thread
+          ));
+        }
+      }
       
-      // Simulate status updates
-      setTimeout(() => {
-        setThreads(prev => prev.map(thread => 
-          thread.lead_id === selectedLeadId && thread.messages
-            ? { 
-                ...thread, 
-                messages: thread.messages.map(msg => 
-                  msg.id === tempId ? { ...msg, status: 'delivered' } : msg
-                )
-              }
-            : thread
-        ));
-      }, 1500);
+      // Simulate status updates for other channels
+      if (selectedThread.channel !== 'whatsapp') {
+        setTimeout(() => {
+          setThreads(prev => prev.map(thread => 
+            thread.lead_id === selectedLeadId && thread.messages
+              ? { 
+                  ...thread, 
+                  messages: thread.messages.map(msg => 
+                    msg.id === tempId ? { ...msg, status: 'delivered' } : msg
+                  )
+                }
+              : thread
+          ));
+        }, 1500);
+        
+        setTimeout(() => {
+          setThreads(prev => prev.map(thread => 
+            thread.lead_id === selectedLeadId && thread.messages
+              ? { 
+                  ...thread, 
+                  messages: thread.messages.map(msg => 
+                    msg.id === tempId ? { ...msg, status: 'read' } : msg
+                  )
+                }
+              : thread
+          ));
+        }, 3000);
+      }
       
-      setTimeout(() => {
-        setThreads(prev => prev.map(thread => 
-          thread.lead_id === selectedLeadId && thread.messages
-            ? { 
-                ...thread, 
-                messages: thread.messages.map(msg => 
-                  msg.id === tempId ? { ...msg, status: 'read' } : msg
-                )
-              }
-            : thread
-        ));
-      }, 3000);
+      toast({
+        title: locale === 'tr' ? '✓ Gönderildi' : '✓ Sent',
+        description: locale === 'tr' ? 'Mesaj başarıyla gönderildi' : 'Message sent successfully',
+      });
       
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
         title: locale === 'tr' ? '❌ Hata' : '❌ Error',
-        description: locale === 'tr' ? 'Mesaj gönderilemedi. Lütfen tekrar deneyin.' : 'Message could not be sent. Please try again.',
+        description: locale === 'tr' ? 'Mesaj gönderilemedi' : 'Failed to send message',
         variant: 'destructive'
       });
+      
+      // Revert optimistic update
+      setThreads(prev => prev.map(thread => 
+        thread.lead_id === selectedLeadId && thread.messages
+          ? { 
+              ...thread, 
+              messages: thread.messages.filter(msg => msg.id !== `temp-${Date.now()}`)
+            }
+          : thread
+      ));
     }
   };
 
@@ -1941,6 +2018,19 @@ export default function MessagingPage() {
                       rows={1}
                     />
                     
+                    {/* Template Button - Sadece WhatsApp için */}
+                    {selectedThread?.channel === 'whatsapp' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-12 bottom-2 h-6 w-6 p-0"
+                        onClick={() => setShowTemplateSelector(!showTemplateSelector)}
+                        title="Template Seç"
+                      >
+                        <FileText className="h-4 w-4" />
+                      </Button>
+                    )}
+                    
                     {/* Emoji Button */}
                     <Button
                       variant="ghost"
@@ -2058,6 +2148,28 @@ export default function MessagingPage() {
             title: "Düzenleme",
             description: "Düzenleme özelliği henüz aktif değil",
           });
+        }}
+      />
+
+      {/* Template Seçici Modal */}
+      <TemplateSelectorModal
+        isOpen={showTemplateSelector}
+        onClose={() => setShowTemplateSelector(false)}
+        templates={whatsappTemplates}
+        onSelectTemplate={(template) => {
+          setSelectedTemplate(template);
+          setShowTemplateSelector(false);
+          
+          // Template seçildiğinde mesajı gönder
+          if (selectedLeadId && selectedThread?.lead.contact_phone) {
+            sendWhatsAppMessage(
+              selectedThread.lead.contact_phone,
+              '', // Template mesajları için boş
+              true, // Template mesajı
+              template.name,
+              template.language
+            );
+          }
         }}
       />
     </div>
@@ -2199,6 +2311,99 @@ function LeadDetailModal({
           >
             <Activity className="h-4 w-4 mr-2" />
             Zaman Çizelgesi
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Template Seçici Modal
+function TemplateSelectorModal({ 
+  isOpen, 
+  onClose, 
+  templates, 
+  onSelectTemplate 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  templates: WhatsAppTemplate[]; 
+  onSelectTemplate: (template: WhatsAppTemplate) => void; 
+}) {
+  const [selectedTemplate, setSelectedTemplate] = useState<WhatsAppTemplate | null>(null);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>WhatsApp Template Seç</DialogTitle>
+          <DialogDescription>
+            Göndermek istediğiniz template'i seçin. Template'ler Meta tarafından onaylanmıştır.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {templates.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">Henüz template bulunmuyor</p>
+            </div>
+          ) : (
+            templates.map((template) => (
+              <div
+                key={template.id}
+                className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                  selectedTemplate?.id === template.id
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+                onClick={() => setSelectedTemplate(template)}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-lg">{template.name}</h3>
+                  <Badge 
+                    variant={template.status === 'APPROVED' ? 'default' : 'secondary'}
+                    className={template.status === 'APPROVED' ? 'bg-green-500' : ''}
+                  >
+                    {template.status === 'APPROVED' ? 'Onaylı' : 'Beklemede'}
+                  </Badge>
+                </div>
+                
+                <div className="space-y-2">
+                  {template.components.map((component, index) => (
+                    <div key={index} className="text-sm">
+                      <span className="font-medium text-gray-600">
+                        {component.type === 'HEADER' ? 'Başlık' : 
+                         component.type === 'BODY' ? 'İçerik' : 'Alt Bilgi'}:
+                      </span>
+                      <p className="text-gray-800 mt-1">{component.text}</p>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+                  <span>Dil: {template.language}</span>
+                  <span>Kategori: {template.category}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            İptal
+          </Button>
+          <Button 
+            onClick={() => {
+              if (selectedTemplate) {
+                onSelectTemplate(selectedTemplate);
+                onClose();
+              }
+            }}
+            disabled={!selectedTemplate}
+          >
+            Template Seç
           </Button>
         </DialogFooter>
       </DialogContent>

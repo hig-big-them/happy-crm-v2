@@ -347,6 +347,46 @@ export class WhatsAppEnterpriseService extends EventEmitter {
     }
   }
 
+  // Basit template mesajı gönderme (veritabanı kontrolü olmadan)
+  async sendSimpleTemplateMessage(to: string, templateName: string, languageCode: string = 'tr', components: any[] = []): Promise<MessageResponse> {
+    try {
+      const formattedPhone = this.formatPhoneNumber(to);
+      
+      const messageData = {
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: formattedPhone,
+        type: 'template',
+        template: {
+          name: templateName,
+          language: { code: languageCode },
+          components: components.length > 0 ? components : undefined
+        }
+      };
+
+      console.log('📤 Template mesajı gönderiliyor:', messageData);
+
+      const response = await this.makeApiRequest(`${this.config.phoneNumberId}/messages`, 'POST', messageData);
+      
+      const result: MessageResponse = {
+        success: true,
+        messageId: response.messages[0].id
+      };
+
+      console.log('✅ Template mesajı başarıyla gönderildi:', result.messageId);
+      return result;
+
+    } catch (error) {
+      console.error('❌ Template mesajı gönderilemedi:', error);
+      const result: MessageResponse = {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+      
+      return result;
+    }
+  }
+
   async sendMediaMessage(to: string, mediaType: 'image' | 'video' | 'document' | 'audio', mediaUrl: string, caption?: string): Promise<MessageResponse> {
     try {
       const formattedPhone = this.formatPhoneNumber(to);
@@ -669,12 +709,12 @@ export class WhatsAppEnterpriseService extends EventEmitter {
 // 🏭 Factory Function
 export function createWhatsAppService(): WhatsAppEnterpriseService {
   const config: WhatsAppConfig = {
-    accessToken: process.env.WHATSAPP_ACCESS_TOKEN || '',
-    phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID || '',
-    businessAccountId: process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || '',
+    accessToken: 'EAAZA7w2AadZC4BPPRnKtBXXhi8ZAZBV06ZCHRurPtBikOW4umxYccikfaEcKUiopL8BnEAhO7X6YEl0CZAJ0nQpv8ZAD1BPZCOM6Isl49iowBHjBJwIW7lu33kPzykNBNtTlhRIuX99X2gZAcgwwjTzyLU9YjiuytvdKsPwQQIVS2SYDeYwUKFK1sD17ubZBC2J01D1yIsSaCRTAU9TZCCwP80gHFKcors4XQkFCFYtdYh6',
+    phoneNumberId: '793146130539824',
+    businessAccountId: process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || '640124182025093',
     webhookVerifyToken: process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || '',
-    apiVersion: process.env.WHATSAPP_API_VERSION || 'v18.0',
-    baseUrl: process.env.WHATSAPP_API_BASE_URL || 'https://graph.facebook.com'
+    apiVersion: 'v23.0',
+    baseUrl: 'https://graph.facebook.com'
   };
 
   return new WhatsAppEnterpriseService(config);
