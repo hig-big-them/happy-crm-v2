@@ -2,20 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET() {
   try {
-    const businessAccountId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID
-    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN
-    const apiVersion = process.env.WHATSAPP_API_VERSION || 'v18.0'
-
-    if (!businessAccountId || !accessToken) {
-      return NextResponse.json({
-        success: false,
-        error: 'WhatsApp credentials not configured',
-        missing: {
-          businessAccountId: !businessAccountId,
-          accessToken: !accessToken
-        }
-      }, { status: 400 })
-    }
+    // Use hardcoded credentials like other WhatsApp endpoints
+    const businessAccountId = '640124182025093'
+    const accessToken = 'EAAZA7w2AadZC4BPPRnKtBXXhi8ZAZBV06ZCHRurPtBikOW4umxYccikfaEcKUiopL8BnEAhO7X6YEl0CZAJ0nQpv8ZAD1BPZCOM6Isl49iowBHjBJwIW7lu33kPzykNBNtTlhRIuX99X2gZAcgwwjTzyLU9YjiuytvdKsPwQQIVS2SYDeYwUKFK1sD17ubZBC2J01D1yIsSaCRTAU9TZCCwP80gHFKcors4XQkFCFYtdYh6'
+    const apiVersion = 'v23.0'
 
     // WhatsApp Business API'den phone number'ları listele
     const url = `https://graph.facebook.com/${apiVersion}/${businessAccountId}/phone_numbers?access_token=${accessToken}`
@@ -25,6 +15,10 @@ export async function GET() {
 
     const response = await fetch(url)
     const data = await response.json()
+
+    console.log('📡 WhatsApp Phone Numbers Response:')
+    console.log('Status:', response.status)
+    console.log('Data:', data)
 
     if (!response.ok) {
       return NextResponse.json({

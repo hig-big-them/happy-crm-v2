@@ -264,8 +264,8 @@ export default function MessagingPage() {
   const whatsappNumbers: WhatsAppNumber[] = [
     {
       id: '1',
-      phone_number_id: '793146130539824', // Gerçek Phone Number ID
-      display_phone_number: '+90 532 799 4223',
+      phone_number_id: '793146130539824', // TODO: Update to correct Phone Number ID for +447782610222
+      display_phone_number: '+447782610222', // Updated to correct number
       verified_name: 'Happy Smile Clinics',
       quality_rating: 'GREEN',
       status: 'CONNECTED',
@@ -627,6 +627,9 @@ export default function MessagingPage() {
         setNewMessageTemplate(null);
         setNewMessageType('text');
         
+        // Mesaj thread'lerini yenile
+        await loadMessageThreads();
+        
         toast({
           title: 'Başarılı',
           description: 'Yeni mesaj başarıyla gönderildi',
@@ -641,11 +644,101 @@ export default function MessagingPage() {
     try {
       setLoading(true);
       
-      // Always use mock data for now
-      const mockThreads = generateMockThreads();
+      console.log('🔄 Loading message threads from Supabase...');
+      
+      // Fetch real data from Supabase
+      const supabase = createClient();
+      
+      // Get leads with their messages
+      const { data: leads, error: leadsError } = await supabase
+        .from('leads')
+        .select(`
+          *,
+          messages:messages(*)
+        `)
+        .order('created_at', { ascending: false });
+      
+      console.log('📊 Leads fetched:', leads?.length || 0);
+      console.log('📊 Leads data:', leads);
+      
+      if (leadsError) {
+        console.error('Error fetching leads:', leadsError);
+        throw leadsError;
+      }
+      
+      // Get WhatsApp messages
+      const { data: whatsappMessages, error: whatsappError } = await supabase
+        .from('whatsapp_messages')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      console.log('📱 WhatsApp messages fetched:', whatsappMessages?.length || 0);
+      console.log('📱 WhatsApp messages data:', whatsappMessages);
+      
+      if (whatsappError) {
+        console.error('Error fetching WhatsApp messages:', whatsappError);
+        // Don't throw error, continue with leads only
+      }
+      
+      // Transform data into MessageThread format
+      const realThreads: MessageThread[] = [];
+      
+      // Process leads
+      if (leads) {
+        for (const lead of leads) {
+          const leadMessages = lead.messages || [];
+          const whatsappLeadMessages = whatsappMessages?.filter(m => 
+            m.to_phone_number === lead.contact_phone || 
+            m.from_phone_number === lead.contact_phone
+          ) || [];
+          
+          // Combine and sort all messages
+          const allMessages = [...leadMessages, ...whatsappLeadMessages]
+            .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+          
+          if (allMessages.length > 0) {
+            const lastMessage = allMessages[allMessages.length - 1];
+            
+            const thread: MessageThread = {
+              lead_id: lead.id,
+              lead: {
+                id: lead.id,
+                lead_name: lead.lead_name || 'Unknown Lead',
+                contact_phone: lead.contact_phone,
+                contact_email: lead.contact_email,
+                company: lead.company,
+                status: lead.status || 'new',
+                priority: lead.priority || 'medium',
+                assigned_to: lead.assigned_to,
+                tags: lead.tags || [],
+                location: lead.location,
+                avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${lead.id}`,
+                last_seen: formatDistanceToNow(new Date(lastMessage.created_at)),
+                is_online: false
+              },
+              last_message: lastMessage,
+              messages: allMessages,
+              unread_count: allMessages.filter(m => !m.read).length,
+              starred_count: 0,
+              total_messages: allMessages.length,
+              is_starred: false,
+              is_archived: false,
+              is_muted: false,
+              channel: 'whatsapp',
+              phone_number_id: whatsappNumbers[0].phone_number_id,
+              typing_indicator: false,
+              last_activity: lastMessage.created_at
+            };
+            
+            realThreads.push(thread);
+          }
+        }
+      }
+      
+      console.log('🧵 Real threads created:', realThreads.length);
       
       // Apply filters
-      let filteredThreads = mockThreads;
+      let filteredThreads = realThreads;
       
       if (activeChannel !== 'all') {
         filteredThreads = filteredThreads.filter(t => t.channel === activeChannel);
@@ -687,15 +780,22 @@ export default function MessagingPage() {
         );
       }
       
+      console.log('✅ Final filtered threads:', filteredThreads.length);
       setThreads(filteredThreads);
       
-      // Simulate real-time updates
-      setTimeout(() => {
-        setTypingUsers(new Set(['lead-2']));
-        setTimeout(() => {
-          setTypingUsers(new Set());
-        }, 3000);
-      }, 2000);
+      // If no real data found, show a message
+      if (filteredThreads.length === 0) {
+        console.log('⚠️ No real data found, showing mock data as fallback');
+        const mockThreads = generateMockThreads();
+        setThreads(mockThreads);
+        
+        toast({
+          title: 'Bilgi',
+          description: 'Gerçek veri bulunamadı, örnek veriler gösteriliyor',
+        });
+      } else {
+        console.log('✅ Real data loaded successfully');
+      }
       
     } catch (error) {
       console.error('Error loading message threads:', error);
@@ -1099,6 +1199,18 @@ export default function MessagingPage() {
                     <span className="text-gray-600">{t.messaging.newMessages}</span>
                   </div>
                 )}
+                
+                {/* Refresh Button */}
+                <Button
+                  onClick={() => loadMessageThreads()}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  disabled={loading}
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                  Yenile
+                </Button>
                 
                 {/* Yeni Mesaj Butonu */}
                 <Button
@@ -2653,16 +2765,16 @@ function NewMessageModal({
           )}
 
           {/* WhatsApp Numarası Bilgisi */}
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="flex items-center gap-2 text-sm">
-              <div className="h-2 w-2 bg-green-500 rounded-full" />
-              <span className="font-medium">WhatsApp Numarası:</span>
-              <span>+90 532 799 4223 (Happy Smile Clinics)</span>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Mesaj bu numaradan gönderilecektir
-            </p>
-          </div>
+                           <div className="bg-gray-50 rounded-lg p-3">
+                   <div className="flex items-center gap-2 text-sm">
+                     <div className="h-2 w-2 bg-green-500 rounded-full" />
+                     <span className="font-medium">WhatsApp Numarası:</span>
+                     <span>+447782610222 (Happy Smile Clinics)</span>
+                   </div>
+                   <p className="text-xs text-gray-500 mt-1">
+                     Mesaj bu numaradan gönderilecektir
+                   </p>
+                 </div>
         </div>
 
         <DialogFooter>

@@ -18,7 +18,17 @@ export async function POST(request: NextRequest) {
     console.log('To:', to)
     console.log('Message:', message)
 
-    const whatsappService = createWhatsAppService()
+    const whatsappService = createWhatsAppService();
+    
+    // Override with hardcoded values for testing
+    const config = {
+      accessToken: 'EAAZA7w2AadZC4BPPRnKtBXXhi8ZAZBV06ZCHRurPtBikOW4umxYccikfaEcKUiopL8BnEAhO7X6YEl0CZAJ0nQpv8ZAD1BPZCOM6Isl49iowBHjBJwIW7lu33kPzykNBNtTlhRIuX99X2gZAcgwwjTzyLU9YjiuytvdKsPwQQIVS2SYDeYwUKFK1sD17ubZBC2J01D1yIsSaCRTAU9TZCCwP80gHFKcors4XQkFCFYtdYh6',
+      phoneNumberId: '793146130539824', // TODO: Update to correct Phone Number ID for +447782610222
+      businessAccountId: '640124182025093',
+      apiVersion: 'v23.0',
+      baseUrl: 'https://graph.facebook.com'
+    };
+
     const result = await whatsappService.sendTextMessage(to, message)
 
     if (result.success) {

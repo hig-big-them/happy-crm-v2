@@ -708,11 +708,12 @@ export class WhatsAppEnterpriseService extends EventEmitter {
 
 // 🏭 Factory Function
 export function createWhatsAppService(): WhatsAppEnterpriseService {
+  // Hardcoded configuration for direct testing
   const config: WhatsAppConfig = {
     accessToken: 'EAAZA7w2AadZC4BPPRnKtBXXhi8ZAZBV06ZCHRurPtBikOW4umxYccikfaEcKUiopL8BnEAhO7X6YEl0CZAJ0nQpv8ZAD1BPZCOM6Isl49iowBHjBJwIW7lu33kPzykNBNtTlhRIuX99X2gZAcgwwjTzyLU9YjiuytvdKsPwQQIVS2SYDeYwUKFK1sD17ubZBC2J01D1yIsSaCRTAU9TZCCwP80gHFKcors4XQkFCFYtdYh6',
-    phoneNumberId: '793146130539824',
-    businessAccountId: process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || '640124182025093',
-    webhookVerifyToken: process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || '',
+    phoneNumberId: '793146130539824', // TODO: Update to correct Phone Number ID for +447782610222
+    businessAccountId: '640124182025093',
+    webhookVerifyToken: 'your_webhook_verify_token',
     apiVersion: 'v23.0',
     baseUrl: 'https://graph.facebook.com'
   };

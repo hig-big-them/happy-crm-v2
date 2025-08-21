@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { to, message } = body
+    const { to, message } = await request.json()
+    
+    // Hardcoded configuration for direct testing
+    const accessToken = 'EAAZA7w2AadZC4BPPRnKtBXXhi8ZAZBV06ZCHRurPtBikOW4umxYccikfaEcKUiopL8BnEAhO7X6YEl0CZAJ0nQpv8ZAD1BPZCOM6Isl49iowBHjBJwIW7lu33kPzykNBNtTlhRIuX99X2gZAcgwwjTzyLU9YjiuytvdKsPwQQIVS2SYDeYwUKFK1sD17ubZBC2J01D1yIsSaCRTAU9TZCCwP80gHFKcors4XQkFCFYtdYh6'
+    const phoneNumberId = '793146130539824' // TODO: Update to correct Phone Number ID for +447782610222
+    const apiVersion = 'v23.0'
 
     if (!to || !message) {
       return NextResponse.json(
@@ -12,10 +16,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const phoneNumberId = '793146130539824'
-    const accessToken = 'EAAZA7w2AadZC4BPPRnKtBXXhi8ZAZBV06ZCHRurPtBikOW4umxYccikfaEcKUiopL8BnEAhO7X6YEl0CZAJ0nQpv8ZAD1BPZCOM6Isl49iowBHjBJwIW7lu33kPzykNBNtTlhRIuX99X2gZAcgwwjTzyLU9YjiuytvdKsPwQQIVS2SYDeYwUKFK1sD17ubZBC2J01D1yIsSaCRTAU9TZCCwP80gHFKcors4XQkFCFYtdYh6'
-
-    const url = `https://graph.facebook.com/v23.0/${phoneNumberId}/messages`
+    const url = `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`
 
     console.log('🚀 Doğrudan WhatsApp Cloud API test:')
     console.log('URL:', url)
