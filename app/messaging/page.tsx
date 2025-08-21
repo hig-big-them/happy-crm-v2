@@ -250,6 +250,11 @@ export default function MessagingPage() {
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<WhatsAppTemplate | null>(null);
   const [templateVariables, setTemplateVariables] = useState<Record<string, string>>({});
+  const [showNewMessageModal, setShowNewMessageModal] = useState(false);
+  const [newMessagePhone, setNewMessagePhone] = useState('');
+  const [newMessageText, setNewMessageText] = useState('');
+  const [newMessageTemplate, setNewMessageTemplate] = useState<WhatsAppTemplate | null>(null);
+  const [newMessageType, setNewMessageType] = useState<'text' | 'template'>('text');
   
   const messageEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -564,6 +569,71 @@ export default function MessagingPage() {
         variant: 'destructive'
       });
       return null;
+    }
+  };
+
+  // Yeni mesaj gönder
+  const sendNewMessage = async () => {
+    if (!newMessagePhone.trim()) {
+      toast({
+        title: 'Hata',
+        description: 'Telefon numarası gerekli',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (newMessageType === 'text' && !newMessageText.trim()) {
+      toast({
+        title: 'Hata',
+        description: 'Mesaj metni gerekli',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (newMessageType === 'template' && !newMessageTemplate) {
+      toast({
+        title: 'Hata',
+        description: 'Template seçimi gerekli',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      let messageId;
+      
+      if (newMessageType === 'template' && newMessageTemplate) {
+        messageId = await sendWhatsAppMessage(
+          newMessagePhone,
+          '',
+          true,
+          newMessageTemplate.name,
+          newMessageTemplate.language
+        );
+      } else {
+        messageId = await sendWhatsAppMessage(
+          newMessagePhone,
+          newMessageText.trim()
+        );
+      }
+
+      if (messageId) {
+        // Modal'ı kapat ve formu temizle
+        setShowNewMessageModal(false);
+        setNewMessagePhone('');
+        setNewMessageText('');
+        setNewMessageTemplate(null);
+        setNewMessageType('text');
+        
+        toast({
+          title: 'Başarılı',
+          description: 'Yeni mesaj başarıyla gönderildi',
+        });
+      }
+    } catch (error) {
+      console.error('Yeni mesaj gönderme hatası:', error);
     }
   };
 
@@ -1029,6 +1099,16 @@ export default function MessagingPage() {
                     <span className="text-gray-600">{t.messaging.newMessages}</span>
                   </div>
                 )}
+                
+                {/* Yeni Mesaj Butonu */}
+                <Button
+                  onClick={() => setShowNewMessageModal(true)}
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Yeni Mesaj
+                </Button>
+                
                 <button 
                   className="text-green-600 hover:text-green-700 transition-colors"
                   title="WhatsApp Test Console"
@@ -2172,6 +2252,28 @@ export default function MessagingPage() {
           }
         }}
       />
+
+      {/* Yeni Mesaj Modalı */}
+      <NewMessageModal
+        isOpen={showNewMessageModal}
+        onClose={() => {
+          setShowNewMessageModal(false);
+          setNewMessagePhone('');
+          setNewMessageText('');
+          setNewMessageTemplate(null);
+          setNewMessageType('text');
+        }}
+        phone={newMessagePhone}
+        onPhoneChange={setNewMessagePhone}
+        text={newMessageText}
+        onTextChange={setNewMessageText}
+        template={newMessageTemplate}
+        onTemplateChange={setNewMessageTemplate}
+        messageType={newMessageType}
+        onMessageTypeChange={setNewMessageType}
+        templates={whatsappTemplates}
+        onSend={sendNewMessage}
+      />
     </div>
   );
 }
@@ -2406,6 +2508,245 @@ function TemplateSelectorModal({
             Template Seç
           </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Yeni Mesaj Modalı
+function NewMessageModal({
+  isOpen,
+  onClose,
+  phone,
+  onPhoneChange,
+  text,
+  onTextChange,
+  template,
+  onTemplateChange,
+  messageType,
+  onMessageTypeChange,
+  templates,
+  onSend
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  phone: string;
+  onPhoneChange: (phone: string) => void;
+  text: string;
+  onTextChange: (text: string) => void;
+  template: WhatsAppTemplate | null;
+  onTemplateChange: (template: WhatsAppTemplate | null) => void;
+  messageType: 'text' | 'template';
+  onMessageTypeChange: (type: 'text' | 'template') => void;
+  templates: WhatsAppTemplate[];
+  onSend: () => void;
+}) {
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            Yeni WhatsApp Mesajı
+          </DialogTitle>
+          <DialogDescription>
+            Yeni bir WhatsApp mesajı gönderin. Normal mesaj veya onaylı template kullanabilirsiniz.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6 py-4">
+          {/* Telefon Numarası */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Telefon Numarası *</label>
+            <Input
+              placeholder="905327994223 (başında 90 ile)"
+              value={phone}
+              onChange={(e) => onPhoneChange(e.target.value)}
+              className="font-mono"
+            />
+            <p className="text-xs text-gray-500">
+              Türkiye numaraları için 90 ile başlayın, uluslararası format kullanın
+            </p>
+          </div>
+
+          {/* Mesaj Tipi Seçimi */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Mesaj Tipi</label>
+            <div className="flex gap-2">
+              <Button
+                variant={messageType === 'text' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onMessageTypeChange('text')}
+                className="flex-1"
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Normal Mesaj
+              </Button>
+              <Button
+                variant={messageType === 'template' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onMessageTypeChange('template')}
+                className="flex-1"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Template Mesaj
+              </Button>
+            </div>
+          </div>
+
+          {/* Mesaj İçeriği */}
+          {messageType === 'text' ? (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Mesaj Metni *</label>
+              <Textarea
+                placeholder="Mesajınızı yazın..."
+                value={text}
+                onChange={(e) => onTextChange(e.target.value)}
+                rows={4}
+                className="resize-none"
+              />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Template Seçimi *</label>
+              {template ? (
+                <div className="border rounded-lg p-3 bg-green-50">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold">{template.name}</h4>
+                    <Badge className="bg-green-500">Onaylı</Badge>
+                  </div>
+                  <div className="space-y-1">
+                    {template.components.map((component, index) => (
+                      <div key={index} className="text-sm">
+                        <span className="font-medium text-gray-600">
+                          {component.type === 'HEADER' ? 'Başlık' : 
+                           component.type === 'BODY' ? 'İçerik' : 'Alt Bilgi'}:
+                        </span>
+                        <p className="text-gray-800">{component.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onTemplateChange(null)}
+                    className="mt-2"
+                  >
+                    Template Değiştir
+                  </Button>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500 mb-3">Template seçmek için tıklayın</p>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowTemplateSelector(true)}
+                  >
+                    Template Seç
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* WhatsApp Numarası Bilgisi */}
+          <div className="bg-gray-50 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-sm">
+              <div className="h-2 w-2 bg-green-500 rounded-full" />
+              <span className="font-medium">WhatsApp Numarası:</span>
+              <span>+90 532 799 4223 (Happy Smile Clinics)</span>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Mesaj bu numaradan gönderilecektir
+            </p>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            İptal
+          </Button>
+          <Button 
+            onClick={onSend}
+            disabled={
+              !phone.trim() || 
+              (messageType === 'text' && !text.trim()) ||
+              (messageType === 'template' && !template)
+            }
+            className="bg-green-500 hover:bg-green-600"
+          >
+            <Send className="h-4 w-4 mr-2" />
+            Mesaj Gönder
+          </Button>
+        </DialogFooter>
+
+        {/* Template Seçici Modal */}
+        <Dialog open={showTemplateSelector} onOpenChange={setShowTemplateSelector}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Template Seç</DialogTitle>
+              <DialogDescription>
+                Göndermek istediğiniz template'i seçin
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {templates.length === 0 ? (
+                <div className="text-center py-8">
+                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">Henüz template bulunmuyor</p>
+                </div>
+              ) : (
+                templates.map((templateItem) => (
+                  <div
+                    key={templateItem.id}
+                    className="border rounded-lg p-4 cursor-pointer transition-colors hover:border-green-300"
+                    onClick={() => {
+                      onTemplateChange(templateItem);
+                      setShowTemplateSelector(false);
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-lg">{templateItem.name}</h3>
+                      <Badge 
+                        variant={templateItem.status === 'APPROVED' ? 'default' : 'secondary'}
+                        className={templateItem.status === 'APPROVED' ? 'bg-green-500' : ''}
+                      >
+                        {templateItem.status === 'APPROVED' ? 'Onaylı' : 'Beklemede'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {templateItem.components.map((component, index) => (
+                        <div key={index} className="text-sm">
+                          <span className="font-medium text-gray-600">
+                            {component.type === 'HEADER' ? 'Başlık' : 
+                             component.type === 'BODY' ? 'İçerik' : 'Alt Bilgi'}:
+                          </span>
+                          <p className="text-gray-800 mt-1">{component.text}</p>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+                      <span>Dil: {templateItem.language}</span>
+                      <span>Kategori: {templateItem.category}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowTemplateSelector(false)}>
+                İptal
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );
