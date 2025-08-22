@@ -52,28 +52,32 @@ export default async function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{
           __html: `
-            console.log('🚀 PWA: Initializing Happy CRM (Demo Mode)...');
-            
             // Service Worker Registration
             if ('serviceWorker' in navigator) {
               window.addEventListener('load', function() {
                 navigator.serviceWorker.register('/sw.js')
                   .then(function(registration) {
-                    console.log('✅ PWA: Service Worker registered', registration.scope);
+                    // Service Worker registered successfully
                   })
                   .catch(function(error) {
-                    console.warn('⚠️ PWA: Service Worker registration failed', error);
+                    // Service Worker registration failed
                   });
               });
             }
             
-            // Error handling for production
+            // Error handling for production - send to monitoring service instead of console
             window.addEventListener('error', function(e) {
-              console.error('❌ Error:', e.message, 'at', e.filename, ':', e.lineno);
+              // Send to error monitoring service (e.g., Sentry) instead of console
+              if (window.Sentry) {
+                window.Sentry.captureException(new Error(e.message));
+              }
             });
             
             window.addEventListener('unhandledrejection', function(e) {
-              console.error('❌ Promise rejection:', e.reason);
+              // Send to error monitoring service instead of console
+              if (window.Sentry) {
+                window.Sentry.captureException(e.reason);
+              }
             });
           `
         }} />

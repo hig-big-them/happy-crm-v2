@@ -54,13 +54,13 @@ export default function LoginPage() {
       const result = await signIn(email, password)
       
       if (result.success) {
-        console.log('✅ Login successful')
+        // Login successful - redirect to dashboard
         router.push('/dashboard')
       } else {
         setError(result.error || 'Giriş başarısız')
       }
     } catch (error) {
-      console.error('Login error:', error)
+      // Handle login error without exposing details
       setError('Beklenmeyen bir hata oluştu')
     } finally {
       setIsLoading(false)

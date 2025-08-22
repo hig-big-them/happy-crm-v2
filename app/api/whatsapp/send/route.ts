@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimitWhatsApp, createRateLimitResponse, getClientIP } from '@/lib/security/rate-limiter';
 
 const WHATSAPP_API_URL = 'https://graph.facebook.com/v22.0';
 const PHONE_NUMBER_ID = '660093600519552';
@@ -16,6 +17,18 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { to, message, type = 'text', template } = body;
+    
+    // Rate limiting - telefon numarası bazında
+    if (to) {
+      const rateLimitResult = await rateLimitWhatsApp(to);
+      if (!rateLimitResult.success) {
+        console.log(`Rate limit exceeded for WhatsApp to ${to}. IP: ${getClientIP(request)}`);
+        return createRateLimitResponse(
+          rateLimitResult,
+          'Too many WhatsApp messages sent to this number. Please try again later.'
+        );
+      }
+    }
 
     if (!to) {
       return NextResponse.json(

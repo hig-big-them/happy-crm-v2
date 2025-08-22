@@ -1,451 +1,257 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft } from 'lucide-react';
+import { useI18n } from '@/lib/i18n/client';
 
 export default function PrivacyPolicy() {
-  const t = useTranslations('privacy');
+  const { locale } = useI18n();
+
+  const content = {
+    tr: {
+      title: "Gizlilik Politikası",
+      lastUpdated: "Son Güncelleme: 23 Ocak 2025",
+      backHome: "Ana Sayfa",
+      sections: [
+        {
+          title: "1. Giriş",
+          content: "Happy CRM olarak, müşterilerimizin ve kullanıcılarımızın gizliliğini korumayı taahhüt ediyoruz. Bu Gizlilik Politikası, hizmetlerimizi kullandığınızda kişisel verilerinizin nasıl toplandığını, kullanıldığını, paylaşıldığını ve korunduğunu açıklamaktadır."
+        },
+        {
+          title: "2. Topladığımız Bilgiler",
+          content: "Hizmetlerimizi sunarken aşağıdaki bilgileri toplayabiliriz:",
+          list: [
+            "Ad, soyad ve iletişim bilgileri",
+            "Telefon numaraları ve e-posta adresleri",
+            "Şirket bilgileri ve iş unvanı",
+            "Müşteri iletişim geçmişi",
+            "Hizmet kullanım verileri ve tercihler"
+          ]
+        },
+        {
+          title: "3. Bilgilerin Kullanım Amaçları",
+          content: "Topladığımız bilgileri aşağıdaki amaçlarla kullanırız:",
+          list: [
+            "Müşteri ilişkileri yönetimi hizmetlerinin sağlanması",
+            "WhatsApp Business üzerinden iletişim kurulması",
+            "Müşteri destek hizmetlerinin sunulması",
+            "Hizmet kalitesinin geliştirilmesi",
+            "Yasal yükümlülüklerin yerine getirilmesi"
+          ]
+        },
+        {
+          title: "4. Bilgi Paylaşımı",
+          content: "Kişisel verilerinizi aşağıdaki durumlar dışında üçüncü taraflarla paylaşmayız:",
+          list: [
+            "Açık onayınızın bulunduğu durumlar",
+            "Yasal zorunlulukların gerektirdiği haller",
+            "Hizmet sağlayıcılarımızla (gizlilik sözleşmesi kapsamında)",
+            "İş ortaklarımızla (yalnızca hizmet sunumu için gerekli bilgiler)"
+          ]
+        },
+        {
+          title: "5. Veri Güvenliği",
+          content: "Kişisel verilerinizin güvenliğini sağlamak için endüstri standardı güvenlik önlemleri uyguluyoruz. Bu önlemler arasında şifreleme, güvenli sunucular, erişim kontrolleri ve düzenli güvenlik denetimleri bulunmaktadır."
+        },
+        {
+          title: "6. Veri Saklama",
+          content: "Kişisel verilerinizi, ilgili hizmetleri sağlamak için gerekli olduğu sürece veya yasal düzenlemelerin gerektirdiği süre boyunca saklarız. İlişkiniz sona erdiğinde, yasal saklama süreleri dışındaki verileriniz güvenli bir şekilde silinir veya anonim hale getirilir."
+        },
+        {
+          title: "7. Haklarınız",
+          content: "KVKK kapsamında aşağıdaki haklara sahipsiniz:",
+          list: [
+            "Kişisel verilerinize erişim hakkı",
+            "Verilerin düzeltilmesini isteme hakkı",
+            "Verilerin silinmesini talep etme hakkı",
+            "Veri işlemenin kısıtlanmasını isteme hakkı",
+            "Veri taşınabilirliği hakkı",
+            "İtiraz etme hakkı"
+          ]
+        },
+        {
+          title: "8. WhatsApp Business Kullanımı",
+          content: "WhatsApp Business Platform üzerinden gönderilen mesajlar için Meta'nın gizlilik politikaları da geçerlidir. Mesajlaşma hizmetini kullanarak, Meta'nın veri işleme şartlarını da kabul etmiş olursunuz."
+        },
+        {
+          title: "9. Çerezler",
+          content: "Web sitemizde kullanıcı deneyimini iyileştirmek için çerezler kullanıyoruz. Çerez kullanımı hakkında detaylı bilgi için Çerez Politikamızı inceleyebilirsiniz."
+        },
+        {
+          title: "10. Değişiklikler",
+          content: "Bu Gizlilik Politikası'nı zaman zaman güncelleyebiliriz. Önemli değişiklikler olması durumunda sizi bilgilendireceğiz. Güncel politikayı her zaman bu sayfadan inceleyebilirsiniz."
+        },
+        {
+          title: "11. İletişim",
+          content: "Gizlilik politikamızla ilgili sorularınız için bizimle iletişime geçebilirsiniz:",
+          contactInfo: {
+            email: "privacy@happycrm.com",
+            phone: "+90 212 XXX XX XX",
+            address: "Happy CRM, İstanbul, Türkiye"
+          }
+        }
+      ],
+      footer: "Tüm hakları saklıdır."
+    },
+    en: {
+      title: "Privacy Policy",
+      lastUpdated: "Last Updated: January 23, 2025",
+      backHome: "Home",
+      sections: [
+        {
+          title: "1. Introduction",
+          content: "At Happy CRM, we are committed to protecting the privacy of our customers and users. This Privacy Policy explains how we collect, use, share and protect your personal data when you use our services."
+        },
+        {
+          title: "2. Information We Collect",
+          content: "We may collect the following information when providing our services:",
+          list: [
+            "Name and contact information",
+            "Phone numbers and email addresses",
+            "Company information and job title",
+            "Customer communication history",
+            "Service usage data and preferences"
+          ]
+        },
+        {
+          title: "3. How We Use Your Information",
+          content: "We use the collected information for the following purposes:",
+          list: [
+            "Providing customer relationship management services",
+            "Communicating through WhatsApp Business",
+            "Delivering customer support services",
+            "Improving service quality",
+            "Fulfilling legal obligations"
+          ]
+        },
+        {
+          title: "4. Information Sharing",
+          content: "We do not share your personal data with third parties except in the following cases:",
+          list: [
+            "When you have given explicit consent",
+            "When required by legal obligations",
+            "With our service providers (under confidentiality agreements)",
+            "With business partners (only information necessary for service delivery)"
+          ]
+        },
+        {
+          title: "5. Data Security",
+          content: "We implement industry-standard security measures to protect your personal data. These measures include encryption, secure servers, access controls, and regular security audits."
+        },
+        {
+          title: "6. Data Retention",
+          content: "We retain your personal data for as long as necessary to provide the relevant services or as required by legal regulations. When your relationship ends, your data outside legal retention periods is securely deleted or anonymized."
+        },
+        {
+          title: "7. Your Rights",
+          content: "Under GDPR, you have the following rights:",
+          list: [
+            "Right to access your personal data",
+            "Right to rectification of data",
+            "Right to erasure of data",
+            "Right to restrict processing",
+            "Right to data portability",
+            "Right to object"
+          ]
+        },
+        {
+          title: "8. WhatsApp Business Usage",
+          content: "Meta's privacy policies also apply to messages sent through WhatsApp Business Platform. By using the messaging service, you also accept Meta's data processing terms."
+        },
+        {
+          title: "9. Cookies",
+          content: "We use cookies on our website to improve user experience. For detailed information about cookie usage, please review our Cookie Policy."
+        },
+        {
+          title: "10. Changes",
+          content: "We may update this Privacy Policy from time to time. We will notify you of significant changes. You can always review the current policy on this page."
+        },
+        {
+          title: "11. Contact",
+          content: "For questions about our privacy policy, you can contact us:",
+          contactInfo: {
+            email: "privacy@happycrm.com",
+            phone: "+90 212 XXX XX XX",
+            address: "Happy CRM, Istanbul, Turkey"
+          }
+        }
+      ],
+      footer: "All rights reserved."
+    }
+  };
+
+  const currentContent = content[locale as 'tr' | 'en'] || content.tr;
+  const emailLabel = locale === 'tr' ? 'E-posta:' : 'Email:';
+  const phoneLabel = locale === 'tr' ? 'Telefon:' : 'Phone:';
+  const addressLabel = locale === 'tr' ? 'Adres:' : 'Address:';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <div className="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
+    <div className="min-h-screen bg-gray-50">
           {/* Header */}
-          <div className="mb-10">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              {t('title', 'Privacy Policy')}
-            </h1>
-            <p className="text-gray-600">
-              {t('lastUpdated', 'Last Updated: January 23, 2025')}
-            </p>
+      <div className="bg-white border-b">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <Link href="/">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <ChevronLeft className="h-4 w-4" />
+              {currentContent.backHome}
+            </Button>
+          </Link>
           </div>
-
-          {/* Introduction */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              {t('intro.title', 'Introduction')}
-            </h2>
-            <p className="text-gray-700 leading-relaxed">
-              {t('intro.content', 
-                'Happy CRM ("we", "our", or "us") is committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our WhatsApp Business Platform integration services.'
-              )}
-            </p>
-          </section>
-
-          {/* Information We Collect */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              {t('collection.title', 'Information We Collect')}
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-medium text-gray-800 mb-2">
-                  {t('collection.personal.title', 'Personal Information')}
-                </h3>
-                <ul className="list-disc list-inside text-gray-700 space-y-2">
-                  <li>{t('collection.personal.name', 'Name and contact information')}</li>
-                  <li>{t('collection.personal.phone', 'Phone numbers (for WhatsApp, SMS, and notification services)')}</li>
-                  <li>{t('collection.personal.email', 'Email addresses')}</li>
-                  <li>{t('collection.personal.business', 'Business information and preferences')}</li>
-                  <li>{t('collection.personal.profile', 'User profile data including username and role')}</li>
-                  <li>{t('collection.personal.agency', 'Agency affiliation and organizational structure')}</li>
-                </ul>
               </div>
               
-              <div>
-                <h3 className="text-lg font-medium text-gray-800 mb-2">
-                  {t('collection.messaging.title', 'Messaging and Communication Data')}
-                </h3>
-                <ul className="list-disc list-inside text-gray-700 space-y-2">
-                  <li>{t('collection.messaging.content', 'Message content across all channels (WhatsApp, SMS, Email, Notes)')}</li>
-                  <li>{t('collection.messaging.media', 'Media files including URLs and file types')}</li>
-                  <li>{t('collection.messaging.metadata', 'Message metadata (timestamps, delivery status, read receipts)')}</li>
-                  <li>{t('collection.messaging.sessions', 'WhatsApp 24-hour conversation session data')}</li>
-                  <li>{t('collection.messaging.templates', 'Template message usage and parameters')}</li>
-                  <li>{t('collection.messaging.webhooks', 'Webhook data from WhatsApp Business API')}</li>
-                </ul>
-              </div>
+      {/* Content */}
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <div className="bg-white rounded-lg shadow-sm p-8 md:p-12">
+          {/* Title */}
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {currentContent.title}
+          </h1>
+          <p className="text-sm text-gray-600 mb-8">
+            {currentContent.lastUpdated}
+          </p>
 
-              <div>
-                <h3 className="text-lg font-medium text-gray-800 mb-2">
-                  {t('collection.system.title', 'System and Operational Data')}
-                </h3>
-                <ul className="list-disc list-inside text-gray-700 space-y-2">
-                  <li>{t('collection.system.leads', 'Lead and customer relationship data')}</li>
-                  <li>{t('collection.system.routes', 'Business routes and location information')}</li>
-                  <li>{t('collection.system.notifications', 'Notification preferences and phone number lists')}</li>
-                  <li>{t('collection.system.activity', 'User activity logs and session information')}</li>
-                  <li>{t('collection.system.api', 'API usage and integration statistics')}</li>
-                </ul>
-              </div>
-            </div>
-          </section>
-
-          {/* How We Use Your Information */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              {t('usage.title', 'How We Use Your Information')}
+          {/* Sections */}
+          <div className="space-y-8">
+            {currentContent.sections.map((section, index) => (
+              <section key={index}>
+                <h2 className="text-xl font-semibold text-gray-800 mb-3">
+                  {section.title}
             </h2>
-            <ul className="list-disc list-inside text-gray-700 space-y-2">
-              <li>{t('usage.provide', 'To provide multi-channel messaging services (WhatsApp, SMS, Email)')}</li>
-              <li>{t('usage.messages', 'To facilitate message sending and receiving through WhatsApp Cloud API')}</li>
-              <li>{t('usage.templates', 'To manage and deliver message templates')}</li>
-              <li>{t('usage.sessions', 'To manage WhatsApp 24-hour conversation sessions')}</li>
-              <li>{t('usage.notifications', 'To send notifications based on your preferences')}</li>
-              <li>{t('usage.support', 'To provide customer support and respond to inquiries')}</li>
-              <li>{t('usage.improve', 'To improve our services and develop new features')}</li>
-              <li>{t('usage.comply', 'To comply with legal obligations and Meta\'s policies')}</li>
-              <li>{t('usage.analytics', 'To analyze usage patterns and optimize performance')}</li>
-              <li>{t('usage.security', 'To detect, prevent, and address technical issues and security threats')}</li>
-              <li>{t('usage.roles', 'To manage user roles and permissions within the system')}</li>
+                <p className="text-gray-700 leading-relaxed mb-3">
+                  {section.content}
+                </p>
+                
+                {section.list && (
+                  <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
+                    {section.list.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
             </ul>
-          </section>
-
-          {/* Data Sharing and Disclosure */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              {t('sharing.title', 'Data Sharing and Disclosure')}
-            </h2>
-            <p className="text-gray-700 mb-4">
-              {t('sharing.intro', 'We may share your information in the following circumstances:')}
-            </p>
-            <ul className="list-disc list-inside text-gray-700 space-y-2">
-              <li>
-                <strong>{t('sharing.meta.title', 'With Meta/WhatsApp:')}</strong> {t('sharing.meta.content', 'We share necessary information with Meta to enable WhatsApp Business Platform functionality in accordance with their policies.')}
-              </li>
-              <li>
-                <strong>{t('sharing.providers.title', 'Service Providers:')}</strong> {t('sharing.providers.content', 'We may share information with third-party service providers who assist us in operating our platform (e.g., cloud hosting, analytics).')}
-              </li>
-              <li>
-                <strong>{t('sharing.legal.title', 'Legal Requirements:')}</strong> {t('sharing.legal.content', 'We may disclose information if required by law or in response to valid legal requests.')}
-              </li>
-              <li>
-                <strong>{t('sharing.consent.title', 'With Your Consent:')}</strong> {t('sharing.consent.content', 'We may share information with your explicit consent or at your direction.')}
-              </li>
-            </ul>
-          </section>
-
-          {/* Data Security */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              {t('security.title', 'Data Security')}
-            </h2>
-            <p className="text-gray-700 leading-relaxed">
-              {t('security.content', 
-                'We implement appropriate technical and organizational security measures to protect your information against unauthorized access, alteration, disclosure, or destruction. This includes encryption, secure API connections, access controls, and regular security audits. All WhatsApp communications are processed through Meta\'s secure Cloud API infrastructure.'
-              )}
-            </p>
-          </section>
-
-          {/* Notification Preferences */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              {t('notifications.title', 'Notification Preferences')}
-            </h2>
-            <p className="text-gray-700 mb-4">
-              {t('notifications.intro', 'We provide flexible notification options to keep you informed:')}
-            </p>
-            <ul className="list-disc list-inside text-gray-700 space-y-2">
-              <li>{t('notifications.types', 'Notification types: deadline reminders, status changes, system updates')}</li>
-              <li>{t('notifications.channels', 'Multiple notification channels: WhatsApp, SMS, Email')}</li>
-              <li>{t('notifications.preferences', 'Customizable preferences for each notification type')}</li>
-              <li>{t('notifications.numbers', 'Ability to add multiple phone numbers for notifications')}</li>
-              <li>{t('notifications.control', 'Full control to enable/disable notifications at any time')}</li>
-            </ul>
-          </section>
-
-          {/* Data Retention */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              {t('retention.title', 'Data Retention')}
-            </h2>
-            <p className="text-gray-700 leading-relaxed mb-4">
-              {t('retention.content', 
-                'We retain your information only for as long as necessary to fulfill the purposes outlined in this Privacy Policy, unless a longer retention period is required by law.'
-              )}
-            </p>
-            <ul className="list-disc list-inside text-gray-700 space-y-2">
-              <li>{t('retention.messages', 'Message data: Retained according to WhatsApp Business Platform policies')}</li>
-              <li>{t('retention.sessions', 'Session data: WhatsApp 24-hour conversation windows are tracked and archived')}</li>
-              <li>{t('retention.user', 'User data: Retained while account is active and as required by law')}</li>
-              <li>{t('retention.backups', 'Backups: Automated backups retained for disaster recovery purposes')}</li>
-              <li>{t('retention.deletion', 'Deletion: Data deletion requests processed within 30 days')}</li>
-            </ul>
-          </section>
-
-          {/* Specific Data Retention Details */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              {t('dataRetentionSpecific.title', 'Specific Data Retention Periods')}
-            </h2>
-            <p className="text-gray-700 mb-4">
-              {t('dataRetentionSpecific.intro', 'Special retention periods for different data types:')}
-            </p>
-            <ul className="list-disc list-inside text-gray-700 space-y-2">
-              <li>{t('dataRetentionSpecific.messages', 'Message data: 3 years or user deletion request')}</li>
-              <li>{t('dataRetentionSpecific.sessions', 'Session data: 1 year, inactive sessions 6 months')}</li>
-              <li>{t('dataRetentionSpecific.userProfiles', 'User profiles: While account is active + 2 years')}</li>
-              <li>{t('dataRetentionSpecific.notifications', 'Notification records: 90 days')}</li>
-              <li>{t('dataRetentionSpecific.webhooks', 'Webhook logs: 30 days (for debugging purposes)')}</li>
-              <li>{t('dataRetentionSpecific.errors', 'Error logs: 6 months')}</li>
-              <li>{t('dataRetentionSpecific.backups', 'Backups: 90 days automatic retention')}</li>
-            </ul>
-          </section>
-
-          {/* Database Tables Information */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              {t('database.title', 'Data Collection Details')}
-            </h2>
-            <p className="text-gray-700 mb-4">
-              {t('database.intro', 'Happy CRM system stores your information in the following specific database tables:')}
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-800 mb-2">
-                  {t('database.messages.title', 'Messages Table')}
-                </h3>
-                <p className="text-sm text-gray-700">
-                  {t('database.messages.content', 'All messaging data (WhatsApp, SMS, Email, Notes), message content, media URLs, status information, timestamps')}
-                </p>
-              </div>
-              <div className="bg-green-50 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-800 mb-2">
-                  {t('database.whatsapp_sessions.title', 'WhatsApp Sessions Table')}
-                </h3>
-                <p className="text-sm text-gray-700">
-                  {t('database.whatsapp_sessions.content', '24-hour session management, phone numbers, session start/end times, template initiation information')}
-                </p>
-              </div>
-              <div className="bg-purple-50 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-800 mb-2">
-                  {t('database.user_profiles.title', 'User Profiles Table')}
-                </h3>
-                <p className="text-sm text-gray-700">
-                  {t('database.user_profiles.content', 'User profile information, role assignments (superuser, admin, user), usernames, creation dates')}
-                </p>
-              </div>
-              <div className="bg-yellow-50 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-800 mb-2">
-                  {t('database.agencies.title', 'Agencies Table')}
-                </h3>
-                <p className="text-sm text-gray-700">
-                  {t('database.agencies.content', 'Agency information, contact person names, phone numbers, activity status')}
-                </p>
-              </div>
-              <div className="bg-red-50 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-800 mb-2">
-                  {t('database.locations.title', 'Locations Table')}
-                </h3>
-                <p className="text-sm text-gray-700">
-                  {t('database.locations.content', 'Location information, address details, geographic coordinates')}
-                </p>
-              </div>
-              <div className="bg-indigo-50 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-800 mb-2">
-                  {t('database.routes.title', 'Routes Table')}
-                </h3>
-                <p className="text-sm text-gray-700">
-                  {t('database.routes.content', 'Business route information, route details, location connections')}
-                </p>
-              </div>
-              <div className="bg-pink-50 rounded-lg p-4 md:col-span-2">
-                <h3 className="font-semibold text-gray-800 mb-2">
-                  {t('database.notification_preferences.title', 'Notification Preferences Table')}
-                </h3>
-                <p className="text-sm text-gray-700">
-                  {t('database.notification_preferences.content', 'Notification preferences, channel settings, muted leads list, notification methods')}
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* User Roles and Access Control */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              {t('roles.title', 'User Roles and Access Control')}
-            </h2>
-            <p className="text-gray-700 mb-4">
-              {t('roles.intro', 'Our platform uses role-based access control to protect your data:')}
-            </p>
-            <ul className="list-disc list-inside text-gray-700 space-y-2">
-              <li>{t('roles.superuser', 'Superuser: System administrators with full platform access')}</li>
-              <li>{t('roles.admin', 'Admin: Agency administrators who manage users and settings')}</li>
-              <li>{t('roles.user', 'User: Standard users with access to assigned leads and messages')}</li>
-              <li>{t('roles.agency', 'Agency Structure: Multi-tenant architecture ensuring data isolation between agencies')}</li>
-              <li>{t('roles.rls', 'Row Level Security: Database-level security ensuring users only access their authorized data')}</li>
-            </ul>
-          </section>
-
-          {/* Your Rights */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              {t('rights.title', 'Your Rights')}
-            </h2>
-            <p className="text-gray-700 mb-4">
-              {t('rights.intro', 'You have the following rights regarding your personal information:')}
-            </p>
-            <ul className="list-disc list-inside text-gray-700 space-y-2">
-              <li>{t('rights.access', 'Access and receive a copy of your personal data')}</li>
-              <li>{t('rights.correct', 'Correct inaccurate or incomplete information')}</li>
-              <li>{t('rights.delete', 'Request deletion of your personal data')}</li>
-              <li>{t('rights.restrict', 'Restrict or object to certain processing activities')}</li>
-              <li>{t('rights.portability', 'Data portability where applicable')}</li>
-              <li>{t('rights.withdraw', 'Withdraw consent at any time')}</li>
-              <li>{t('rights.notifications', 'Manage your notification preferences and phone numbers')}</li>
-              <li>{t('rights.optout', 'Opt-out of marketing communications')}</li>
-            </ul>
-          </section>
-
-          {/* WhatsApp Specific Policies */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              {t('whatsapp.title', 'WhatsApp Business Platform Compliance')}
-            </h2>
-            <p className="text-gray-700 leading-relaxed mb-4">
-              {t('whatsapp.content', 
-                'Our use of the WhatsApp Business Platform is subject to Meta\'s terms and policies. We comply with:'
-              )}
-            </p>
-            <ul className="list-disc list-inside text-gray-700 space-y-2">
-              <li>{t('whatsapp.terms', 'WhatsApp Business Terms of Service')}</li>
-              <li>{t('whatsapp.policy', 'WhatsApp Business Policy')}</li>
-              <li>{t('whatsapp.commerce', 'WhatsApp Commerce Policy')}</li>
-              <li>{t('whatsapp.data', 'Meta\'s Data Processing Terms')}</li>
-            </ul>
-          </section>
-
-          {/* Meta App Review Compliance */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              {t('metaReview.title', 'Meta App Review Compliance')}
-            </h2>
-            <p className="text-gray-700 mb-4">
-              {t('metaReview.intro', 'Our WhatsApp Business API usage fully complies with Meta\'s app review requirements:')}
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <h3 className="font-semibold text-green-800 mb-2">
-                  {t('metaReview.purpose.title', 'Usage Purpose')}
-                </h3>
-                <p className="text-green-700 text-sm">
-                  {t('metaReview.purpose.content', 'WhatsApp Business API is used exclusively for business customer communication purposes')}
-                </p>
-              </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="font-semibold text-blue-800 mb-2">
-                  {t('metaReview.templates.title', 'Template Message Management')}
-                </h3>
-                <p className="text-blue-700 text-sm">
-                  {t('metaReview.templates.content', 'All template messages are approved by Meta and regularly updated')}
-                </p>
-              </div>
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                <h3 className="font-semibold text-purple-800 mb-2">
-                  {t('metaReview.optin.title', 'User Consent (Opt-in)')}
-                </h3>
-                <p className="text-purple-700 text-sm">
-                  {t('metaReview.optin.content', 'All users have provided explicit consent for WhatsApp messaging and have opt-out options available')}
-                </p>
-              </div>
-              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-                <h3 className="font-semibold text-indigo-800 mb-2">
-                  {t('metaReview.compliance.title', 'Meta Policy Compliance')}
-                </h3>
-                <p className="text-indigo-700 text-sm">
-                  {t('metaReview.compliance.content', 'Full compliance with WhatsApp Business Policy, Commerce Policy, and Data Processing Terms')}
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* Spam Prevention Policies */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              {t('spamPrevention.title', 'Spam Prevention Policies')}
-            </h2>
-            <p className="text-gray-700 mb-4">
-              {t('spamPrevention.intro', 'The following measures are taken to prevent spam and protect user experience:')}
-            </p>
-            <ul className="list-disc list-inside text-gray-700 space-y-2">
-              <li>{t('spamPrevention.optout', 'Users\' right to stop receiving messages at any time')}</li>
-              <li>{t('spamPrevention.frequency', 'Limiting message sending frequency')}</li>
-              <li>{t('spamPrevention.relevant', 'Sending only business-related and valuable content for users')}</li>
-              <li>{t('spamPrevention.monitoring', 'Automatic spam detection and blocking systems')}</li>
-              <li>{t('spamPrevention.reporting', 'User complaint reporting and quick resolution mechanisms')}</li>
-            </ul>
-          </section>
-
-          {/* International Data Transfers */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              {t('international.title', 'International Data Transfers')}
-            </h2>
-            <p className="text-gray-700 leading-relaxed">
-              {t('international.content', 
-                'Your information may be transferred to and processed in countries other than your country of residence. These countries may have data protection laws different from your country. We ensure appropriate safeguards are in place to protect your information in accordance with this Privacy Policy.'
-              )}
-            </p>
-          </section>
-
-          {/* Children's Privacy */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              {t('children.title', 'Children\'s Privacy')}
-            </h2>
-            <p className="text-gray-700 leading-relaxed">
-              {t('children.content', 
-                'Our services are not directed to individuals under the age of 18. We do not knowingly collect personal information from children. If we become aware that we have collected personal information from a child, we will take steps to delete such information.'
-              )}
-            </p>
-          </section>
-
-          {/* Updates to Privacy Policy */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              {t('updates.title', 'Updates to This Privacy Policy')}
-            </h2>
-            <p className="text-gray-700 leading-relaxed">
-              {t('updates.content', 
-                'We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date. You are advised to review this Privacy Policy periodically for any changes.'
-              )}
-            </p>
-          </section>
-
-          {/* Contact Information */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              {t('contact.title', 'Contact Us')}
-            </h2>
-            <p className="text-gray-700 leading-relaxed mb-4">
-              {t('contact.intro', 'If you have any questions about this Privacy Policy or our data practices, please contact us at:')}
-            </p>
-            <div className="bg-gray-50 rounded-lg p-4">
+                )}
+                
+                {section.contactInfo && (
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
               <p className="text-gray-700">
-                <strong>{t('contact.email', 'Email:')}</strong> privacy@happycrm.com
+                      <strong>{emailLabel}</strong> {section.contactInfo.email}
               </p>
               <p className="text-gray-700">
-                <strong>{t('contact.address', 'Address:')}</strong> Happy CRM Privacy Team
+                      <strong>{phoneLabel}</strong> {section.contactInfo.phone}
               </p>
               <p className="text-gray-700">
-                <strong>{t('contact.phone', 'Phone:')}</strong> +1 (555) 123-4567
+                      <strong>{addressLabel}</strong> {section.contactInfo.address}
               </p>
             </div>
+                )}
           </section>
+            ))}
+          </div>
 
           {/* Footer */}
           <div className="mt-12 pt-8 border-t border-gray-200">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              <Link 
-                href="/"
-                className="text-blue-600 hover:text-blue-800 transition-colors"
-              >
-                ← {t('back', 'Back to Home')}
-              </Link>
-              <p className="text-sm text-gray-500">
-                © 2025 Happy CRM. {t('rights.reserved', 'All rights reserved.')}
-              </p>
-            </div>
+            <p className="text-sm text-gray-500 text-center">
+              © 2025 Happy CRM. {currentContent.footer}
+            </p>
           </div>
         </div>
       </div>

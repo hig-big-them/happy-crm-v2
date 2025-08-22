@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/utils/supabase/server';
 import crypto from 'crypto';
 import { getDeduplicationService } from '@/lib/services/redis-dedup-service';
+import { rateLimitWebhook, getClientIP, createRateLimitResponse } from '@/lib/security/rate-limiter';
 
 // Webhook doğrulama jetonu ve app secret
 const WEBHOOK_VERIFY_TOKEN = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || "HAPPY_CRM_WEBHOOK_VERIFY_TOKEN_2025";
@@ -151,6 +152,18 @@ function verifySignature(payload: string, signature: string): boolean {
 // POST endpoint - webhook events
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting for webhook endpoints
+    const clientIP = getClientIP(request);
+    const rateLimitResult = await rateLimitWebhook('whatsapp_webhook', clientIP);
+    
+    if (!rateLimitResult.success) {
+      console.log(`Rate limit exceeded for webhook from IP: ${clientIP}`);
+      return createRateLimitResponse(
+        rateLimitResult,
+        'Too many webhook requests. Please slow down.'
+      );
+    }
+    
     const body = await request.text();
     const signature = request.headers.get('x-hub-signature-256');
     

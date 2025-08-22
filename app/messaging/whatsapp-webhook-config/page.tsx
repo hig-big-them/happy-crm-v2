@@ -29,11 +29,11 @@ export default function WhatsAppWebhookConfigPage() {
   const [verificationStatus, setVerificationStatus] = useState<'checking' | 'verified' | 'not_verified'>('checking');
   
   // Production webhook URL
-  const productionUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://your-vercel-app.vercel.app';
+  const productionUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://your-app-domain.com';
   const fullWebhookUrl = `${productionUrl}/api/whatsapp/webhook`;
   
-  // Secure verify token (stored in env)
-  const secureVerifyToken = process.env.NEXT_PUBLIC_WHATSAPP_WEBHOOK_VERIFY_TOKEN || '63cfb5f323184a8e51f90106b8391a506c71b79dc221869c30ae625ddd249612';
+  // Verify token should be set in environment variables
+  const secureVerifyToken = process.env.NEXT_PUBLIC_WHATSAPP_WEBHOOK_VERIFY_TOKEN || 'PLEASE_SET_IN_ENV_VARIABLES';
 
   useEffect(() => {
     setWebhookUrl(fullWebhookUrl);
