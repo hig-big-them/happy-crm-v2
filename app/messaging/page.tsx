@@ -9,6 +9,8 @@
 
 import * as React from 'react';
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { useMockAuth } from '@/components/mock-auth-provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -232,6 +234,35 @@ interface MessageThread {
 
 export default function MessagingPage() {
   const { t, locale } = useI18n()
+  const router = useRouter()
+  const { user } = useMockAuth()
+  
+  // Demo kullanıcı kontrolü - messaging erişimini kısıtla
+  const isDemoUser = user?.email?.includes('demo.') || user?.email?.includes('@happycrm.com');
+  
+  // Demo kullanıcıları bilgilendirme sayfasına yönlendir
+  useEffect(() => {
+    if (isDemoUser) {
+      router.replace('/demo-messaging-info');
+    }
+  }, [isDemoUser, router]);
+  
+  // Demo kullanıcılar için boş sayfa göster
+  if (isDemoUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="text-center space-y-4">
+          <MessageSquare className="h-16 w-16 mx-auto text-gray-400" />
+          <h2 className="text-xl font-semibold text-gray-600">Messaging Kısıtlı</h2>
+          <p className="text-gray-500">Demo kullanıcılar messaging özelliğine erişemez.</p>
+          <Button onClick={() => router.push('/dashboard')} className="mt-4">
+            Dashboard'a Dön
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeChannel, setActiveChannel] = useState<'all' | 'whatsapp' | 'sms' | 'email' | 'note'>('all');

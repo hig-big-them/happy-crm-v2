@@ -44,27 +44,32 @@ export function Navbar({}: NavbarProps) {
     }
   };
 
-  // Ana navigasyon linkleri - güvenlik için messaging kısıtlandı
+  // Demo kullanıcı kontrolü
+  const isDemoUser = user?.email?.includes('demo.') || user?.email?.includes('@happycrm.com');
+  
+  // Ana navigasyon linkleri - demo kullanıcılar için messaging kısıtlı
   const mainNavItems = [
     { name: t.nav.dashboard, href: "/dashboard" },
     { name: t.nav.pipeline, href: "/pipelines" },
     { name: t.nav.leads, href: "/leads" },
-    // Messaging güvenlik için kısıtlandı
-    { 
+    // Messaging - sadece gerçek kullanıcılar için
+    ...(isDemoUser ? [{
       name: t.nav.messaging, 
-      href: "#", 
+      href: "/demo-messaging-info", 
       icon: MessageSquare, 
-      restricted: true,
-      onClick: () => {
-        alert('Messaging access is restricted for security reasons. This feature is available for authenticated business users only.');
-      }
-    },
+      restricted: true
+    }] : [{ 
+      name: t.nav.messaging, 
+      href: "/messaging", 
+      icon: MessageSquare 
+    }]),
   ];
 
   // Admin menü öğeleri
   const adminNavItems = userRole === "superuser" ? [
     { name: "Yönetim", href: "/admin/agencies" },
     { name: t.common.settings, href: "/admin/messaging-settings", icon: Settings },
+    { name: "🛡️ Security Test", href: "/security-test" },
     { name: "Webhook Test", href: "/admin/tools/webhook-test" },
     { name: "Webhook Monitor", href: "/admin/tools/webhook-monitor" },
     { name: "WhatsApp Debug", href: "/admin/tools/whatsapp-debug" },

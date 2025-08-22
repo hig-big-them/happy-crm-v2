@@ -7,6 +7,7 @@ import { Plus, Target, X, Users, ChevronUp, MessageCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { triggerHaptic } from '@/hooks/use-swipe'
 import { useI18n } from '@/lib/i18n/client'
+import { useMockAuth } from '@/components/mock-auth-provider'
 
 interface FloatingActionButtonProps {
   onNewLead?: () => void
@@ -20,6 +21,7 @@ export function FloatingActionButton({
   className
 }: FloatingActionButtonProps) {
   const { locale } = useI18n()
+  const { user } = useMockAuth()
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
@@ -75,8 +77,15 @@ export function FloatingActionButton({
   }
 
   const handleMessagesClick = () => {
-    alert('Messaging access is restricted for security reasons. This feature is available for authenticated business users only.');
-    // router.push('/messaging') // Güvenlik için devre dışı
+    // Demo kullanıcı kontrolü
+    const isDemoUser = user?.email?.includes('demo.') || user?.email?.includes('@happycrm.com');
+    
+    if (isDemoUser) {
+      router.push('/demo-messaging-info');
+      return;
+    }
+    
+    router.push('/messaging');
   }
 
   const actions = [
