@@ -56,20 +56,24 @@ export default function BypassLoginPage() {
           <p className="text-gray-600">{status}</p>
         </div>
         
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-          <div className="text-sm text-yellow-800">
-            <div className="font-semibold">⚠️ Geçici Çözüm</div>
-            <div>Sadece geliştirme amaçlı</div>
-            <div>Email: halilg@gmail.com</div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <div className="text-sm text-red-800">
+            <div className="font-semibold">🚫 Bypass Devre Dışı</div>
+            <div>Bu özellik App Review için devre dışı bırakıldı</div>
+            <div>Lütfen normal giriş sayfasını kullanın</div>
           </div>
         </div>
         
         {!loading && (
           <Button 
-            onClick={performBypass}
-            className="w-full mb-4"
+            onClick={() => {
+              setStatus('❌ Bypass özelliği App Review için devre dışı bırakıldı');
+            }}
+            disabled
+            variant="outline"
+            className="w-full mb-4 opacity-50"
           >
-            Bypass Giriş Yap
+            🚫 Bypass Devre Dışı
           </Button>
         )}
         

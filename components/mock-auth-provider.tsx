@@ -29,30 +29,37 @@ const MockAuthContext = createContext<MockAuthContextType>({
   refreshSession: async () => {},
 })
 
-// Mock users
+// Mock users - App Review için güçlendirilmiş
 const MOCK_USERS: MockUser[] = [
   {
     id: '1',
-    email: 'admin@happycrm.com',
-    name: 'Admin User',
+    email: 'demo.admin@happycrm.com',
+    name: 'Demo Admin',
     role: 'superuser',
     avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
   },
   {
-    id: '2',
-    email: 'agency@happycrm.com',
-    name: 'Agency Manager',
+    id: '2', 
+    email: 'demo.manager@happycrm.com',
+    name: 'Demo Manager',
     role: 'agency',
     avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
   },
   {
     id: '3',
-    email: 'user@happycrm.com',
-    name: 'Regular User',
+    email: 'demo.user@happycrm.com', 
+    name: 'Demo User',
     role: 'user',
     avatar_url: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face'
   }
 ]
+
+// Güçlü şifre gereksinimleri - App Review için
+const REQUIRED_PASSWORDS: { [email: string]: string } = {
+  'demo.admin@happycrm.com': 'DemoAdmin2024!@#',
+  'demo.manager@happycrm.com': 'DemoManager2024!@#',
+  'demo.user@happycrm.com': 'DemoUser2024!@#'
+}
 
 export function MockAuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<MockUser | null>(null)
@@ -74,10 +81,11 @@ export function MockAuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: 'Invalid email or password' }
     }
     
-    // Mock password check (any password works for demo)
-    if (password.length < 3) {
-      console.log('❌ [MOCK-AUTH] Password too short')
-      return { success: false, error: 'Password must be at least 3 characters' }
+    // Güçlü şifre kontrolü - App Review için
+    const requiredPassword = REQUIRED_PASSWORDS[email];
+    if (!requiredPassword || password !== requiredPassword) {
+      console.log('❌ [MOCK-AUTH] Invalid password for:', email)
+      return { success: false, error: 'Invalid email or password' }
     }
     
     console.log('✅ [MOCK-AUTH] Sign in successful:', mockUser.name)

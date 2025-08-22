@@ -25,7 +25,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [showDemoInfo, setShowDemoInfo] = useState(false)
+  const [showDemoInfo, setShowDemoInfo] = useState(true) // App Review için demo bilgileri göster
   const router = useRouter()
 
   // Redirect if already logged in
@@ -204,6 +204,28 @@ export default function LoginPage() {
           </form>
         </CardContent>
         
+        {/* Demo Bilgileri - App Review için */}
+        {showDemoInfo && (
+          <CardContent className="pt-0">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start gap-2">
+                <Info className="h-4 w-4 text-blue-600 mt-0.5" />
+                <div className="text-sm text-blue-800">
+                  <div className="font-semibold mb-2">📋 Demo Hesapları (App Review)</div>
+                  <div className="space-y-1 text-xs">
+                    <div><strong>Admin:</strong> demo.admin@happycrm.com</div>
+                    <div><strong>Manager:</strong> demo.manager@happycrm.com</div>
+                    <div><strong>User:</strong> demo.user@happycrm.com</div>
+                    <div className="text-blue-600 mt-2">
+                      <strong>Şifreler güçlendirilmiştir - App Review ekibi için ayrıca paylaşılacaktır</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        )}
+        
         <CardFooter className="flex flex-col space-y-2">
           <div className="text-center text-sm text-gray-600">
             <Link href="/forgot-password" className="text-blue-600 hover:text-blue-800 underline">
@@ -212,7 +234,7 @@ export default function LoginPage() {
           </div>
           
           <div className="text-center text-xs text-gray-500">
-            Demo modunda çalışıyor • Gerçek veriler kullanılmıyor
+            Demo modunda çalışıyor • App Review için hazırlandı
           </div>
         </CardFooter>
       </Card>

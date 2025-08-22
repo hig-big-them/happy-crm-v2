@@ -120,26 +120,26 @@ export const mockDashboardData = {
 export const mockLeads = [
   {
     id: '1',
-    lead_name: 'Ahmet Yılmaz',
-    contact_phone: '+90 532 123 4567',
-    contact_email: 'ahmet@example.com'
+    lead_name: 'Demo Customer A',
+    contact_phone: '+90 532 100 0001',
+    contact_email: 'demo.customer.a@example.com'
   },
   {
     id: '2',
-    lead_name: 'Fatma Kaya',
-    contact_phone: '+90 533 987 6543',
-    contact_email: 'fatma@example.com'
+    lead_name: 'Demo Customer B',
+    contact_phone: '+90 533 100 0002',
+    contact_email: 'demo.customer.b@example.com'
   },
   {
     id: '3',
-    lead_name: 'Mehmet Çelik',
-    contact_phone: '+90 534 555 7777',
-    contact_email: 'mehmet@example.com'
+    lead_name: 'Demo Customer C',
+    contact_phone: '+90 534 100 0003',
+    contact_email: 'demo.customer.c@example.com'
   },
   {
     id: '4',
-    lead_name: 'Ayşe Demir',
-    contact_phone: '+90 535 444 8888',
-    contact_email: 'ayse@example.com'
+    lead_name: 'Demo Customer D',
+    contact_phone: '+90 535 100 0004',
+    contact_email: 'demo.customer.d@example.com'
   }
 ]; 
