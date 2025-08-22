@@ -1,7 +1,7 @@
 {
   "privacy": {
     "title": "Privacy Policy",
-    "lastUpdated": "Last Updated: January 22, 2025",
+    "lastUpdated": "Last Updated: January 23, 2025",
     "intro": {
       "title": "Introduction",
       "content": "Happy CRM (\"we\", \"our\", or \"us\") is committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our WhatsApp Business Platform integration services."
@@ -11,35 +11,43 @@
       "personal": {
         "title": "Personal Information",
         "name": "Name and contact information",
-        "phone": "Phone numbers (for WhatsApp Business communication)",
+        "phone": "Phone numbers (for WhatsApp, SMS, and notification services)",
         "email": "Email addresses",
-        "business": "Business information and preferences"
+        "business": "Business information and preferences",
+        "profile": "User profile data including username and role",
+        "agency": "Agency affiliation and organizational structure"
       },
-      "usage": {
-        "title": "Usage Data",
-        "messages": "WhatsApp message interactions and communication logs",
-        "templates": "Template usage and performance metrics",
-        "api": "API usage statistics",
-        "device": "Device and browser information"
+      "messaging": {
+        "title": "Messaging and Communication Data",
+        "content": "Message content across all channels (WhatsApp, SMS, Email, Notes)",
+        "media": "Media files including URLs and file types",
+        "metadata": "Message metadata (timestamps, delivery status, read receipts)",
+        "sessions": "WhatsApp 24-hour conversation session data",
+        "templates": "Template message usage and parameters",
+        "webhooks": "Webhook data from WhatsApp Business API"
       },
-      "whatsapp": {
-        "title": "WhatsApp Business Data",
-        "numbers": "WhatsApp Business phone numbers",
-        "profiles": "Business profiles and display information",
-        "conversations": "Conversation metadata (not message content)",
-        "status": "Message delivery status and webhooks"
+      "system": {
+        "title": "System and Operational Data",
+        "leads": "Lead and customer relationship data",
+        "routes": "Business routes and location information",
+        "notifications": "Notification preferences and phone number lists",
+        "activity": "User activity logs and session information",
+        "api": "API usage and integration statistics"
       }
     },
     "usage": {
       "title": "How We Use Your Information",
-      "provide": "To provide and maintain our WhatsApp Business Platform integration services",
+      "provide": "To provide multi-channel messaging services (WhatsApp, SMS, Email)",
       "messages": "To facilitate message sending and receiving through WhatsApp Cloud API",
       "templates": "To manage and deliver message templates",
+      "sessions": "To manage WhatsApp 24-hour conversation sessions",
+      "notifications": "To send notifications based on your preferences",
       "support": "To provide customer support and respond to inquiries",
       "improve": "To improve our services and develop new features",
       "comply": "To comply with legal obligations and Meta's policies",
       "analytics": "To analyze usage patterns and optimize performance",
-      "security": "To detect, prevent, and address technical issues and security threats"
+      "security": "To detect, prevent, and address technical issues and security threats",
+      "roles": "To manage user roles and permissions within the system"
     },
     "sharing": {
       "title": "Data Sharing and Disclosure",
@@ -65,9 +73,32 @@
       "title": "Data Security",
       "content": "We implement appropriate technical and organizational security measures to protect your information against unauthorized access, alteration, disclosure, or destruction. This includes encryption, secure API connections, access controls, and regular security audits. All WhatsApp communications are processed through Meta's secure Cloud API infrastructure."
     },
+    "notifications": {
+      "title": "Notification Preferences",
+      "intro": "We provide flexible notification options to keep you informed:",
+      "types": "Notification types: deadline reminders, status changes, system updates",
+      "channels": "Multiple notification channels: WhatsApp, SMS, Email",
+      "preferences": "Customizable preferences for each notification type",
+      "numbers": "Ability to add multiple phone numbers for notifications",
+      "control": "Full control to enable/disable notifications at any time"
+    },
     "retention": {
       "title": "Data Retention",
-      "content": "We retain your information only for as long as necessary to fulfill the purposes outlined in this Privacy Policy, unless a longer retention period is required by law. Message data is retained according to WhatsApp Business Platform policies and your configured settings."
+      "content": "We retain your information only for as long as necessary to fulfill the purposes outlined in this Privacy Policy, unless a longer retention period is required by law.",
+      "messages": "Message data: Retained according to WhatsApp Business Platform policies",
+      "sessions": "Session data: WhatsApp 24-hour conversation windows are tracked and archived",
+      "user": "User data: Retained while account is active and as required by law",
+      "backups": "Backups: Automated backups retained for disaster recovery purposes",
+      "deletion": "Deletion: Data deletion requests processed within 30 days"
+    },
+    "roles": {
+      "title": "User Roles and Access Control",
+      "intro": "Our platform uses role-based access control to protect your data:",
+      "superuser": "Superuser: System administrators with full platform access",
+      "admin": "Admin: Agency administrators who manage users and settings",
+      "user": "User: Standard users with access to assigned leads and messages",
+      "agency": "Agency Structure: Multi-tenant architecture ensuring data isolation between agencies",
+      "rls": "Row Level Security: Database-level security ensuring users only access their authorized data"
     },
     "rights": {
       "title": "Your Rights",
@@ -78,6 +109,8 @@
       "restrict": "Restrict or object to certain processing activities",
       "portability": "Data portability where applicable",
       "withdraw": "Withdraw consent at any time",
+      "notifications": "Manage your notification preferences and phone numbers",
+      "optout": "Opt-out of marketing communications",
       "reserved": "All rights reserved."
     },
     "whatsapp": {
@@ -99,6 +132,78 @@
     "updates": {
       "title": "Updates to This Privacy Policy",
       "content": "We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the \"Last Updated\" date. You are advised to review this Privacy Policy periodically for any changes."
+    },
+    "database": {
+      "title": "Data Collection Details",
+      "intro": "Happy CRM system stores your information in the following specific database tables:",
+      "messages": {
+        "title": "Messages Table",
+        "content": "All messaging data (WhatsApp, SMS, Email, Notes), message content, media URLs, status information, timestamps"
+      },
+      "whatsapp_sessions": {
+        "title": "WhatsApp Sessions Table",
+        "content": "24-hour session management, phone numbers, session start/end times, template initiation information"
+      },
+      "user_profiles": {
+        "title": "User Profiles Table",
+        "content": "User profile information, role assignments (superuser, admin, user), usernames, creation dates"
+      },
+      "agencies": {
+        "title": "Agencies Table",
+        "content": "Agency information, contact person names, phone numbers, activity status"
+      },
+      "locations": {
+        "title": "Locations Table",
+        "content": "Location information, address details, geographic coordinates"
+      },
+      "routes": {
+        "title": "Routes Table",
+        "content": "Business route information, route details, location connections"
+      },
+      "notification_preferences": {
+        "title": "Notification Preferences Table",
+        "content": "Notification preferences, channel settings, muted leads list, notification methods"
+      }
+    },
+    "metaReview": {
+      "title": "Meta App Review Compliance",
+      "intro": "Our WhatsApp Business API usage fully complies with Meta's app review requirements:",
+      "purpose": {
+        "title": "Usage Purpose",
+        "content": "WhatsApp Business API is used exclusively for business customer communication purposes"
+      },
+      "templates": {
+        "title": "Template Message Management",
+        "content": "All template messages are approved by Meta and regularly updated"
+      },
+      "optin": {
+        "title": "User Consent (Opt-in)",
+        "content": "All users have provided explicit consent for WhatsApp messaging and have opt-out options available"
+      },
+      "compliance": {
+        "title": "Meta Policy Compliance",
+        "content": "Full compliance with WhatsApp Business Policy, Commerce Policy, and Data Processing Terms"
+      }
+    },
+    "spamPrevention": {
+      "title": "Spam Prevention Policies",
+      "intro": "The following measures are taken to prevent spam and protect user experience:",
+      "optout": "Users' right to stop receiving messages at any time",
+      "frequency": "Limiting message sending frequency",
+      "relevant": "Sending only business-related and valuable content for users",
+      "monitoring": "Automatic spam detection and blocking systems",
+      "reporting": "User complaint reporting and quick resolution mechanisms"
+    },
+    "dataRetentionSpecific": {
+      "title": "Specific Data Retention Periods",
+      "intro": "Special retention periods for different data types:",
+      "messages": "Message data: 3 years or user deletion request",
+      "sessions": "Session data: 1 year, inactive sessions 6 months",
+      "userProfiles": "User profiles: While account is active + 2 years",
+      "notifications": "Notification records: 90 days",
+      "webhooks": "Webhook logs: 30 days (for debugging purposes)",
+      "errors": "Error logs: 6 months",
+      "backups": "Backups: 90 days automatic retention"
     },
     "contact": {
       "title": "Contact Us",

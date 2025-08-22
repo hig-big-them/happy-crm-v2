@@ -1,7 +1,7 @@
 {
   "privacy": {
     "title": "Gizlilik Politikası",
-    "lastUpdated": "Son Güncelleme: 22 Ocak 2025",
+    "lastUpdated": "Son Güncelleme: 23 Ocak 2025",
     "intro": {
       "title": "Giriş",
       "content": "Happy CRM (\"biz\", \"bizim\" veya \"bize\") olarak gizliliğinizi korumaya ve kişisel bilgilerinizin güvenliğini sağlamaya kararlıyız. Bu Gizlilik Politikası, WhatsApp Business Platform entegrasyon hizmetlerimizi kullandığınızda bilgilerinizi nasıl topladığımızı, kullandığımızı, açıkladığımızı ve koruduğumuzu açıklar."
@@ -11,35 +11,43 @@
       "personal": {
         "title": "Kişisel Bilgiler",
         "name": "Ad ve iletişim bilgileri",
-        "phone": "Telefon numaraları (WhatsApp Business iletişimi için)",
+        "phone": "Telefon numaraları (WhatsApp, SMS ve bildirim servisleri için)",
         "email": "E-posta adresleri",
-        "business": "İşletme bilgileri ve tercihleri"
+        "business": "İşletme bilgileri ve tercihleri",
+        "profile": "Kullanıcı adı ve rol dahil kullanıcı profil verileri",
+        "agency": "Ajans bağlantısı ve organizasyon yapısı"
       },
-      "usage": {
-        "title": "Kullanım Verileri",
-        "messages": "WhatsApp mesaj etkileşimleri ve iletişim kayıtları",
-        "templates": "Şablon kullanımı ve performans metrikleri",
-        "api": "API kullanım istatistikleri",
-        "device": "Cihaz ve tarayıcı bilgileri"
+      "messaging": {
+        "title": "Mesajlaşma ve İletişim Verileri",
+        "content": "Tüm kanallardaki mesaj içerikleri (WhatsApp, SMS, Email, Notlar)",
+        "media": "URL'ler ve dosya tipleri dahil medya dosyaları",
+        "metadata": "Mesaj meta verileri (zaman damgaları, teslimat durumu, okundu bilgileri)",
+        "sessions": "WhatsApp 24 saatlik konuşma oturumu verileri",
+        "templates": "Şablon mesaj kullanımı ve parametreleri",
+        "webhooks": "WhatsApp Business API'den gelen webhook verileri"
       },
-      "whatsapp": {
-        "title": "WhatsApp Business Verileri",
-        "numbers": "WhatsApp Business telefon numaraları",
-        "profiles": "İşletme profilleri ve görüntüleme bilgileri",
-        "conversations": "Konuşma meta verileri (mesaj içeriği değil)",
-        "status": "Mesaj teslimat durumu ve webhook'lar"
+      "system": {
+        "title": "Sistem ve Operasyonel Veriler",
+        "leads": "Müşteri adayı ve müşteri ilişki verileri",
+        "routes": "İş rotaları ve konum bilgileri",
+        "notifications": "Bildirim tercihleri ve telefon numarası listeleri",
+        "activity": "Kullanıcı aktivite günlükleri ve oturum bilgileri",
+        "api": "API kullanımı ve entegrasyon istatistikleri"
       }
     },
     "usage": {
       "title": "Bilgilerinizi Nasıl Kullanıyoruz",
-      "provide": "WhatsApp Business Platform entegrasyon hizmetlerimizi sağlamak ve sürdürmek için",
+      "provide": "Çoklu kanal mesajlaşma hizmetleri sağlamak için (WhatsApp, SMS, Email)",
       "messages": "WhatsApp Cloud API üzerinden mesaj gönderme ve almayı kolaylaştırmak için",
       "templates": "Mesaj şablonlarını yönetmek ve teslim etmek için",
+      "sessions": "WhatsApp 24 saatlik konuşma oturumlarını yönetmek için",
+      "notifications": "Tercihlerinize göre bildirimler göndermek için",
       "support": "Müşteri desteği sağlamak ve sorulara yanıt vermek için",
       "improve": "Hizmetlerimizi geliştirmek ve yeni özellikler geliştirmek için",
       "comply": "Yasal yükümlülüklere ve Meta'nın politikalarına uymak için",
       "analytics": "Kullanım kalıplarını analiz etmek ve performansı optimize etmek için",
-      "security": "Teknik sorunları ve güvenlik tehditlerini tespit etmek, önlemek ve ele almak için"
+      "security": "Teknik sorunları ve güvenlik tehditlerini tespit etmek, önlemek ve ele almak için",
+      "roles": "Sistem içindeki kullanıcı rollerini ve izinlerini yönetmek için"
     },
     "sharing": {
       "title": "Veri Paylaşımı ve Açıklama",
@@ -65,9 +73,32 @@
       "title": "Veri Güvenliği",
       "content": "Bilgilerinizi yetkisiz erişim, değiştirme, ifşa veya imhaya karşı korumak için uygun teknik ve organizasyonel güvenlik önlemleri uyguluyoruz. Bu önlemler şifreleme, güvenli API bağlantıları, erişim kontrolleri ve düzenli güvenlik denetimlerini içerir. Tüm WhatsApp iletişimleri Meta'nın güvenli Cloud API altyapısı üzerinden işlenir."
     },
+    "notifications": {
+      "title": "Bildirim Tercihleri",
+      "intro": "Sizi bilgilendirmek için esnek bildirim seçenekleri sunuyoruz:",
+      "types": "Bildirim türleri: son tarih hatırlatıcıları, durum değişiklikleri, sistem güncellemeleri",
+      "channels": "Çoklu bildirim kanalları: WhatsApp, SMS, Email",
+      "preferences": "Her bildirim türü için özelleştirilebilir tercihler",
+      "numbers": "Bildirimler için birden fazla telefon numarası ekleme imkanı",
+      "control": "İstediğiniz zaman bildirimleri etkinleştirme/devre dışı bırakma kontrolü"
+    },
     "retention": {
       "title": "Veri Saklama",
-      "content": "Bilgilerinizi yalnızca bu Gizlilik Politikası'nda belirtilen amaçları yerine getirmek için gerekli olduğu sürece saklarız, kanun tarafından daha uzun bir saklama süresi gerekmediği sürece. Mesaj verileri WhatsApp Business Platform politikalarına ve yapılandırılmış ayarlarınıza göre saklanır."
+      "content": "Bilgilerinizi yalnızca bu Gizlilik Politikası'nda belirtilen amaçları yerine getirmek için gerekli olduğu sürece saklarız, kanun tarafından daha uzun bir saklama süresi gerekmediği sürece.",
+      "messages": "Mesaj verileri: WhatsApp Business Platform politikalarına göre saklanır",
+      "sessions": "Oturum verileri: WhatsApp 24 saatlik konuşma pencereleri takip edilir ve arşivlenir",
+      "user": "Kullanıcı verileri: Hesap aktif olduğu sürece ve kanunun gerektirdiği şekilde saklanır",
+      "backups": "Yedeklemeler: Felaket kurtarma amaçları için otomatik yedeklemeler saklanır",
+      "deletion": "Silme: Veri silme talepleri 30 gün içinde işlenir"
+    },
+    "roles": {
+      "title": "Kullanıcı Rolleri ve Erişim Kontrolü",
+      "intro": "Platformumuz verilerinizi korumak için rol tabanlı erişim kontrolü kullanır:",
+      "superuser": "Süper kullanıcı: Tam platform erişimine sahip sistem yöneticileri",
+      "admin": "Admin: Kullanıcıları ve ayarları yöneten ajans yöneticileri",
+      "user": "Kullanıcı: Atanmış müşteri adaylarına ve mesajlara erişimi olan standart kullanıcılar",
+      "agency": "Ajans Yapısı: Ajanslar arasında veri izolasyonu sağlayan çoklu kiracı mimarisi",
+      "rls": "Satır Düzeyi Güvenlik: Kullanıcıların yalnızca yetkili verilerine erişmesini sağlayan veritabanı düzeyinde güvenlik"
     },
     "rights": {
       "title": "Haklarınız",
@@ -78,6 +109,8 @@
       "restrict": "Belirli işleme faaliyetlerini kısıtlama veya itiraz etme",
       "portability": "Uygun olduğunda veri taşınabilirliği",
       "withdraw": "İstediğiniz zaman onayı geri çekme",
+      "notifications": "Bildirim tercihlerinizi ve telefon numaralarınızı yönetme",
+      "optout": "Pazarlama iletişimlerinden çıkma",
       "reserved": "Tüm hakları saklıdır."
     },
     "whatsapp": {
@@ -99,6 +132,78 @@
     "updates": {
       "title": "Bu Gizlilik Politikası'nın Güncellenmesi",
       "content": "Bu Gizlilik Politikası'nı zaman zaman güncelleyebiliriz. Yeni Gizlilik Politikası'nı bu sayfada yayınlayarak ve \"Son Güncelleme\" tarihini güncelleyerek sizi herhangi bir değişiklikten haberdar edeceğiz. Herhangi bir değişiklik için bu Gizlilik Politikası'nı periyodik olarak gözden geçirmeniz önerilir."
+    },
+    "database": {
+      "title": "Veri Toplama Detayları",
+      "intro": "Happy CRM sistemi aşağıdaki spesifik veri tablolarında bilgilerinizi saklar:",
+      "messages": {
+        "title": "Messages Tablosu",
+        "content": "Tüm mesajlaşma verileri (WhatsApp, SMS, Email, Notlar), mesaj içeriği, medya URL'leri, durum bilgileri, zaman damgaları"
+      },
+      "whatsapp_sessions": {
+        "title": "WhatsApp Sessions Tablosu",
+        "content": "24 saatlik oturum yönetimi, telefon numaraları, oturum başlangıç/bitiş zamanları, template başlatma bilgileri"
+      },
+      "user_profiles": {
+        "title": "User Profiles Tablosu",
+        "content": "Kullanıcı profil bilgileri, rol atamaları (superuser, admin, user), kullanıcı adları, oluşturma tarihleri"
+      },
+      "agencies": {
+        "title": "Agencies Tablosu",
+        "content": "Ajans bilgileri, iletişim kişi adları, telefon numaraları, aktiflik durumları"
+      },
+      "locations": {
+        "title": "Locations Tablosu",
+        "content": "Konum bilgileri, adres detayları, coğrafi koordinatlar"
+      },
+      "routes": {
+        "title": "Routes Tablosu",
+        "content": "İş rotası bilgileri, güzergah detayları, konum bağlantıları"
+      },
+      "notification_preferences": {
+        "title": "Notification Preferences Tablosu",
+        "content": "Bildirim tercihleri, kanal ayarları, susturulan lead listesi, bildirim yöntemleri"
+      }
+    },
+    "metaReview": {
+      "title": "Meta App Review Uyumluluğu",
+      "intro": "WhatsApp Business API kullanımımız Meta'nın app review gereksinimlerine tam uyum sağlar:",
+      "purpose": {
+        "title": "Kullanım Amacı",
+        "content": "WhatsApp Business API sadece iş amaçlı müşteri iletişimi için kullanılmaktadır"
+      },
+      "templates": {
+        "title": "Template Mesaj Yönetimi",
+        "content": "Tüm template mesajlar Meta tarafından onaylanmış ve düzenli olarak güncellenmiştir"
+      },
+      "optin": {
+        "title": "Kullanıcı Onayı (Opt-in)",
+        "content": "Tüm kullanıcılar WhatsApp mesajlaşması için açık onay vermiştir ve opt-out seçeneklerine sahiptir"
+      },
+      "compliance": {
+        "title": "Meta Politika Uyumu",
+        "content": "WhatsApp Business Policy, Commerce Policy ve Data Processing Terms'e tam uyum sağlanmaktadır"
+      }
+    },
+    "spamPrevention": {
+      "title": "Spam Önleme Politikaları",
+      "intro": "Spam önleme ve kullanıcı deneyimi koruma için aşağıdaki önlemler alınmıştır:",
+      "optout": "Kullanıcıların herhangi bir zamanda mesaj almayı durdurma hakkı",
+      "frequency": "Mesaj gönderim sıklığının sınırlandırılması",
+      "relevant": "Sadece iş ile ilgili ve kullanıcı için değerli içerik gönderimi",
+      "monitoring": "Otomatik spam tespit ve engelleme sistemleri",
+      "reporting": "Kullanıcı şikayet raporlama ve hızlı çözüm mekanizmaları"
+    },
+    "dataRetentionSpecific": {
+      "title": "Spesifik Veri Saklama Süreleri",
+      "intro": "Farklı veri türleri için özel saklama süreleri:",
+      "messages": "Mesaj verileri: 3 yıl veya kullanıcı silme talebi",
+      "sessions": "Session verileri: 1 yıl, aktif olmayan sessionlar 6 ay",
+      "userProfiles": "Kullanıcı profilleri: Hesap aktif olduğu sürece + 2 yıl",
+      "notifications": "Bildirim kayıtları: 90 gün",
+      "webhooks": "Webhook logları: 30 gün (debug amaçlı)",
+      "errors": "Hata logları: 6 ay",
+      "backups": "Yedeklemeler: 90 gün otomatik saklama"
     },
     "contact": {
       "title": "Bize Ulaşın",

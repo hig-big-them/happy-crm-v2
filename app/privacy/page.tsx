@@ -16,7 +16,7 @@ export default function PrivacyPolicy() {
               {t('title', 'Privacy Policy')}
             </h1>
             <p className="text-gray-600">
-              {t('lastUpdated', 'Last Updated: January 22, 2025')}
+              {t('lastUpdated', 'Last Updated: January 23, 2025')}
             </p>
           </div>
 
@@ -137,16 +137,127 @@ export default function PrivacyPolicy() {
             </p>
           </section>
 
+          {/* Notification Preferences */}
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+              {t('notifications.title', 'Notification Preferences')}
+            </h2>
+            <p className="text-gray-700 mb-4">
+              {t('notifications.intro', 'We provide flexible notification options to keep you informed:')}
+            </p>
+            <ul className="list-disc list-inside text-gray-700 space-y-2">
+              <li>{t('notifications.types', 'Notification types: deadline reminders, status changes, system updates')}</li>
+              <li>{t('notifications.channels', 'Multiple notification channels: WhatsApp, SMS, Email')}</li>
+              <li>{t('notifications.preferences', 'Customizable preferences for each notification type')}</li>
+              <li>{t('notifications.numbers', 'Ability to add multiple phone numbers for notifications')}</li>
+              <li>{t('notifications.control', 'Full control to enable/disable notifications at any time')}</li>
+            </ul>
+          </section>
+
           {/* Data Retention */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
               {t('retention.title', 'Data Retention')}
             </h2>
-            <p className="text-gray-700 leading-relaxed">
+            <p className="text-gray-700 leading-relaxed mb-4">
               {t('retention.content', 
-                'We retain your information only for as long as necessary to fulfill the purposes outlined in this Privacy Policy, unless a longer retention period is required by law. Message data is retained according to WhatsApp Business Platform policies and your configured settings.'
+                'We retain your information only for as long as necessary to fulfill the purposes outlined in this Privacy Policy, unless a longer retention period is required by law.'
               )}
             </p>
+            <ul className="list-disc list-inside text-gray-700 space-y-2">
+              <li>{t('retention.messages', 'Message data: Retained according to WhatsApp Business Platform policies')}</li>
+              <li>{t('retention.sessions', 'Session data: WhatsApp 24-hour conversation windows are tracked and archived')}</li>
+              <li>{t('retention.user', 'User data: Retained while account is active and as required by law')}</li>
+              <li>{t('retention.backups', 'Backups: Automated backups retained for disaster recovery purposes')}</li>
+              <li>{t('retention.deletion', 'Deletion: Data deletion requests processed within 30 days')}</li>
+            </ul>
+          </section>
+
+          {/* Specific Data Retention Details */}
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+              {t('dataRetentionSpecific.title', 'Specific Data Retention Periods')}
+            </h2>
+            <p className="text-gray-700 mb-4">
+              {t('dataRetentionSpecific.intro', 'Special retention periods for different data types:')}
+            </p>
+            <ul className="list-disc list-inside text-gray-700 space-y-2">
+              <li>{t('dataRetentionSpecific.messages', 'Message data: 3 years or user deletion request')}</li>
+              <li>{t('dataRetentionSpecific.sessions', 'Session data: 1 year, inactive sessions 6 months')}</li>
+              <li>{t('dataRetentionSpecific.userProfiles', 'User profiles: While account is active + 2 years')}</li>
+              <li>{t('dataRetentionSpecific.notifications', 'Notification records: 90 days')}</li>
+              <li>{t('dataRetentionSpecific.webhooks', 'Webhook logs: 30 days (for debugging purposes)')}</li>
+              <li>{t('dataRetentionSpecific.errors', 'Error logs: 6 months')}</li>
+              <li>{t('dataRetentionSpecific.backups', 'Backups: 90 days automatic retention')}</li>
+            </ul>
+          </section>
+
+          {/* Database Tables Information */}
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+              {t('database.title', 'Data Collection Details')}
+            </h2>
+            <p className="text-gray-700 mb-4">
+              {t('database.intro', 'Happy CRM system stores your information in the following specific database tables:')}
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-800 mb-2">
+                  {t('database.messages.title', 'Messages Table')}
+                </h3>
+                <p className="text-sm text-gray-700">
+                  {t('database.messages.content', 'All messaging data (WhatsApp, SMS, Email, Notes), message content, media URLs, status information, timestamps')}
+                </p>
+              </div>
+              <div className="bg-green-50 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-800 mb-2">
+                  {t('database.whatsapp_sessions.title', 'WhatsApp Sessions Table')}
+                </h3>
+                <p className="text-sm text-gray-700">
+                  {t('database.whatsapp_sessions.content', '24-hour session management, phone numbers, session start/end times, template initiation information')}
+                </p>
+              </div>
+              <div className="bg-purple-50 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-800 mb-2">
+                  {t('database.user_profiles.title', 'User Profiles Table')}
+                </h3>
+                <p className="text-sm text-gray-700">
+                  {t('database.user_profiles.content', 'User profile information, role assignments (superuser, admin, user), usernames, creation dates')}
+                </p>
+              </div>
+              <div className="bg-yellow-50 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-800 mb-2">
+                  {t('database.agencies.title', 'Agencies Table')}
+                </h3>
+                <p className="text-sm text-gray-700">
+                  {t('database.agencies.content', 'Agency information, contact person names, phone numbers, activity status')}
+                </p>
+              </div>
+              <div className="bg-red-50 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-800 mb-2">
+                  {t('database.locations.title', 'Locations Table')}
+                </h3>
+                <p className="text-sm text-gray-700">
+                  {t('database.locations.content', 'Location information, address details, geographic coordinates')}
+                </p>
+              </div>
+              <div className="bg-indigo-50 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-800 mb-2">
+                  {t('database.routes.title', 'Routes Table')}
+                </h3>
+                <p className="text-sm text-gray-700">
+                  {t('database.routes.content', 'Business route information, route details, location connections')}
+                </p>
+              </div>
+              <div className="bg-pink-50 rounded-lg p-4 md:col-span-2">
+                <h3 className="font-semibold text-gray-800 mb-2">
+                  {t('database.notification_preferences.title', 'Notification Preferences Table')}
+                </h3>
+                <p className="text-sm text-gray-700">
+                  {t('database.notification_preferences.content', 'Notification preferences, channel settings, muted leads list, notification methods')}
+                </p>
+              </div>
+            </div>
           </section>
 
           {/* User Roles and Access Control */}
@@ -201,6 +312,67 @@ export default function PrivacyPolicy() {
               <li>{t('whatsapp.policy', 'WhatsApp Business Policy')}</li>
               <li>{t('whatsapp.commerce', 'WhatsApp Commerce Policy')}</li>
               <li>{t('whatsapp.data', 'Meta\'s Data Processing Terms')}</li>
+            </ul>
+          </section>
+
+          {/* Meta App Review Compliance */}
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+              {t('metaReview.title', 'Meta App Review Compliance')}
+            </h2>
+            <p className="text-gray-700 mb-4">
+              {t('metaReview.intro', 'Our WhatsApp Business API usage fully complies with Meta\'s app review requirements:')}
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 className="font-semibold text-green-800 mb-2">
+                  {t('metaReview.purpose.title', 'Usage Purpose')}
+                </h3>
+                <p className="text-green-700 text-sm">
+                  {t('metaReview.purpose.content', 'WhatsApp Business API is used exclusively for business customer communication purposes')}
+                </p>
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="font-semibold text-blue-800 mb-2">
+                  {t('metaReview.templates.title', 'Template Message Management')}
+                </h3>
+                <p className="text-blue-700 text-sm">
+                  {t('metaReview.templates.content', 'All template messages are approved by Meta and regularly updated')}
+                </p>
+              </div>
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <h3 className="font-semibold text-purple-800 mb-2">
+                  {t('metaReview.optin.title', 'User Consent (Opt-in)')}
+                </h3>
+                <p className="text-purple-700 text-sm">
+                  {t('metaReview.optin.content', 'All users have provided explicit consent for WhatsApp messaging and have opt-out options available')}
+                </p>
+              </div>
+              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                <h3 className="font-semibold text-indigo-800 mb-2">
+                  {t('metaReview.compliance.title', 'Meta Policy Compliance')}
+                </h3>
+                <p className="text-indigo-700 text-sm">
+                  {t('metaReview.compliance.content', 'Full compliance with WhatsApp Business Policy, Commerce Policy, and Data Processing Terms')}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Spam Prevention Policies */}
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+              {t('spamPrevention.title', 'Spam Prevention Policies')}
+            </h2>
+            <p className="text-gray-700 mb-4">
+              {t('spamPrevention.intro', 'The following measures are taken to prevent spam and protect user experience:')}
+            </p>
+            <ul className="list-disc list-inside text-gray-700 space-y-2">
+              <li>{t('spamPrevention.optout', 'Users\' right to stop receiving messages at any time')}</li>
+              <li>{t('spamPrevention.frequency', 'Limiting message sending frequency')}</li>
+              <li>{t('spamPrevention.relevant', 'Sending only business-related and valuable content for users')}</li>
+              <li>{t('spamPrevention.monitoring', 'Automatic spam detection and blocking systems')}</li>
+              <li>{t('spamPrevention.reporting', 'User complaint reporting and quick resolution mechanisms')}</li>
             </ul>
           </section>
 
