@@ -19,6 +19,7 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
@@ -84,7 +85,18 @@ import {
   VolumeX,
   Smile
 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+// Mock client for messaging page
+const createMockClient = () => ({
+  from: () => ({
+    select: () => ({ data: [], error: null }),
+    insert: () => ({ data: null, error: null }),
+    update: () => ({ data: null, error: null }),
+    delete: () => ({ data: null, error: null })
+  }),
+  auth: {
+    getUser: async () => ({ data: { user: { id: 'mock-user' } }, error: null })
+  }
+});
 import { useInfiniteMessages } from '@/lib/providers/query-provider';
 import { useMessagingStore } from '@/lib/stores/messaging-store';
 // Date formatting utilities (uses locale cookie if present)
@@ -256,6 +268,16 @@ export default function MessagingPage() {
   const [newMessageTemplate, setNewMessageTemplate] = useState<WhatsAppTemplate | null>(null);
   const [newMessageType, setNewMessageType] = useState<'text' | 'template'>('text');
   
+  // Lead ekleme için yeni state'ler
+  const [showAddLeadModal, setShowAddLeadModal] = useState(false);
+  const [addLeadPhone, setAddLeadPhone] = useState('');
+  const [addLeadForm, setAddLeadForm] = useState({
+    lead_name: '',
+    company: '',
+    contact_email: '',
+    notes: ''
+  });
+  
   const messageEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -359,7 +381,7 @@ export default function MessagingPage() {
   const pipelines: any[] = [];
   const stages: any[] = [];
   
-  const supabase = createClient();
+  const supabase = createMockClient();
   const { threads: storeThreads } = useMessagingStore();
 
   // Generate mock messages
@@ -550,13 +572,14 @@ export default function MessagingPage() {
       const result = await response.json();
 
       if (result.success) {
-        toast({
-          title: locale === 'tr' ? 'Başarılı' : 'Success',
-          description: locale === 'tr' ? 'Mesaj başarıyla gönderildi' : 'Message sent successfully',
-        });
+        // Başarı mesajını sadece normal gönderimde göster
+        if (!isTemplate) {
+          toast({
+            title: locale === 'tr' ? 'Başarılı' : 'Success',
+            description: locale === 'tr' ? 'Mesaj başarıyla gönderildi' : 'Message sent successfully',
+          });
+        }
         
-        // Mesaj thread'lerini yenile
-        await loadMessageThreads();
         return result.messageId;
       } else {
         throw new Error(result.error);
@@ -569,6 +592,72 @@ export default function MessagingPage() {
         variant: 'destructive'
       });
       return null;
+    }
+  };
+
+  // Lead ekleme fonksiyonu
+  const addAsLead = async () => {
+    if (!addLeadPhone || !addLeadForm.lead_name) {
+      toast({
+        title: 'Hata',
+        description: 'İsim alanı zorunludur',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      const supabase = createMockClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { data: newLead, error } = await supabase
+        .from('leads')
+        .insert({
+          lead_name: addLeadForm.lead_name,
+          contact_phone: addLeadPhone,
+          contact_email: addLeadForm.contact_email,
+          company: addLeadForm.company,
+          notes: addLeadForm.notes,
+          source: 'whatsapp',
+          status: 'new',
+          created_by: user?.id,
+          metadata: {
+            added_from: 'messaging'
+          }
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: 'Başarılı',
+        description: 'Lead başarıyla eklendi',
+      });
+
+      // Modal'ı kapat ve formu temizle
+      setShowAddLeadModal(false);
+      setAddLeadForm({
+        lead_name: '',
+        company: '',
+        contact_email: '',
+        notes: ''
+      });
+
+      // Thread'leri yenile
+      await loadMessageThreads();
+      
+      // Yeni lead'i seç
+      if (newLead) {
+        setSelectedLeadId(newLead.id);
+      }
+    } catch (error) {
+      console.error('Lead ekleme hatası:', error);
+      toast({
+        title: 'Hata',
+        description: 'Lead eklenemedi',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -601,12 +690,14 @@ export default function MessagingPage() {
       return;
     }
 
+    setLoading(true);
     try {
       let messageId;
+      const formattedPhone = newMessagePhone.startsWith('+') ? newMessagePhone : `+90${newMessagePhone.replace(/\D/g, '')}`;
       
       if (newMessageType === 'template' && newMessageTemplate) {
         messageId = await sendWhatsAppMessage(
-          newMessagePhone,
+          formattedPhone,
           '',
           true,
           newMessageTemplate.name,
@@ -614,29 +705,60 @@ export default function MessagingPage() {
         );
       } else {
         messageId = await sendWhatsAppMessage(
-          newMessagePhone,
+          formattedPhone,
           newMessageText.trim()
         );
       }
 
       if (messageId) {
-        // Modal'ı kapat ve formu temizle
+        // Modal'ı hemen kapat
         setShowNewMessageModal(false);
+        
+        // Formu temizle
         setNewMessagePhone('');
         setNewMessageText('');
         setNewMessageTemplate(null);
         setNewMessageType('text');
         
-        // Mesaj thread'lerini yenile
+        // Mesaj thread'lerini yenile ve konuşmayı seç
         await loadMessageThreads();
+        
+        // Thread'leri yenile ve otomatik seç
+        setTimeout(async () => {
+          await loadMessageThreads();
+          
+          // State güncellenmiş thread'leri kullan
+          setThreads(prevThreads => {
+            const cleanPhone = formattedPhone.replace(/[^0-9+]/g, '');
+            const threadToSelect = prevThreads.find(t => {
+              const threadPhone = t.lead?.contact_phone?.replace(/[^0-9+]/g, '');
+              return threadPhone === cleanPhone || 
+                     threadPhone === cleanPhone.replace('+90', '') ||
+                     threadPhone === '+90' + cleanPhone.replace('+', '');
+            });
+            
+            if (threadToSelect) {
+              setSelectedLeadId(threadToSelect.lead_id);
+            }
+            
+            return prevThreads;
+          });
+        }, 800);
         
         toast({
           title: 'Başarılı',
-          description: 'Yeni mesaj başarıyla gönderildi',
+          description: 'Mesaj gönderildi ve konuşma açılıyor...',
         });
       }
     } catch (error) {
       console.error('Yeni mesaj gönderme hatası:', error);
+      toast({
+        title: 'Hata',
+        description: 'Mesaj gönderilemedi',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -644,98 +766,19 @@ export default function MessagingPage() {
     try {
       setLoading(true);
       
-      console.log('🔄 Loading message threads from Supabase...');
+      console.log('🔄 Loading message threads from API...');
       
-      // Fetch real data from Supabase
-      const supabase = createClient();
+      // Fetch data from API instead of direct Supabase
+      const response = await fetch('/api/messaging/threads');
+      const result = await response.json();
       
-      // Get leads with their messages
-      const { data: leads, error: leadsError } = await supabase
-        .from('leads')
-        .select(`
-          *,
-          messages:messages(*)
-        `)
-        .order('created_at', { ascending: false });
-      
-      console.log('📊 Leads fetched:', leads?.length || 0);
-      console.log('📊 Leads data:', leads);
-      
-      if (leadsError) {
-        console.error('Error fetching leads:', leadsError);
-        throw leadsError;
+      if (!result.success) {
+        console.error('Error fetching threads from API:', result.error);
+        throw new Error(result.error);
       }
       
-      // Get WhatsApp messages
-      const { data: whatsappMessages, error: whatsappError } = await supabase
-        .from('whatsapp_messages')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      console.log('📱 WhatsApp messages fetched:', whatsappMessages?.length || 0);
-      console.log('📱 WhatsApp messages data:', whatsappMessages);
-      
-      if (whatsappError) {
-        console.error('Error fetching WhatsApp messages:', whatsappError);
-        // Don't throw error, continue with leads only
-      }
-      
-      // Transform data into MessageThread format
-      const realThreads: MessageThread[] = [];
-      
-      // Process leads
-      if (leads) {
-        for (const lead of leads) {
-          const leadMessages = lead.messages || [];
-          const whatsappLeadMessages = whatsappMessages?.filter(m => 
-            m.to_phone_number === lead.contact_phone || 
-            m.from_phone_number === lead.contact_phone
-          ) || [];
-          
-          // Combine and sort all messages
-          const allMessages = [...leadMessages, ...whatsappLeadMessages]
-            .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-          
-          if (allMessages.length > 0) {
-            const lastMessage = allMessages[allMessages.length - 1];
-            
-            const thread: MessageThread = {
-              lead_id: lead.id,
-              lead: {
-                id: lead.id,
-                lead_name: lead.lead_name || 'Unknown Lead',
-                contact_phone: lead.contact_phone,
-                contact_email: lead.contact_email,
-                company: lead.company,
-                status: lead.status || 'new',
-                priority: lead.priority || 'medium',
-                assigned_to: lead.assigned_to,
-                tags: lead.tags || [],
-                location: lead.location,
-                avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${lead.id}`,
-                last_seen: formatDistanceToNow(new Date(lastMessage.created_at)),
-                is_online: false
-              },
-              last_message: lastMessage,
-              messages: allMessages,
-              unread_count: allMessages.filter(m => !m.read).length,
-              starred_count: 0,
-              total_messages: allMessages.length,
-              is_starred: false,
-              is_archived: false,
-              is_muted: false,
-              channel: 'whatsapp',
-              phone_number_id: whatsappNumbers[0].phone_number_id,
-              typing_indicator: false,
-              last_activity: lastMessage.created_at
-            };
-            
-            realThreads.push(thread);
-          }
-        }
-      }
-      
-      console.log('🧵 Real threads created:', realThreads.length);
+      const realThreads = result.threads || [];
+      console.log('🧵 Threads loaded from API:', realThreads.length);
       
       // Apply filters
       let filteredThreads = realThreads;
@@ -1017,6 +1060,9 @@ export default function MessagingPage() {
         phone_number_id: selectedThread.phone_number_id
       };
       
+      // Save original content before clearing
+      const originalContent = messageText.trim();
+      
       // Clear input immediately
       setMessageText('');
       if (textareaRef.current) {
@@ -1041,11 +1087,46 @@ export default function MessagingPage() {
         messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
       
+      // Save message to database - basit API kullan
+      const response = await fetch('/api/messaging/send-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          leadId: selectedLeadId,
+          phoneNumber: selectedThread.lead.contact_phone,
+          channel: selectedThread.channel,
+          content: originalContent
+        }),
+      });
+    
+    if (response.ok) {
+      const { message: savedMessage } = await response.json();
+      
+      // Update with real message ID
+      setThreads(prev => prev.map(thread => 
+        thread.lead_id === selectedLeadId && thread.messages
+          ? { 
+              ...thread, 
+              messages: thread.messages.map(msg => 
+                msg.id === tempId ? { ...msg, id: savedMessage.id } : msg
+              )
+            }
+          : thread
+      ));
+      
+      // Thread'leri yenile
+      setTimeout(() => {
+        loadMessageThreads();
+      }, 500);
+    }
+      
       // WhatsApp API ile mesaj gönder
       if (selectedThread.channel === 'whatsapp' && selectedThread.lead.contact_phone) {
         const messageId = await sendWhatsAppMessage(
           selectedThread.lead.contact_phone,
-          messageText.trim()
+          originalContent
         );
         
         if (messageId) {
@@ -1110,7 +1191,7 @@ export default function MessagingPage() {
         thread.lead_id === selectedLeadId && thread.messages
           ? { 
               ...thread, 
-              messages: thread.messages.filter(msg => msg.id !== `temp-${Date.now()}`)
+              messages: thread.messages.filter(msg => msg.id !== tempId)
             }
           : thread
       ));
@@ -1139,14 +1220,14 @@ export default function MessagingPage() {
   }, [selectedLeadId]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/20">
       {/* WhatsApp Business Header */}
-      <div className="border-b bg-white sticky top-0 z-50 shadow-sm">
+      <div className="border-b bg-white/95 backdrop-blur-md sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-green-500/25">
                   <MessageSquare className="h-5 w-5 text-white" />
                 </div>
                 <div>
@@ -1162,7 +1243,7 @@ export default function MessagingPage() {
                 <select 
                   value={selectedWhatsAppNumber}
                   onChange={(e) => setSelectedWhatsAppNumber(e.target.value)}
-                  className="text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="text-sm bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 hover:bg-white"
                 >
                   <option value="all">{t.messaging.allLines}</option>
                   {whatsappNumbers.map(num => (
@@ -1215,7 +1296,7 @@ export default function MessagingPage() {
                 {/* Yeni Mesaj Butonu */}
                 <Button
                   onClick={() => setShowNewMessageModal(true)}
-                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+                  className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 shadow-lg shadow-green-500/25 transition-all duration-200"
                 >
                   <MessageSquare className="h-4 w-4" />
                   Yeni Mesaj
@@ -1241,11 +1322,11 @@ export default function MessagingPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex h-[calc(100vh-73px)]">
+      <div className="flex h-[calc(100vh-73px)] overflow-hidden">
         {/* Sidebar - Thread List */}
-        <div className="w-96 border-r bg-white flex flex-col">
+        <div className="w-80 lg:w-96 border-r bg-white flex flex-col flex-shrink-0">
           {/* Search & Filters */}
-          <div className="p-4 space-y-3 border-b bg-gray-50">
+          <div className="p-3 space-y-2 border-b bg-gradient-to-r from-green-50 to-emerald-50">
             {/* Search with advanced toggle */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -1253,7 +1334,7 @@ export default function MessagingPage() {
                 placeholder={t.messaging.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-10 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className="w-full pl-9 pr-10 py-2.5 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 hover:bg-white shadow-sm"
               />
               <button
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded transition-colors"
@@ -1264,14 +1345,14 @@ export default function MessagingPage() {
             </div>
 
             {/* Channel Filters */}
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               <button
                 onClick={() => setActiveChannel('all')}
                 className={cn(
-                  "px-3 py-1.5 text-sm rounded-lg transition-all",
+                  "px-3 py-1.5 text-sm rounded-xl transition-all duration-200 font-medium",
                   activeChannel === 'all' 
-                    ? "bg-green-500 text-white" 
-                    : "bg-white text-gray-600 hover:bg-gray-100"
+                    ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/25" 
+                    : "bg-white/70 text-gray-600 hover:bg-white hover:shadow-md"
                 )}
               >
                 {t.messaging.channelAll}
@@ -1279,10 +1360,10 @@ export default function MessagingPage() {
               <button
                 onClick={() => setActiveChannel('whatsapp')}
                 className={cn(
-                  "p-1.5 rounded-lg transition-all",
+                  "p-2 rounded-xl transition-all duration-200",
                   activeChannel === 'whatsapp' 
-                    ? "bg-green-500 text-white" 
-                    : "bg-white text-gray-600 hover:bg-gray-100"
+                    ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/25" 
+                    : "bg-white/70 text-gray-600 hover:bg-white hover:shadow-md"
                 )}
               >
                 <MessageSquare className="h-4 w-4" />
@@ -1290,10 +1371,10 @@ export default function MessagingPage() {
               <button
                 onClick={() => setActiveChannel('sms')}
                 className={cn(
-                  "p-1.5 rounded-lg transition-all",
+                  "p-2 rounded-xl transition-all duration-200",
                   activeChannel === 'sms' 
-                    ? "bg-green-500 text-white" 
-                    : "bg-white text-gray-600 hover:bg-gray-100"
+                    ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/25" 
+                    : "bg-white/70 text-gray-600 hover:bg-white hover:shadow-md"
                 )}
               >
                 <Phone className="h-4 w-4" />
@@ -1390,7 +1471,7 @@ export default function MessagingPage() {
           </div>
 
           {/* Thread List */}
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 bg-gradient-to-b from-gray-50 to-white">
             <LayoutGroup>
               {loading ? (
                 <div className="p-4 space-y-3">
@@ -1429,8 +1510,8 @@ export default function MessagingPage() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                         className={cn(
-                          "group relative hover:bg-accent/50 transition-all duration-200",
-                          selectedLeadId === thread.lead_id && "bg-accent",
+                          "group relative hover:bg-gradient-to-r hover:from-green-50/50 hover:to-emerald-50/50 transition-all duration-200 border-b border-gray-100",
+                          selectedLeadId === thread.lead_id && "bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-l-green-500",
                           thread.is_muted && "opacity-60"
                         )}
                       >
@@ -1727,23 +1808,45 @@ export default function MessagingPage() {
         </div>
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col bg-white">
+        <div className="flex-1 flex flex-col bg-gradient-to-br from-gray-50 to-white overflow-hidden">
           {selectedThread ? (
             <>
               {/* Chat Header */}
-              <div className="h-16 border-b bg-white px-4 flex items-center justify-between shadow-sm">
+              <div className="h-14 border-b bg-white/95 backdrop-blur-sm px-4 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-3">
                   {/* Lead Info */}
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={selectedThread.lead.avatar_url} />
+                    <AvatarImage src={selectedThread.lead?.avatar_url} />
                     <AvatarFallback className="text-xs">
-                      {selectedThread.lead.lead_name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                      {selectedThread.lead?.lead_name ? 
+                        selectedThread.lead.lead_name.split(' ').map(n => n[0]).join('').toUpperCase() :
+                        '?'
+                      }
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-sm">{selectedThread.lead.lead_name}</h3>
-                      {selectedThread.lead.is_online && (
+                      <h3 className="font-semibold text-sm">
+                        {selectedThread.lead?.lead_name || selectedThread.lead?.contact_phone || 'Bilinmeyen'}
+                      </h3>
+                      
+                      {/* Lead yoksa "Lead Olarak Ekle" butonu */}
+                      {!selectedThread.lead?.lead_name && selectedThread.lead?.contact_phone && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-6 text-xs"
+                          onClick={() => {
+                            setAddLeadPhone(selectedThread.lead.contact_phone || '');
+                            setShowAddLeadModal(true);
+                          }}
+                        >
+                          <User className="h-3 w-3 mr-1" />
+                          Lead Olarak Ekle
+                        </Button>
+                      )}
+                      
+                      {selectedThread.lead?.is_online && (
                         <span className="text-xs text-green-600 flex items-center gap-1.5">
                           <div className="h-2 w-2 bg-green-500 rounded-full" />
                           {locale === 'tr' ? 'Çevrimiçi' : 'Online'}
@@ -1846,8 +1949,8 @@ export default function MessagingPage() {
               </div>
               
               {/* Messages Area */}
-              <ScrollArea className="flex-1 bg-gray-50">
-                <div className="p-4 space-y-3 max-w-4xl mx-auto">
+              <ScrollArea className="flex-1 bg-gradient-to-b from-gray-50/50 to-white">
+                <div className="p-4 space-y-2 max-w-3xl mx-auto">
                   {/* Date Separator */}
                   <div className="flex items-center gap-4 my-4">
                     <div className="flex-1 h-px bg-gray-200" />
@@ -1866,30 +1969,34 @@ export default function MessagingPage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         className={cn(
-                          "flex gap-2",
-                          message.is_outbound ? "justify-end" : "justify-start",
-                          !showAvatar && !message.is_outbound && "ml-10"
+                          "flex gap-2 mb-3",
+                          message.is_outbound ? "justify-end" : "justify-start"
                         )}
                       >
-                        {!message.is_outbound && showAvatar && (
-                          <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600 flex-shrink-0 mt-auto">
-                            {selectedThread.lead.lead_name.charAt(0).toUpperCase()}
+                        {/* Sol avatar - sadece incoming mesajlar için */}
+                        {!message.is_outbound && (
+                          <div className="w-8 flex-shrink-0">
+                            {showAvatar && (
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={selectedThread.lead.avatar_url} />
+                                <AvatarFallback className="text-xs bg-gray-100">
+                                  {selectedThread.lead.lead_name.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                            )}
                           </div>
                         )}
-                        {!message.is_outbound && !showAvatar && (
-                          <div className="w-8 flex-shrink-0" />
-                        )}
                         
+                        {/* Mesaj baloncuğu - düzeltilmiş boyutlar */}
                         <div className={cn(
-                          "group relative flex flex-col",
+                          "group relative flex flex-col max-w-[70%] sm:max-w-[60%] lg:max-w-[50%]",
                           message.is_outbound ? "items-end" : "items-start"
                         )}>
-                          {/* Message Bubble */}
                           <div className={cn(
-                            "relative inline-block rounded-2xl px-4 py-2.5 max-w-[85%] break-words",
+                            "relative inline-block rounded-2xl px-3 py-2 shadow-sm",
                             message.is_outbound 
-                              ? "bg-green-500 text-white rounded-br-md" 
-                              : "bg-gray-100 text-gray-900 rounded-bl-md"
+                              ? "bg-green-500 text-white rounded-br-sm" 
+                              : "bg-white border border-gray-200 text-gray-900 rounded-bl-sm"
                           )}>
                             {/* Reply Indicator */}
                             {message.reply_to && (
@@ -1900,9 +2007,11 @@ export default function MessagingPage() {
                               </div>
                             )}
                             
-                            {/* Message Content */}
+                            {/* Mesaj içeriği */}
                             {message.type === 'text' && (
-                              <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{message.content}</p>
+                              <p className="text-sm whitespace-pre-wrap break-words">
+                                {message.content}
+                              </p>
                             )}
                             
                             {message.type === 'image' && (
@@ -2011,43 +2120,26 @@ export default function MessagingPage() {
                               </div>
                             )}
                             
-                            {/* Time & Status */}
+                            {/* Zaman ve durum - daha küçük */}
                             <div className="flex items-center gap-1 mt-1">
                               <span className={cn(
-                                "text-xs",
-                                message.is_outbound ? "text-green-100" : "text-gray-500"
+                                "text-[10px]",
+                                message.is_outbound ? "text-white/70" : "text-gray-400"
                               )}>
                                 {format(new Date(message.created_at), 'HH:mm')}
                               </span>
                               {message.is_outbound && message.status && (
                                 <>
-                                  {message.status === 'sent' && <Check className="h-3 w-3 text-green-200" />}
-                                  {message.status === 'delivered' && <CheckCheck className="h-3 w-3 text-green-200" />}
-                                  {message.status === 'read' && <CheckCheck className="h-3 w-3 text-blue-400" />}
-                                  {message.status === 'failed' && <AlertCircle className="h-3 w-3 text-red-400" />}
+                                  {message.status === 'sent' && <Check className="h-3 w-3 text-white/60" />}
+                                  {message.status === 'delivered' && <CheckCheck className="h-3 w-3 text-white/60" />}
+                                  {message.status === 'read' && <CheckCheck className="h-3 w-3 text-blue-200" />}
+                                  {message.status === 'failed' && <AlertCircle className="h-3 w-3 text-red-300" />}
                                 </>
                               )}
                             </div>
                           </div>
                           
-                          {/* Message Actions */}
-                          <div className={cn(
-                            "absolute top-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity",
-                            message.is_outbound ? "right-full mr-2" : "left-full ml-2"
-                          )}>
-                            <Button variant="ghost" size="icon" className="h-6 w-6">
-                              <Reply className="h-3 w-3" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-6 w-6">
-                              <Forward className="h-3 w-3" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-6 w-6">
-                              <Copy className="h-3 w-3" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-6 w-6">
-                              <Heart className="h-3 w-3" />
-                            </Button>
-                          </div>
+                          {/* Message Actions - Hidden for cleaner UI */}
                         </div>
                         
                         {message.is_outbound && !showAvatar && (
@@ -2127,18 +2219,18 @@ export default function MessagingPage() {
               </AnimatePresence>
               
               {/* Message Composer */}
-              <div className="border-t bg-white p-4">
+              <div className="border-t bg-white/95 backdrop-blur-sm p-3">
                 {/* Attachment Preview */}
                 {/* TODO: Add attachment preview */}
                 
                 {/* Composer */}
-                <div className="flex items-end gap-2">
+                <div className="flex items-end gap-2 max-w-3xl mx-auto w-full">
                   {/* Attachment Button */}
                   <div className="relative">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-10 w-10"
+                      className="h-10 w-10 rounded-xl hover:bg-gray-100 transition-all duration-200"
                       onClick={() => setShowAttachmentMenu(!showAttachmentMenu)}
                     >
                       <Paperclip className="h-5 w-5" />
@@ -2150,7 +2242,7 @@ export default function MessagingPage() {
                           initial={{ opacity: 0, scale: 0.95, y: 10 }}
                           animate={{ opacity: 1, scale: 1, y: 0 }}
                           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                          className="absolute bottom-full mb-2 left-0 bg-popover rounded-lg shadow-lg p-2 min-w-[180px]"
+                          className="absolute bottom-full mb-2 left-0 bg-white border border-gray-200 rounded-xl shadow-xl p-2 min-w-[180px]"
                         >
                           <Button
                             variant="ghost"
@@ -2206,7 +2298,7 @@ export default function MessagingPage() {
                           sendMessage();
                         }
                       }}
-                      className="min-h-[44px] max-h-[120px] pr-10 resize-none"
+                      className="min-h-[44px] max-h-[120px] pr-10 resize-none bg-gray-50 border-gray-200 rounded-xl focus:bg-white transition-colors duration-200"
                       rows={1}
                     />
                     
@@ -2238,7 +2330,7 @@ export default function MessagingPage() {
                   {messageText.trim() ? (
                     <Button
                       size="icon"
-                      className="h-10 w-10"
+                      className="h-10 w-10 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-lg shadow-green-500/25"
                       onClick={sendMessage}
                     >
                       <Send className="h-5 w-5" />
@@ -2247,7 +2339,7 @@ export default function MessagingPage() {
                     <Button
                       variant="secondary"
                       size="icon"
-                      className="h-10 w-10"
+                      className="h-10 w-10 rounded-xl hover:bg-gray-100 transition-all duration-200"
                       onClick={() => setIsRecording(!isRecording)}
                     >
                       <Mic className={cn("h-5 w-5", isRecording && "text-red-500 animate-pulse")} />
@@ -2296,17 +2388,24 @@ export default function MessagingPage() {
               />
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center bg-gray-50">
-              <div className="text-center space-y-4">
-                <div className="h-20 w-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto">
-                  <MessageSquare className="h-10 w-10 text-gray-400" />
+            <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-green-50/20">
+              <div className="text-center space-y-6">
+                <div className="h-24 w-24 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 flex items-center justify-center mx-auto shadow-lg shadow-green-500/10">
+                  <MessageSquare className="h-12 w-12 text-green-600" />
                 </div>
-                <div className="space-y-2">
-                  <h3 className="text-xl font-medium text-gray-900">{t.messaging.selectChatTitle}</h3>
-                  <p className="text-sm text-gray-500 max-w-sm">
+                <div className="space-y-3">
+                  <h3 className="text-2xl font-semibold text-gray-900">{t.messaging.selectChatTitle}</h3>
+                  <p className="text-sm text-gray-600 max-w-md mx-auto leading-relaxed">
                     {t.messaging.selectChatDesc}
                   </p>
                 </div>
+                <Button
+                  onClick={() => setShowNewMessageModal(true)}
+                  className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg shadow-green-500/25"
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Yeni Sohbet Başlat
+                </Button>
               </div>
             </div>
           )}
@@ -2364,6 +2463,78 @@ export default function MessagingPage() {
           }
         }}
       />
+
+      {/* Lead Ekleme Modal'ı */}
+      <Dialog open={showAddLeadModal} onOpenChange={setShowAddLeadModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Lead Olarak Ekle</DialogTitle>
+            <DialogDescription>
+              {addLeadPhone} numarasını lead olarak kaydedin
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="lead_name" className="text-right">
+                İsim *
+              </Label>
+              <Input
+                id="lead_name"
+                value={addLeadForm.lead_name}
+                onChange={(e) => setAddLeadForm(prev => ({ ...prev, lead_name: e.target.value }))}
+                className="col-span-3"
+                placeholder="Müşteri adı"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="company" className="text-right">
+                Şirket
+              </Label>
+              <Input
+                id="company"
+                value={addLeadForm.company}
+                onChange={(e) => setAddLeadForm(prev => ({ ...prev, company: e.target.value }))}
+                className="col-span-3"
+                placeholder="Şirket adı (opsiyonel)"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="email" className="text-right">
+                E-posta
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={addLeadForm.contact_email}
+                onChange={(e) => setAddLeadForm(prev => ({ ...prev, contact_email: e.target.value }))}
+                className="col-span-3"
+                placeholder="email@example.com"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="notes" className="text-right">
+                Notlar
+              </Label>
+              <Textarea
+                id="notes"
+                value={addLeadForm.notes}
+                onChange={(e) => setAddLeadForm(prev => ({ ...prev, notes: e.target.value }))}
+                className="col-span-3"
+                placeholder="Ek notlar..."
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddLeadModal(false)}>
+              İptal
+            </Button>
+            <Button onClick={addAsLead}>
+              Lead Olarak Kaydet
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Yeni Mesaj Modalı */}
       <NewMessageModal

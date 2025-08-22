@@ -22,321 +22,241 @@ export async function GET(request: NextRequest) {
   const isExport = searchParams.get('export') === 'true';
 
   try {
-    // Build unified message query
-    let messages: any[] = [];
-    
-    // WhatsApp Messages
-    let whatsappQuery = supabase
-      .from('whatsapp_messages')
+    // Build unified message query - only select basic existing columns
+    let query = supabase
+      .from('messages')
       .select(`
         id,
-        message_id,
-        from_number,
-        to_number,
-        message_type,
-        content,
-        status,
-        sent_at,
-        delivered_at,
-        read_at,
-        failed_at,
-        is_incoming,
         lead_id,
-        pricing_info
-      `);
-
-    if (leadId) whatsappQuery = whatsappQuery.eq('lead_id', leadId);
-    if (status && status !== 'all') whatsappQuery = whatsappQuery.eq('status', status);
-    
-    const { data: whatsappMessages } = await whatsappQuery.order('sent_at', { ascending: false });
-
-    // SMS Messages
-    let smsQuery = supabase
-      .from('sms_messages')
-      .select(`
-        id,
-        message_sid,
-        from_number,
-        to_number,
+        channel,
+        direction,
         content,
         status,
-        sent_at,
-        delivered_at,
-        is_incoming,
-        lead_id
-      `);
-
-    if (leadId) smsQuery = smsQuery.eq('lead_id', leadId);
-    if (status && status !== 'all') smsQuery = smsQuery.eq('status', status);
-    
-    const { data: smsMessages } = await smsQuery.order('sent_at', { ascending: false });
-
-    // Email Messages
-    let emailQuery = supabase
-      .from('email_messages')
-      .select(`
-        id,
-        message_id,
-        from_email,
-        to_email,
-        subject,
-        content,
-        status,
-        sent_at,
-        delivered_at,
-        is_incoming,
-        lead_id
-      `);
-
-    if (leadId) emailQuery = emailQuery.eq('lead_id', leadId);
-    if (status && status !== 'all') emailQuery = emailQuery.eq('status', status);
-    
-    const { data: emailMessages } = await emailQuery.order('sent_at', { ascending: false });
-
-    // Notes
-    let notesQuery = supabase
-      .from('lead_notes')
-      .select(`
-        id,
-        content,
-        note_type,
-        created_at,
-        lead_id,
-        created_by_profile:user_profiles!created_by(
-          display_name,
-          email
-        )
-      `);
-
-    if (leadId) notesQuery = notesQuery.eq('lead_id', leadId);
-    
-    const { data: notes } = await notesQuery.order('created_at', { ascending: false });
-
-    // Lead bilgilerini çek
-    let leadQuery = supabase
-      .from('leads')
-      .select(`
-        id,
-        lead_name,
-        company:companies(company_name)
-      `);
-
-    if (leadId) leadQuery = leadQuery.eq('id', leadId);
-    
-    const { data: leads } = await leadQuery;
-    const leadsMap = new Map(leads?.map(lead => [lead.id, lead]) || []);
-
-    // Normalize messages
-    const normalizedMessages: any[] = [];
-
-    // WhatsApp messages
-    whatsappMessages?.forEach(msg => {
-      const lead = leadsMap.get(msg.lead_id);
-      if (!lead) return;
-
-      normalizedMessages.push({
-        id: `wa_${msg.id}`,
-        channel: 'whatsapp',
-        message_id: msg.message_id,
-        direction: msg.is_incoming ? 'incoming' : 'outgoing',
-        content: {
-          text: msg.content?.text,
-          template: msg.content?.template,
-          media_type: msg.content?.type,
-          media_url: msg.content?.media_url
-        },
-        status: msg.status,
-        sent_at: msg.sent_at || msg.delivered_at || msg.read_at,
-        delivered_at: msg.delivered_at,
-        read_at: msg.read_at,
-        failed_at: msg.failed_at,
-        from_number: msg.from_number,
-        to_number: msg.to_number,
-        lead,
-        pricing_info: msg.pricing_info
-      });
-    });
-
-    // SMS messages
-    smsMessages?.forEach(msg => {
-      const lead = leadsMap.get(msg.lead_id);
-      if (!lead) return;
-
-      normalizedMessages.push({
-        id: `sms_${msg.id}`,
-        channel: 'sms',
-        message_id: msg.message_sid,
-        direction: msg.is_incoming ? 'incoming' : 'outgoing',
-        content: {
-          text: msg.content
-        },
-        status: msg.status,
-        sent_at: msg.sent_at,
-        delivered_at: msg.delivered_at,
-        from_number: msg.from_number,
-        to_number: msg.to_number,
-        lead
-      });
-    });
-
-    // Email messages
-    emailMessages?.forEach(msg => {
-      const lead = leadsMap.get(msg.lead_id);
-      if (!lead) return;
-
-      normalizedMessages.push({
-        id: `email_${msg.id}`,
-        channel: 'email',
-        message_id: msg.message_id,
-        direction: msg.is_incoming ? 'incoming' : 'outgoing',
-        content: {
-          subject: msg.subject,
-          text: msg.content
-        },
-        status: msg.status,
-        sent_at: msg.sent_at,
-        delivered_at: msg.delivered_at,
-        from_email: msg.from_email,
-        to_email: msg.to_email,
-        lead
-      });
-    });
-
-    // Notes
-    notes?.forEach(note => {
-      const lead = leadsMap.get(note.lead_id);
-      if (!lead) return;
-
-      normalizedMessages.push({
-        id: `note_${note.id}`,
-        channel: 'note',
-        direction: 'outgoing',
-        content: {
-          text: note.content
-        },
-        status: 'read',
-        sent_at: note.created_at,
-        lead,
-        created_by: note.created_by_profile
-      });
-    });
+        metadata,
+        created_at
+      `)
+      .order('created_at', { ascending: false });
 
     // Apply filters
-    let filteredMessages = normalizedMessages;
+    if (leadId) query = query.eq('lead_id', leadId);
+    if (channel && channel !== 'all') query = query.eq('channel', channel);
+    if (status && status !== 'all') query = query.eq('status', status);
+    if (direction && direction !== 'all') query = query.eq('direction', direction);
+    
+    // Apply pagination
+    query = query.range(offset, offset + limit - 1);
 
-    if (channel && channel !== 'all') {
-      filteredMessages = filteredMessages.filter(msg => msg.channel === channel);
-    }
+    const { data: messages, error } = await query;
 
-    if (direction && direction !== 'all') {
-      filteredMessages = filteredMessages.filter(msg => msg.direction === direction);
-    }
-
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filteredMessages = filteredMessages.filter(msg => 
-        msg.content.text?.toLowerCase().includes(searchLower) ||
-        msg.content.subject?.toLowerCase().includes(searchLower) ||
-        msg.lead.lead_name.toLowerCase().includes(searchLower)
+    if (error) {
+      console.error('Failed to fetch messages:', error);
+      return NextResponse.json(
+        { success: false, error: 'Failed to fetch messages', details: error },
+        { status: 500 }
       );
     }
 
-    // Sort by timestamp
-    filteredMessages.sort((a, b) => 
-      new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime()
-    );
-
-    // Calculate stats
-    const stats = {
-      total: filteredMessages.length,
-      by_channel: {} as Record<string, number>,
-      by_status: {} as Record<string, number>,
-      by_direction: {} as Record<string, number>,
-      cost_summary: {
-        total_cost: 0,
-        billable_messages: 0
-      }
-    };
-
-    filteredMessages.forEach(msg => {
-      // Channel stats
-      stats.by_channel[msg.channel] = (stats.by_channel[msg.channel] || 0) + 1;
-      
-      // Status stats
-      stats.by_status[msg.status] = (stats.by_status[msg.status] || 0) + 1;
-      
-      // Direction stats
-      stats.by_direction[msg.direction] = (stats.by_direction[msg.direction] || 0) + 1;
-      
-      // Cost stats
-      if (msg.pricing_info?.billable) {
-        stats.cost_summary.billable_messages++;
-      }
-    });
-
-    // Handle export
-    if (isExport) {
-      const csv = generateCSV(filteredMessages);
-      return new NextResponse(csv, {
-        headers: {
-          'Content-Type': 'text/csv',
-          'Content-Disposition': 'attachment; filename="mesaj-gecmisi.csv"'
-        }
-      });
+    // Apply search filter if provided
+    let filteredMessages = messages || [];
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filteredMessages = filteredMessages.filter(message => 
+        message.content?.toLowerCase().includes(searchLower)
+      );
     }
 
-    // Pagination
-    const paginatedMessages = filteredMessages.slice(offset, offset + limit);
+    // Calculate statistics
+    const stats = {
+      total: filteredMessages.length,
+      byChannel: {
+        whatsapp: filteredMessages.filter(m => m.channel === 'whatsapp').length,
+        sms: filteredMessages.filter(m => m.channel === 'sms').length,
+        email: filteredMessages.filter(m => m.channel === 'email').length,
+        note: filteredMessages.filter(m => m.channel === 'note').length
+      },
+      byStatus: {
+        sent: filteredMessages.filter(m => m.status === 'sent').length,
+        delivered: filteredMessages.filter(m => m.status === 'delivered').length,
+        read: filteredMessages.filter(m => m.status === 'read').length,
+        failed: filteredMessages.filter(m => m.status === 'failed').length,
+        pending: filteredMessages.filter(m => m.status === 'pending').length
+      },
+      byDirection: {
+        incoming: filteredMessages.filter(m => m.direction === 'incoming').length,
+        outgoing: filteredMessages.filter(m => m.direction === 'outgoing').length
+      },
+      unread: filteredMessages.filter(m => m.metadata?.is_read === false && m.direction === 'incoming').length,
+      starred: filteredMessages.filter(m => m.metadata?.is_starred === true).length
+    };
+
+    // Normalize messages for frontend
+    const normalizedMessages = filteredMessages.map(message => ({
+      id: message.id,
+      channel: message.channel,
+      direction: message.direction,
+      content: {
+        text: message.content,
+        subject: message.metadata?.subject,
+        template: message.metadata?.template_name,
+        media_type: message.metadata?.media_type,
+        media_url: message.metadata?.media_url
+      },
+      status: message.status,
+      sent_at: message.metadata?.sent_at || message.created_at,
+      delivered_at: message.metadata?.delivered_at,
+      read_at: message.metadata?.read_at,
+      failed_at: message.metadata?.failed_at,
+      from_number: message.metadata?.from_number,
+      to_number: message.metadata?.to_number,
+      from_email: message.metadata?.from_email,
+      to_email: message.metadata?.to_email,
+      created_by: message.metadata?.sender ? {
+        display_name: message.metadata.sender.full_name || message.metadata.sender.email,
+        email: message.metadata.sender.email
+      } : null,
+      lead: {
+        id: message.lead_id,
+        lead_name: message.metadata?.lead_name,
+        company: message.metadata?.company
+      },
+      pricing_info: message.metadata?.pricing_info,
+      is_read: message.metadata?.is_read || false,
+      is_starred: message.metadata?.is_starred || false
+    }));
 
     return NextResponse.json({
       success: true,
-      messages: paginatedMessages,
+      messages: normalizedMessages,
       stats,
       pagination: {
-        total: filteredMessages.length,
-        limit,
         offset,
-        hasMore: filteredMessages.length > offset + limit
+        limit,
+        hasMore: filteredMessages.length === limit
       }
     });
 
   } catch (error) {
-    console.error('Message history fetch error:', error);
+    console.error('Failed to fetch message history:', error);
     return NextResponse.json(
-      { success: false, error: 'Mesaj geçmişi yüklenirken hata oluştu' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     );
   }
 }
 
-// CSV Export Helper
-function generateCSV(messages: any[]): string {
-  const headers = [
-    'Tarih',
-    'Kanal', 
-    'Yön',
-    'Lead',
-    'Şirket',
-    'Durum',
-    'İçerik',
-    'Telefon/Email'
-  ];
+export async function POST(request: NextRequest) {
+  const supabase = createClient();
+  
+  try {
+    const body = await request.json();
+    const { leadId, phoneNumber, channel, direction, content, mediaUrl, mediaType, metadata } = body;
 
-  const rows = messages.map(msg => [
-    new Date(msg.sent_at).toLocaleString('tr-TR'),
-    msg.channel.toUpperCase(),
-    msg.direction === 'incoming' ? 'Gelen' : 'Giden',
-    msg.lead.lead_name,
-    msg.lead.company?.company_name || '',
-    msg.status,
-    msg.content.text || msg.content.subject || 'N/A',
-    msg.to_number || msg.to_email || msg.from_number || msg.from_email || ''
-  ]);
+    // Validation - leadId veya phoneNumber olmalı
+    if ((!leadId && !phoneNumber) || !channel || !direction || !content) {
+      return NextResponse.json(
+        { success: false, error: 'Missing required fields (leadId or phoneNumber required)' },
+        { status: 400 }
+      );
+    }
 
-  const csvContent = [headers, ...rows]
-    .map(row => row.map(cell => `"${cell}"`).join(','))
-    .join('\n');
+    // Get current user - mock auth için bypass
+    const { data: { user } } = await supabase.auth.getUser();
+    const mockUser = user || { id: 'mock-user-id' }; // Mock user for development
+    
+    if (!mockUser) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
-  // UTF-8 BOM for Turkish characters
-  return '\ufeff' + csvContent;
+    let actualLeadId = leadId;
+    
+    // Eğer leadId yoksa ama phoneNumber varsa, lead'i bul veya oluştur
+    if (!leadId && phoneNumber) {
+      // Önce mevcut lead'i ara
+      const { data: existingLead } = await supabase
+        .from('leads')
+        .select('id')
+        .eq('contact_phone', phoneNumber)
+        .maybeSingle();
+      
+      if (existingLead) {
+        actualLeadId = existingLead.id;
+      } else {
+        // Lead yoksa, geçici bir lead oluştur
+        const { data: newLead, error: leadError } = await supabase
+          .from('leads')
+          .insert({
+            lead_name: phoneNumber, // Geçici olarak numara kullan
+            contact_phone: phoneNumber,
+            source: 'whatsapp',
+            status: 'new',
+            created_by: mockUser.id,
+            metadata: {
+              auto_created: true,
+              created_from: 'messaging'
+            }
+          })
+          .select()
+          .single();
+        
+        if (leadError) {
+          console.error('Failed to create lead:', leadError);
+          // Lead oluşturulamazsa bile mesajı kaydet (lead_id null olarak)
+        } else {
+          actualLeadId = newLead.id;
+        }
+      }
+    }
+
+    // Prepare metadata with media info
+    const messageMetadata = {
+      ...metadata,
+      phone_number: phoneNumber,
+      media_url: mediaUrl,
+      media_type: mediaType,
+      is_read: false,
+      is_starred: false,
+      sent_at: new Date().toISOString()
+    };
+
+    // Insert message - direction'ı düzelt
+    const correctedDirection = direction === 'outgoing' ? 'outbound' : direction === 'incoming' ? 'inbound' : direction;
+    
+    const { data: message, error } = await supabase
+      .from('messages')
+      .insert({
+        lead_id: actualLeadId,
+        channel,
+        direction: correctedDirection,
+        content,
+        sender_id: mockUser.id,
+        metadata: messageMetadata,
+        status: 'sent'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Failed to insert message:', error);
+      return NextResponse.json(
+        { success: false, error: 'Failed to save message' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message,
+      leadId: actualLeadId
+    });
+
+  } catch (error) {
+    console.error('Failed to create message:', error);
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
 }

@@ -28,12 +28,21 @@ if (!supabaseUrl || !supabaseServiceKey) {
  */
 export function createServiceClient() {
   if (!supabaseUrl || !supabaseServiceKey) {
-    // Return a mock client only in development
+    // Return a simple mock client only in development
     if (process.env.NODE_ENV === 'development') {
       console.warn('⚠️ Using mock Supabase service client - configure environment variables for real database');
-      // Import mock client as fallback in development
-      const { createServiceClient: createMockClient } = require('@/lib/utils/supabase/service');
-      return createMockClient();
+      // Simple mock client without circular import
+      return {
+        from: () => ({
+          select: () => ({ data: [], error: null }),
+          insert: () => ({ data: null, error: null }),
+          update: () => ({ data: null, error: null }),
+          delete: () => ({ data: null, error: null })
+        }),
+        auth: {
+          getUser: async () => ({ data: { user: null }, error: null })
+        }
+      } as any;
     }
     
     throw new Error('Supabase service client cannot be created without environment variables');
