@@ -54,6 +54,48 @@ export interface Dictionaries {
     quickPipelineManage: string
     quickPipelineView: string
   }
+  home: {
+    hero: {
+      title: string
+      subtitle: string
+      description: string
+      getStarted: string
+      viewDemo: string
+    }
+    features: {
+      title: string
+      subtitle: string
+      whatsapp: {
+        title: string
+        description: string
+      }
+      leadManagement: {
+        title: string
+        description: string
+      }
+      analytics: {
+        title: string
+        description: string
+      }
+      automation: {
+        title: string
+        description: string
+      }
+      teamCollaboration: {
+        title: string
+        description: string
+      }
+      security: {
+        title: string
+        description: string
+      }
+    }
+    cta: {
+      title: string
+      subtitle: string
+      button: string
+    }
+  }
   settings: {
     pageTitle: string
     account: { title: string, desc: string, cta: string }
@@ -317,6 +359,48 @@ const tr: Dictionaries = {
     quickPipelineManage: "Pipeline Yönetimi",
     quickPipelineView: "Pipeline Görünümü",
   },
+  home: {
+    hero: {
+      title: "Happy CRM",
+      subtitle: "Müşteri ilişkileri ve WhatsApp mesajlaşma platformu",
+      description: "Lead'lerinizi yönetin, mesajlaşmayı otomatikleştirin ve işinizi büyütün",
+      getStarted: "Başlayın",
+      viewDemo: "Demo Görün"
+    },
+    features: {
+      title: "Neden Happy CRM?",
+      subtitle: "Müşteri ilişkilerinizi yönetmek ve işinizi büyütmek için ihtiyacınız olan her şey",
+      whatsapp: {
+        title: "WhatsApp Business API",
+        description: "WhatsApp üzerinden müşterilerinizle profesyonel mesajlaşma. Template mesajları ve otomatik yanıtlar."
+      },
+      leadManagement: {
+        title: "Müşteri ve Lead Yönetimi",
+        description: "Lead takibi, pipeline yönetimi ve müşteri ilişkileri. Satış süreçlerinizi optimize edin."
+      },
+      analytics: {
+        title: "Analiz ve Raporlama",
+        description: "Müşteri etkileşimleriniz, mesaj performansı ve satış metrikleri hakkında detaylı analiz."
+      },
+      automation: {
+        title: "Otomasyon",
+        description: "Akıllı iş akışları ile tekrarlayan görevleri otomatikleştirin. Otomatik yanıtlar ve takip dizileri."
+      },
+      teamCollaboration: {
+        title: "Takım İşbirliği",
+        description: "Ekibinizle birlikte çalışın. Lead'leri atayın, konuşmaları paylaşın ve takım performansını takip edin."
+      },
+      security: {
+        title: "Güvenli ve Güvenilir",
+        description: "Kurumsal düzeyde güvenlik ve veri şifreleme. Müşteri verileriniz güvende ve gizlilik düzenlemelerine uygun."
+      }
+    },
+    cta: {
+      title: "Müşteri ilişkilerinizi dönüştürmeye hazır mısınız?",
+      subtitle: "Happy CRM kullanarak müşteri yönetimini ve WhatsApp iletişimini kolaylaştıran binlerce işletmeye katılın.",
+      button: "Yolculuğunuza Başlayın"
+    }
+  },
   settings: {
     pageTitle: "Kullanıcı Ayarları",
     account: { title: "Hesap Ayarları", desc: "Hesap bilgilerinizi ve şifrenizi buradan yönetebilirsiniz", cta: "Hesap Ayarlarını Yönet" },
@@ -463,6 +547,48 @@ const en: Dictionaries = {
     quickNewLead: "New Lead",
     quickPipelineManage: "Manage Pipelines",
     quickPipelineView: "Pipeline View",
+  },
+  home: {
+    hero: {
+      title: "Happy CRM",
+      subtitle: "Customer relationship and WhatsApp messaging platform",
+      description: "Manage leads, automate messaging, and grow your business with our comprehensive solution",
+      getStarted: "Get Started",
+      viewDemo: "View Demo"
+    },
+    features: {
+      title: "Why Choose Happy CRM?",
+      subtitle: "Everything you need to manage customer relationships and grow your business",
+      whatsapp: {
+        title: "WhatsApp Business API",
+        description: "Professional messaging with customers via WhatsApp. Template messages and automated responses."
+      },
+      leadManagement: {
+        title: "Customer & Lead Management",
+        description: "Lead tracking, pipeline management and customer relationships. Optimize your sales processes."
+      },
+      analytics: {
+        title: "Analytics & Reporting",
+        description: "Detailed performance reports, message analytics and customer behavior analysis."
+      },
+      automation: {
+        title: "Automation",
+        description: "Automate repetitive tasks with smart workflows. Set up automatic responses and follow-up sequences."
+      },
+      teamCollaboration: {
+        title: "Team Collaboration",
+        description: "Work together with your team. Assign leads, share conversations, and track team performance."
+      },
+      security: {
+        title: "Secure & Reliable",
+        description: "Enterprise-grade security with data encryption. Your customer data is safe and compliant with privacy regulations."
+      }
+    },
+    cta: {
+      title: "Ready to transform your customer relationships?",
+      subtitle: "Join thousands of businesses using Happy CRM to streamline their customer management and WhatsApp communications.",
+      button: "Start Your Journey"
+    }
   },
   settings: {
     pageTitle: "User Settings",

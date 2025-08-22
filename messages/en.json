@@ -1,0 +1,112 @@
+{
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last Updated: January 22, 2025",
+    "intro": {
+      "title": "Introduction",
+      "content": "Happy CRM (\"we\", \"our\", or \"us\") is committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our WhatsApp Business Platform integration services."
+    },
+    "collection": {
+      "title": "Information We Collect",
+      "personal": {
+        "title": "Personal Information",
+        "name": "Name and contact information",
+        "phone": "Phone numbers (for WhatsApp Business communication)",
+        "email": "Email addresses",
+        "business": "Business information and preferences"
+      },
+      "usage": {
+        "title": "Usage Data",
+        "messages": "WhatsApp message interactions and communication logs",
+        "templates": "Template usage and performance metrics",
+        "api": "API usage statistics",
+        "device": "Device and browser information"
+      },
+      "whatsapp": {
+        "title": "WhatsApp Business Data",
+        "numbers": "WhatsApp Business phone numbers",
+        "profiles": "Business profiles and display information",
+        "conversations": "Conversation metadata (not message content)",
+        "status": "Message delivery status and webhooks"
+      }
+    },
+    "usage": {
+      "title": "How We Use Your Information",
+      "provide": "To provide and maintain our WhatsApp Business Platform integration services",
+      "messages": "To facilitate message sending and receiving through WhatsApp Cloud API",
+      "templates": "To manage and deliver message templates",
+      "support": "To provide customer support and respond to inquiries",
+      "improve": "To improve our services and develop new features",
+      "comply": "To comply with legal obligations and Meta's policies",
+      "analytics": "To analyze usage patterns and optimize performance",
+      "security": "To detect, prevent, and address technical issues and security threats"
+    },
+    "sharing": {
+      "title": "Data Sharing and Disclosure",
+      "intro": "We may share your information in the following circumstances:",
+      "meta": {
+        "title": "With Meta/WhatsApp:",
+        "content": "We share necessary information with Meta to enable WhatsApp Business Platform functionality in accordance with their policies."
+      },
+      "providers": {
+        "title": "Service Providers:",
+        "content": "We may share information with third-party service providers who assist us in operating our platform (e.g., cloud hosting, analytics)."
+      },
+      "legal": {
+        "title": "Legal Requirements:",
+        "content": "We may disclose information if required by law or in response to valid legal requests."
+      },
+      "consent": {
+        "title": "With Your Consent:",
+        "content": "We may share information with your explicit consent or at your direction."
+      }
+    },
+    "security": {
+      "title": "Data Security",
+      "content": "We implement appropriate technical and organizational security measures to protect your information against unauthorized access, alteration, disclosure, or destruction. This includes encryption, secure API connections, access controls, and regular security audits. All WhatsApp communications are processed through Meta's secure Cloud API infrastructure."
+    },
+    "retention": {
+      "title": "Data Retention",
+      "content": "We retain your information only for as long as necessary to fulfill the purposes outlined in this Privacy Policy, unless a longer retention period is required by law. Message data is retained according to WhatsApp Business Platform policies and your configured settings."
+    },
+    "rights": {
+      "title": "Your Rights",
+      "intro": "You have the following rights regarding your personal information:",
+      "access": "Access and receive a copy of your personal data",
+      "correct": "Correct inaccurate or incomplete information",
+      "delete": "Request deletion of your personal data",
+      "restrict": "Restrict or object to certain processing activities",
+      "portability": "Data portability where applicable",
+      "withdraw": "Withdraw consent at any time",
+      "reserved": "All rights reserved."
+    },
+    "whatsapp": {
+      "title": "WhatsApp Business Platform Compliance",
+      "content": "Our use of the WhatsApp Business Platform is subject to Meta's terms and policies. We comply with:",
+      "terms": "WhatsApp Business Terms of Service",
+      "policy": "WhatsApp Business Policy",
+      "commerce": "WhatsApp Commerce Policy",
+      "data": "Meta's Data Processing Terms"
+    },
+    "international": {
+      "title": "International Data Transfers",
+      "content": "Your information may be transferred to and processed in countries other than your country of residence. These countries may have data protection laws different from your country. We ensure appropriate safeguards are in place to protect your information in accordance with this Privacy Policy."
+    },
+    "children": {
+      "title": "Children's Privacy",
+      "content": "Our services are not directed to individuals under the age of 18. We do not knowingly collect personal information from children. If we become aware that we have collected personal information from a child, we will take steps to delete such information."
+    },
+    "updates": {
+      "title": "Updates to This Privacy Policy",
+      "content": "We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the \"Last Updated\" date. You are advised to review this Privacy Policy periodically for any changes."
+    },
+    "contact": {
+      "title": "Contact Us",
+      "intro": "If you have any questions about this Privacy Policy or our data practices, please contact us at:",
+      "email": "Email:",
+      "address": "Address:",
+      "phone": "Phone:"
+    },
+    "back": "Back to Home"
+  }
+}

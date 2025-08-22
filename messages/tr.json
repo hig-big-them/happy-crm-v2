@@ -1,0 +1,112 @@
+{
+  "privacy": {
+    "title": "Gizlilik Politikası",
+    "lastUpdated": "Son Güncelleme: 22 Ocak 2025",
+    "intro": {
+      "title": "Giriş",
+      "content": "Happy CRM (\"biz\", \"bizim\" veya \"bize\") olarak gizliliğinizi korumaya ve kişisel bilgilerinizin güvenliğini sağlamaya kararlıyız. Bu Gizlilik Politikası, WhatsApp Business Platform entegrasyon hizmetlerimizi kullandığınızda bilgilerinizi nasıl topladığımızı, kullandığımızı, açıkladığımızı ve koruduğumuzu açıklar."
+    },
+    "collection": {
+      "title": "Topladığımız Bilgiler",
+      "personal": {
+        "title": "Kişisel Bilgiler",
+        "name": "Ad ve iletişim bilgileri",
+        "phone": "Telefon numaraları (WhatsApp Business iletişimi için)",
+        "email": "E-posta adresleri",
+        "business": "İşletme bilgileri ve tercihleri"
+      },
+      "usage": {
+        "title": "Kullanım Verileri",
+        "messages": "WhatsApp mesaj etkileşimleri ve iletişim kayıtları",
+        "templates": "Şablon kullanımı ve performans metrikleri",
+        "api": "API kullanım istatistikleri",
+        "device": "Cihaz ve tarayıcı bilgileri"
+      },
+      "whatsapp": {
+        "title": "WhatsApp Business Verileri",
+        "numbers": "WhatsApp Business telefon numaraları",
+        "profiles": "İşletme profilleri ve görüntüleme bilgileri",
+        "conversations": "Konuşma meta verileri (mesaj içeriği değil)",
+        "status": "Mesaj teslimat durumu ve webhook'lar"
+      }
+    },
+    "usage": {
+      "title": "Bilgilerinizi Nasıl Kullanıyoruz",
+      "provide": "WhatsApp Business Platform entegrasyon hizmetlerimizi sağlamak ve sürdürmek için",
+      "messages": "WhatsApp Cloud API üzerinden mesaj gönderme ve almayı kolaylaştırmak için",
+      "templates": "Mesaj şablonlarını yönetmek ve teslim etmek için",
+      "support": "Müşteri desteği sağlamak ve sorulara yanıt vermek için",
+      "improve": "Hizmetlerimizi geliştirmek ve yeni özellikler geliştirmek için",
+      "comply": "Yasal yükümlülüklere ve Meta'nın politikalarına uymak için",
+      "analytics": "Kullanım kalıplarını analiz etmek ve performansı optimize etmek için",
+      "security": "Teknik sorunları ve güvenlik tehditlerini tespit etmek, önlemek ve ele almak için"
+    },
+    "sharing": {
+      "title": "Veri Paylaşımı ve Açıklama",
+      "intro": "Bilgilerinizi aşağıdaki durumlarda paylaşabiliriz:",
+      "meta": {
+        "title": "Meta/WhatsApp ile:",
+        "content": "WhatsApp Business Platform işlevselliğini etkinleştirmek için gerekli bilgileri Meta ile politikalarına uygun olarak paylaşırız."
+      },
+      "providers": {
+        "title": "Hizmet Sağlayıcılar:",
+        "content": "Platformumuzu işletmemize yardımcı olan üçüncü taraf hizmet sağlayıcılarla bilgi paylaşabiliriz (örn. bulut barındırma, analitik)."
+      },
+      "legal": {
+        "title": "Yasal Gereklilikler:",
+        "content": "Kanunla gerekli olması veya geçerli yasal taleplere yanıt olarak bilgileri açıklayabiliriz."
+      },
+      "consent": {
+        "title": "Onayınızla:",
+        "content": "Açık onayınızla veya talimatınız doğrultusunda bilgi paylaşabiliriz."
+      }
+    },
+    "security": {
+      "title": "Veri Güvenliği",
+      "content": "Bilgilerinizi yetkisiz erişim, değiştirme, ifşa veya imhaya karşı korumak için uygun teknik ve organizasyonel güvenlik önlemleri uyguluyoruz. Bu önlemler şifreleme, güvenli API bağlantıları, erişim kontrolleri ve düzenli güvenlik denetimlerini içerir. Tüm WhatsApp iletişimleri Meta'nın güvenli Cloud API altyapısı üzerinden işlenir."
+    },
+    "retention": {
+      "title": "Veri Saklama",
+      "content": "Bilgilerinizi yalnızca bu Gizlilik Politikası'nda belirtilen amaçları yerine getirmek için gerekli olduğu sürece saklarız, kanun tarafından daha uzun bir saklama süresi gerekmediği sürece. Mesaj verileri WhatsApp Business Platform politikalarına ve yapılandırılmış ayarlarınıza göre saklanır."
+    },
+    "rights": {
+      "title": "Haklarınız",
+      "intro": "Kişisel bilgilerinizle ilgili aşağıdaki haklara sahipsiniz:",
+      "access": "Kişisel verilerinize erişim ve bir kopyasını alma",
+      "correct": "Yanlış veya eksik bilgileri düzeltme",
+      "delete": "Kişisel verilerinizin silinmesini talep etme",
+      "restrict": "Belirli işleme faaliyetlerini kısıtlama veya itiraz etme",
+      "portability": "Uygun olduğunda veri taşınabilirliği",
+      "withdraw": "İstediğiniz zaman onayı geri çekme",
+      "reserved": "Tüm hakları saklıdır."
+    },
+    "whatsapp": {
+      "title": "WhatsApp Business Platform Uyumluluğu",
+      "content": "WhatsApp Business Platform kullanımımız Meta'nın şartlarına ve politikalarına tabidir. Aşağıdakilere uyuyoruz:",
+      "terms": "WhatsApp Business Hizmet Şartları",
+      "policy": "WhatsApp Business Politikası",
+      "commerce": "WhatsApp Ticaret Politikası",
+      "data": "Meta'nın Veri İşleme Şartları"
+    },
+    "international": {
+      "title": "Uluslararası Veri Transferleri",
+      "content": "Bilgileriniz ikamet ettiğiniz ülke dışındaki ülkelere aktarılabilir ve bu ülkelerde işlenebilir. Bu ülkeler sizin ülkenizden farklı veri koruma yasalarına sahip olabilir. Bu Gizlilik Politikası'na uygun olarak bilgilerinizi korumak için uygun güvenlik önlemlerinin alındığından emin oluyoruz."
+    },
+    "children": {
+      "title": "Çocukların Gizliliği",
+      "content": "Hizmetlerimiz 18 yaşın altındaki bireylere yönelik değildir. Bilerek çocuklardan kişisel bilgi toplamıyoruz. Bir çocuktan kişisel bilgi topladığımızın farkına varırsak, bu bilgileri silmek için adımlar atacağız."
+    },
+    "updates": {
+      "title": "Bu Gizlilik Politikası'nın Güncellenmesi",
+      "content": "Bu Gizlilik Politikası'nı zaman zaman güncelleyebiliriz. Yeni Gizlilik Politikası'nı bu sayfada yayınlayarak ve \"Son Güncelleme\" tarihini güncelleyerek sizi herhangi bir değişiklikten haberdar edeceğiz. Herhangi bir değişiklik için bu Gizlilik Politikası'nı periyodik olarak gözden geçirmeniz önerilir."
+    },
+    "contact": {
+      "title": "Bize Ulaşın",
+      "intro": "Bu Gizlilik Politikası veya veri uygulamalarımız hakkında sorularınız varsa, lütfen bize ulaşın:",
+      "email": "E-posta:",
+      "address": "Adres:",
+      "phone": "Telefon:"
+    },
+    "back": "Ana Sayfaya Dön"
+  }
+}
