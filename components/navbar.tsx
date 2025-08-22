@@ -44,12 +44,21 @@ export function Navbar({}: NavbarProps) {
     }
   };
 
-  // Ana navigasyon linkleri - temiz ve düzenli
+  // Ana navigasyon linkleri - güvenlik için messaging kısıtlandı
   const mainNavItems = [
     { name: t.nav.dashboard, href: "/dashboard" },
     { name: t.nav.pipeline, href: "/pipelines" },
     { name: t.nav.leads, href: "/leads" },
-    { name: t.nav.messaging, href: "/messaging", icon: MessageSquare },
+    // Messaging güvenlik için kısıtlandı
+    { 
+      name: t.nav.messaging, 
+      href: "#", 
+      icon: MessageSquare, 
+      restricted: true,
+      onClick: () => {
+        alert('Messaging access is restricted for security reasons. This feature is available for authenticated business users only.');
+      }
+    },
   ];
 
   // Admin menü öğeleri
@@ -87,18 +96,29 @@ export function Navbar({}: NavbarProps) {
           {!isLoading && user && (
             <nav className="hidden md:flex gap-6 items-center">
               {mainNavItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary ${
-                    pathname === item.href
-                      ? "text-primary"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {item.icon && <item.icon className="h-4 w-4" />}
-                  {item.name}
-                </Link>
+                item.restricted ? (
+                  <button
+                    key={item.href}
+                    onClick={item.onClick}
+                    className="flex items-center gap-2 text-sm font-medium transition-colors text-muted-foreground hover:text-red-500 opacity-60 cursor-not-allowed"
+                  >
+                    {item.icon && <item.icon className="h-4 w-4" />}
+                    {item.name} 🔒
+                  </button>
+                ) : (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary ${
+                      pathname === item.href
+                        ? "text-primary"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {item.icon && <item.icon className="h-4 w-4" />}
+                    {item.name}
+                  </Link>
+                )
               ))}
               
               {/* Admin Dropdown */}
@@ -218,18 +238,29 @@ export function Navbar({}: NavbarProps) {
                 </SheetHeader>
                 <nav className="flex flex-col gap-4 mt-4">
                   {mobileNavItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary ${
-                        pathname === item.href
-                          ? "text-primary"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      {item.icon && <item.icon className="h-4 w-4" />}
-                      {item.name}
-                    </Link>
+                    item.restricted ? (
+                      <button
+                        key={item.href}
+                        onClick={item.onClick}
+                        className="flex items-center gap-2 text-sm font-medium transition-colors text-muted-foreground hover:text-red-500 opacity-60 cursor-not-allowed text-left"
+                      >
+                        {item.icon && <item.icon className="h-4 w-4" />}
+                        {item.name} 🔒
+                      </button>
+                    ) : (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary ${
+                          pathname === item.href
+                            ? "text-primary"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        {item.icon && <item.icon className="h-4 w-4" />}
+                        {item.name}
+                      </Link>
+                    )
                   ))}
                   <Button 
                     onClick={handleLogout}

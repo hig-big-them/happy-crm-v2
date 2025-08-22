@@ -28,11 +28,18 @@ export default function Home() {
                 {t.home.hero.getStarted}
               </Button>
             </Link>
-            <Link href="/messaging">
-              <Button variant="outline" size="lg" className="px-8 py-3 text-lg">
-                {t.home.hero.viewDemo}
-              </Button>
-            </Link>
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="px-8 py-3 text-lg opacity-50 cursor-not-allowed" 
+              disabled
+              onClick={(e) => {
+                e.preventDefault();
+                alert('Demo access is restricted for security reasons. Please sign in to access the platform.');
+              }}
+            >
+              {t.home.hero.viewDemo} (Restricted)
+            </Button>
           </div>
         </div>
       </div>

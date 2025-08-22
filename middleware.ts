@@ -9,8 +9,16 @@ export async function middleware(request: NextRequest) {
   console.log('🎭 [MIDDLEWARE] Mock auth mode - skipping Supabase checks')
   
   // Skip auth check for public routes and API routes that don't need auth
-  const publicRoutes = ['/login', '/auth/callback', '/forgot-password', '/bypass-login']
+  const publicRoutes = ['/login', '/auth/callback', '/forgot-password', '/bypass-login', '/']
   const skipAuthRoutes = ['/api/webhooks', '/api/cron', '/api/twilio', '/api/admin/system-settings']
+  
+  // Messaging routes - güvenlik için kısıtlandı
+  const restrictedRoutes = ['/messaging']
+  
+  if (restrictedRoutes.some(route => pathname.startsWith(route))) {
+    console.log('🔒 [MIDDLEWARE] Restricted route access blocked:', pathname)
+    return NextResponse.redirect(new URL('/login?restricted=messaging', request.url))
+  }
   
   if (publicRoutes.includes(pathname) || 
       skipAuthRoutes.some(route => pathname.startsWith(route))) {

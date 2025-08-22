@@ -75,7 +75,8 @@ export function FloatingActionButton({
   }
 
   const handleMessagesClick = () => {
-    router.push('/messaging')
+    alert('Messaging access is restricted for security reasons. This feature is available for authenticated business users only.');
+    // router.push('/messaging') // Güvenlik için devre dışı
   }
 
   const actions = [

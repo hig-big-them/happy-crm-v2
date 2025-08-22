@@ -287,12 +287,25 @@ async function processIncomingMessage(message: any, metadata: any, supabase: any
     
     console.log('📋 Found existing lead:', existingLead);
     
-    // Mesajı veritabanına kaydet
+    // Mesajı veritabanına kaydet - UTF-8 encoding düzeltmesi
+    let messageContent = message.text?.body || JSON.stringify(content);
+    
+    // UTF-8 encoding sorununu düzelt
+    try {
+      // Eğer content bozuksa, Buffer ile düzelt
+      if (messageContent && messageContent.includes('�')) {
+        const buffer = Buffer.from(messageContent, 'latin1');
+        messageContent = buffer.toString('utf8');
+      }
+    } catch (error) {
+      console.warn('⚠️ UTF-8 encoding fix failed:', error);
+    }
+    
     const messageData = {
       lead_id: existingLead?.id || null,
       channel: 'whatsapp',
       direction: 'inbound', // Mevcut tabloda "inbound/outbound" kullanılıyor
-      content: message.text?.body || JSON.stringify(content),
+      content: messageContent,
       // media_url: content.media_id ? `https://graph.facebook.com/v18.0/${content.media_id}` : null, // Kolonu yok
       status: 'sent', // Mevcut constraint'e uygun
       // sent_at: new Date(parseInt(message.timestamp) * 1000).toISOString(), // Kolonu yok

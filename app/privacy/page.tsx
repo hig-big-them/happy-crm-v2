@@ -44,33 +44,38 @@ export default function PrivacyPolicy() {
                 </h3>
                 <ul className="list-disc list-inside text-gray-700 space-y-2">
                   <li>{t('collection.personal.name', 'Name and contact information')}</li>
-                  <li>{t('collection.personal.phone', 'Phone numbers (for WhatsApp Business communication)')}</li>
+                  <li>{t('collection.personal.phone', 'Phone numbers (for WhatsApp, SMS, and notification services)')}</li>
                   <li>{t('collection.personal.email', 'Email addresses')}</li>
                   <li>{t('collection.personal.business', 'Business information and preferences')}</li>
+                  <li>{t('collection.personal.profile', 'User profile data including username and role')}</li>
+                  <li>{t('collection.personal.agency', 'Agency affiliation and organizational structure')}</li>
                 </ul>
               </div>
               
               <div>
                 <h3 className="text-lg font-medium text-gray-800 mb-2">
-                  {t('collection.usage.title', 'Usage Data')}
+                  {t('collection.messaging.title', 'Messaging and Communication Data')}
                 </h3>
                 <ul className="list-disc list-inside text-gray-700 space-y-2">
-                  <li>{t('collection.usage.messages', 'WhatsApp message interactions and communication logs')}</li>
-                  <li>{t('collection.usage.templates', 'Template usage and performance metrics')}</li>
-                  <li>{t('collection.usage.api', 'API usage statistics')}</li>
-                  <li>{t('collection.usage.device', 'Device and browser information')}</li>
+                  <li>{t('collection.messaging.content', 'Message content across all channels (WhatsApp, SMS, Email, Notes)')}</li>
+                  <li>{t('collection.messaging.media', 'Media files including URLs and file types')}</li>
+                  <li>{t('collection.messaging.metadata', 'Message metadata (timestamps, delivery status, read receipts)')}</li>
+                  <li>{t('collection.messaging.sessions', 'WhatsApp 24-hour conversation session data')}</li>
+                  <li>{t('collection.messaging.templates', 'Template message usage and parameters')}</li>
+                  <li>{t('collection.messaging.webhooks', 'Webhook data from WhatsApp Business API')}</li>
                 </ul>
               </div>
 
               <div>
                 <h3 className="text-lg font-medium text-gray-800 mb-2">
-                  {t('collection.whatsapp.title', 'WhatsApp Business Data')}
+                  {t('collection.system.title', 'System and Operational Data')}
                 </h3>
                 <ul className="list-disc list-inside text-gray-700 space-y-2">
-                  <li>{t('collection.whatsapp.numbers', 'WhatsApp Business phone numbers')}</li>
-                  <li>{t('collection.whatsapp.profiles', 'Business profiles and display information')}</li>
-                  <li>{t('collection.whatsapp.conversations', 'Conversation metadata (not message content)')}</li>
-                  <li>{t('collection.whatsapp.status', 'Message delivery status and webhooks')}</li>
+                  <li>{t('collection.system.leads', 'Lead and customer relationship data')}</li>
+                  <li>{t('collection.system.routes', 'Business routes and location information')}</li>
+                  <li>{t('collection.system.notifications', 'Notification preferences and phone number lists')}</li>
+                  <li>{t('collection.system.activity', 'User activity logs and session information')}</li>
+                  <li>{t('collection.system.api', 'API usage and integration statistics')}</li>
                 </ul>
               </div>
             </div>
@@ -82,14 +87,17 @@ export default function PrivacyPolicy() {
               {t('usage.title', 'How We Use Your Information')}
             </h2>
             <ul className="list-disc list-inside text-gray-700 space-y-2">
-              <li>{t('usage.provide', 'To provide and maintain our WhatsApp Business Platform integration services')}</li>
+              <li>{t('usage.provide', 'To provide multi-channel messaging services (WhatsApp, SMS, Email)')}</li>
               <li>{t('usage.messages', 'To facilitate message sending and receiving through WhatsApp Cloud API')}</li>
               <li>{t('usage.templates', 'To manage and deliver message templates')}</li>
+              <li>{t('usage.sessions', 'To manage WhatsApp 24-hour conversation sessions')}</li>
+              <li>{t('usage.notifications', 'To send notifications based on your preferences')}</li>
               <li>{t('usage.support', 'To provide customer support and respond to inquiries')}</li>
               <li>{t('usage.improve', 'To improve our services and develop new features')}</li>
               <li>{t('usage.comply', 'To comply with legal obligations and Meta\'s policies')}</li>
               <li>{t('usage.analytics', 'To analyze usage patterns and optimize performance')}</li>
               <li>{t('usage.security', 'To detect, prevent, and address technical issues and security threats')}</li>
+              <li>{t('usage.roles', 'To manage user roles and permissions within the system')}</li>
             </ul>
           </section>
 
@@ -141,6 +149,23 @@ export default function PrivacyPolicy() {
             </p>
           </section>
 
+          {/* User Roles and Access Control */}
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+              {t('roles.title', 'User Roles and Access Control')}
+            </h2>
+            <p className="text-gray-700 mb-4">
+              {t('roles.intro', 'Our platform uses role-based access control to protect your data:')}
+            </p>
+            <ul className="list-disc list-inside text-gray-700 space-y-2">
+              <li>{t('roles.superuser', 'Superuser: System administrators with full platform access')}</li>
+              <li>{t('roles.admin', 'Admin: Agency administrators who manage users and settings')}</li>
+              <li>{t('roles.user', 'User: Standard users with access to assigned leads and messages')}</li>
+              <li>{t('roles.agency', 'Agency Structure: Multi-tenant architecture ensuring data isolation between agencies')}</li>
+              <li>{t('roles.rls', 'Row Level Security: Database-level security ensuring users only access their authorized data')}</li>
+            </ul>
+          </section>
+
           {/* Your Rights */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
@@ -156,6 +181,8 @@ export default function PrivacyPolicy() {
               <li>{t('rights.restrict', 'Restrict or object to certain processing activities')}</li>
               <li>{t('rights.portability', 'Data portability where applicable')}</li>
               <li>{t('rights.withdraw', 'Withdraw consent at any time')}</li>
+              <li>{t('rights.notifications', 'Manage your notification preferences and phone numbers')}</li>
+              <li>{t('rights.optout', 'Opt-out of marketing communications')}</li>
             </ul>
           </section>
 
