@@ -38,6 +38,84 @@ export async function GET(request: NextRequest) {
     // Transform data into MessageThread format
     const threads = [];
     
+    // Ayrıca lead_id null olan mesajları da getir (telefon numarası bazlı)
+    const { data: orphanMessages, error: orphanError } = await supabase
+      .from('messages')
+      .select('*')
+      .is('lead_id', null)
+      .eq('channel', 'whatsapp')
+      .order('created_at', { ascending: false });
+    
+    console.log('📱 Orphan messages found:', orphanMessages?.length || 0);
+    
+    // Orphan mesajları telefon numarasına göre grupla
+    if (orphanMessages && orphanMessages.length > 0) {
+      const phoneGroups: { [phone: string]: any[] } = {};
+      
+      orphanMessages.forEach(msg => {
+        const phone = msg.metadata?.from_number || 'unknown';
+        if (!phoneGroups[phone]) phoneGroups[phone] = [];
+        phoneGroups[phone].push(msg);
+      });
+      
+      // Her telefon numarası için thread oluştur
+      Object.entries(phoneGroups).forEach(([phone, messages]) => {
+        const lastMessage = messages[0]; // En son mesaj
+        
+        const thread = {
+          lead_id: `orphan-${phone}`,
+          lead: {
+            id: `orphan-${phone}`,
+            lead_name: phone,
+            contact_phone: phone,
+            contact_email: null,
+            company: null,
+            status: 'new',
+            priority: 'medium',
+            assigned_to: null,
+            tags: ['Yeni Numara'],
+            location: null,
+            avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${phone}`,
+            last_seen: 'Az önce',
+            is_online: false
+          },
+          last_message: {
+            id: lastMessage.id,
+            content: lastMessage.content,
+            channel: lastMessage.channel,
+            direction: lastMessage.direction,
+            status: lastMessage.status,
+            created_at: lastMessage.created_at,
+            is_outbound: lastMessage.direction === 'outbound',
+            type: 'text'
+          },
+          messages: messages.map(msg => ({
+            id: msg.id,
+            content: msg.content,
+            channel: msg.channel,
+            direction: msg.direction,
+            status: msg.status,
+            created_at: msg.created_at,
+            is_outbound: msg.direction === 'outbound',
+            type: 'text',
+            metadata: msg.metadata
+          })),
+          unread_count: messages.filter(m => !m.metadata?.is_read && m.direction === 'inbound').length,
+          starred_count: 0,
+          total_messages: messages.length,
+          is_starred: false,
+          is_archived: false,
+          is_muted: false,
+          channel: 'whatsapp',
+          phone_number_id: '793146130539824',
+          typing_indicator: false,
+          last_activity: lastMessage.created_at
+        };
+        
+        threads.push(thread);
+      });
+    }
+    
     if (leads) {
       for (const lead of leads) {
         const leadMessages = lead.messages || [];
