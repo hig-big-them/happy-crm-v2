@@ -74,7 +74,7 @@ export default function LoginPage() {
         <div className="hidden lg:block flex-1 space-y-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">Happy CRM</h1>
-            <p className="text-xl text-gray-600 mb-8">Müşteri ilişkileri ve WhatsApp mesajlaşma platformu</p>
+            <p className="text-xl text-gray-600 mb-8">Customer relationship and WhatsApp messaging platform</p>
           </div>
           
           <div className="space-y-6">
@@ -86,7 +86,7 @@ export default function LoginPage() {
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 mb-2">WhatsApp Business API</h3>
-                <p className="text-gray-600 text-sm">Müşterilerinizle WhatsApp üzerinden profesyonel mesajlaşma. Template mesajları ve otomatik yanıtlar.</p>
+                <p className="text-gray-600 text-sm">Professional messaging with customers via WhatsApp. Template messages and automated responses.</p>
               </div>
             </div>
             
@@ -97,8 +97,8 @@ export default function LoginPage() {
                 </svg>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Müşteri ve Lead Yönetimi</h3>
-                <p className="text-gray-600 text-sm">Lead takibi, pipeline yönetimi ve müşteri ilişkileri. Satış süreçlerinizi optimize edin.</p>
+                <h3 className="font-semibold text-gray-900 mb-2">Customer & Lead Management</h3>
+                <p className="text-gray-600 text-sm">Lead tracking, pipeline management and customer relationships. Optimize your sales processes.</p>
               </div>
             </div>
             
@@ -109,8 +109,8 @@ export default function LoginPage() {
                 </svg>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Raporlama ve Analiz</h3>
-                <p className="text-gray-600 text-sm">Detaylı performans raporları, mesaj analitiği ve müşteri davranış analizi.</p>
+                <h3 className="font-semibold text-gray-900 mb-2">Analytics & Reporting</h3>
+                <p className="text-gray-600 text-sm">Detailed performance reports, message analytics and customer behavior analysis.</p>
               </div>
             </div>
           </div>
@@ -120,21 +120,21 @@ export default function LoginPage() {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold text-gray-900">
-              Giriş Yap
+              Sign In
             </CardTitle>
             <CardDescription className="text-gray-600">
-              Hesabınıza erişim için giriş bilgilerinizi girin
+              Enter your credentials to access your account
             </CardDescription>
           </CardHeader>
 
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">E-posta</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="ornek@sirket.com"
+                  placeholder="example@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -143,7 +143,7 @@ export default function LoginPage() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password">Şifre</Label>
+                <Label htmlFor="password">Password</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -185,10 +185,10 @@ export default function LoginPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Giriş yapılıyor...
+                    Signing in...
                   </>
                 ) : (
-                  'Giriş Yap'
+                  'Sign In'
                 )}
               </Button>
             </form>
@@ -197,7 +197,7 @@ export default function LoginPage() {
           <CardFooter className="flex flex-col space-y-2">
             <div className="text-center text-sm text-gray-600">
               <Link href="/forgot-password" className="text-blue-600 hover:text-blue-800 underline">
-                Şifremi unuttum
+                Forgot password?
               </Link>
             </div>
           </CardFooter>

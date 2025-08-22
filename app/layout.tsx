@@ -16,7 +16,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Happy CRM',
-  description: 'Müşteri yönetim ve takip sistemi',
+  description: 'Customer relationship management and WhatsApp messaging platform',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,

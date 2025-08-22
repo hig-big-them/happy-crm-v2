@@ -138,15 +138,15 @@ export function Navbar({}: NavbarProps) {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="text-sm font-medium">
                 <Languages className="h-4 w-4 mr-2" />
-                {locale === "tr" ? "Türkçe" : "English"}
+                {locale === "en" ? "English" : "Türkçe"}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem onClick={() => setLocale("tr")}>
-                Türkçe {locale === "tr" ? "✓" : ""}
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setLocale("en")}>
                 English {locale === "en" ? "✓" : ""}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLocale("tr")}>
+                Türkçe {locale === "tr" ? "✓" : ""}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
