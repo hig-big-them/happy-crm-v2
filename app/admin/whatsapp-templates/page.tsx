@@ -430,7 +430,7 @@ export default function WhatsAppTemplatesPage() {
                            buttons: template.components?.find(c => c.type === 'BUTTONS')?.buttons || []
                          }])
                          .select()
-                         .single();
+                         .maybeSingle();
 
                       if (error) {
                         console.error('Database error:', error);
