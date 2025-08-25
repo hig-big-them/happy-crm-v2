@@ -673,10 +673,17 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
               <Input
                 id="template-name"
                 value={currentTemplate.name}
-                onChange={(e) => setCurrentTemplate(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) => {
+                  // Sadece küçük harf, rakam ve alt çizgi kabul et
+                  const sanitizedName = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+                  setCurrentTemplate(prev => ({ ...prev, name: sanitizedName }));
+                }}
                 placeholder="Örn: welcome_message"
                 className="mt-1"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Sadece küçük harfler, rakamlar ve alt çizgi (_) kullanabilirsiniz
+              </p>
             </div>
             
             <div>

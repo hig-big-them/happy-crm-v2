@@ -368,13 +368,8 @@ export class MetaWhatsAppTemplateService {
       language: 'tr',
       components: [
         {
-          type: 'HEADER',
-          format: 'TEXT',
-          text: 'Test Template'
-        },
-        {
           type: 'BODY',
-          text: 'Bu bir test template\'idir. {{1}} parametresi ile test ediliyor.'
+          text: 'Test Template\n\nBu bir test template\'idir. {{1}} parametresi ile test ediliyor.'
         },
         {
           type: 'FOOTER',
@@ -472,10 +467,10 @@ export class MetaWhatsAppTemplateService {
 
     // Test sonuçlarına göre: Category otomatik olarak MARKETING'e çevriliyor
     // Bu yüzden UTILITY kullanmaya devam ediyoruz
-    return {
-      name: uiData.name.trim(),
-      category: uiData.category.toUpperCase() as 'MARKETING' | 'UTILITY' | 'AUTHENTICATION',
-      language: uiData.language.toLowerCase(),
+          return {
+        name: uiData.name.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_'),
+        category: uiData.category.toUpperCase() as 'MARKETING' | 'UTILITY' | 'AUTHENTICATION',
+        language: uiData.language.toLowerCase(),
       components,
       parameter_format: 'POSITIONAL'
     };
