@@ -127,6 +127,9 @@ export default async function RootLayout({
                   xfbml: true,
                   version: '${process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION || 'v20.0'}',
                 });
+                
+                // Log page view event
+                FB.AppEvents.logPageView();
               };
             `
           }}

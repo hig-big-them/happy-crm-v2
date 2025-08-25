@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import EmbeddedSignupButton from '@/components/whatsapp/embedded-signup-button';
+import FacebookLoginButton from '@/components/whatsapp/facebook-login-button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CheckCircle, AlertCircle, MessageSquare, Settings, Globe, Shield } from 'lucide-react';
 
 export default function WhatsAppSignupPage() {
@@ -87,7 +89,7 @@ export default function WhatsAppSignupPage() {
         <CardContent className="text-center space-y-6">
           {!signupData && (
             <>
-              <div className="p-6 bg-blue-50 rounded-lg">
+              <div className="p-6 bg-blue-50 rounded-lg mb-6">
                 <h3 className="font-semibold mb-2">Bağlantı Süreci</h3>
                 <ul className="text-sm text-left space-y-1">
                   <li>• Facebook ile giriş yapın</li>
@@ -97,12 +99,41 @@ export default function WhatsAppSignupPage() {
                 </ul>
               </div>
 
-              <EmbeddedSignupButton
-                onSuccess={handleSuccess}
-                onError={handleError}
-                disabled={isProcessing}
-                className="px-8 py-3 text-lg"
-              />
+              <Tabs defaultValue="custom" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="custom">Custom Button</TabsTrigger>
+                  <TabsTrigger value="facebook">Facebook Button</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="custom" className="space-y-4">
+                  <div className="text-center space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Özelleştirilmiş buton ile WhatsApp Embedded Signup
+                    </p>
+                    <EmbeddedSignupButton
+                      onSuccess={handleSuccess}
+                      onError={handleError}
+                      disabled={isProcessing}
+                      className="px-8 py-3 text-lg"
+                    />
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="facebook" className="space-y-4">
+                  <div className="text-center space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Facebook'un resmi login button component'i
+                    </p>
+                    <FacebookLoginButton
+                      onSuccess={handleSuccess}
+                      onError={handleError}
+                      size="large"
+                      buttonText="WhatsApp Business'a Bağlan"
+                      className="flex justify-center"
+                    />
+                  </div>
+                </TabsContent>
+              </Tabs>
 
               {isProcessing && (
                 <div className="flex items-center justify-center gap-2 text-muted-foreground">

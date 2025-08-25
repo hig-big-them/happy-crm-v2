@@ -43,6 +43,29 @@ const EmbeddedSignupButton = ({
   disabled = false,
   className = ""
 }: EmbeddedSignupButtonProps) => {
+  
+  // Check Facebook login status
+  const checkLoginStatus = () => {
+    if (!window.FB) {
+      console.warn('Facebook SDK not loaded yet');
+      return;
+    }
+    
+    window.FB.getLoginStatus(function(response) {
+      console.log('📋 Facebook login status:', response);
+      
+      if (response.status === 'connected') {
+        console.log('✅ User is connected to Facebook');
+        // User is logged into Facebook and your app
+      } else if (response.status === 'not_authorized') {
+        console.log('⚠️ User is logged into Facebook but not authorized');
+        // User is logged into Facebook, but has not logged into your app
+      } else {
+        console.log('❌ User is not logged into Facebook');
+        // User is not logged into Facebook
+      }
+    });
+  };
 
   const handleLogin = () => {
     if (!window.FB) {
@@ -63,6 +86,9 @@ const EmbeddedSignupButton = ({
       return;
     }
 
+    // Check login status before starting WhatsApp signup
+    checkLoginStatus();
+    
     console.log('🚀 Starting WhatsApp Embedded Signup...');
 
     window.FB.login(
