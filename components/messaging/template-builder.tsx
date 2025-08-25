@@ -567,25 +567,20 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
   useEffect(() => {
     const variables: Record<string, string> = {};
     
+    // Variable'ları body text'ten çıkar ve sample değerler ata
     currentTemplate.components.forEach(component => {
-      component.parameters?.forEach(param => {
-        if (!variables[param.key]) {
-          switch (param.type) {
-            case 'text':
-              variables[param.key] = param.placeholder || 'Örnek Metin';
-              break;
-            case 'number':
-              variables[param.key] = '123';
-              break;
-            case 'date':
-              variables[param.key] = new Date().toLocaleDateString('tr-TR');
-              break;
-            case 'currency':
-              variables[param.key] = '₺1,234';
-              break;
+      if (component.type === 'body' && component.text) {
+        const variablePattern = /\{\{(\d+)\}\}/g;
+        const matches = [...component.text.matchAll(variablePattern)];
+        
+        matches.forEach(match => {
+          const variableNumber = match[1];
+          if (!variables[variableNumber]) {
+            // Sample değerler ata
+            variables[variableNumber] = `Örnek ${variableNumber}`;
           }
-        }
-      });
+        });
+      }
     });
     
     setPreviewVariables(variables);
