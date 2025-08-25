@@ -469,6 +469,10 @@ export default function WhatsAppTemplatesPage() {
                       // Database'deki template'leri al
                       const { data: localTemplates } = await supabase.from('message_templates').select('*');
                       
+                      // Debug: Mevcut template'leri logla
+                      console.log('📋 Local templates found:', localTemplates?.length || 0);
+                      console.log('📋 Local template names:', localTemplates?.map(t => t.name) || []);
+                      
                       // Mevcut template'lerin status'larını güncelle
                       if (localTemplates && localTemplates.length > 0) {
                         await syncTemplateStatuses(localTemplates);
@@ -479,6 +483,10 @@ export default function WhatsAppTemplatesPage() {
                       
                       // Mevcut template isimlerini al
                       const existingTemplateNames = localTemplates?.map(t => t.name) || [];
+                      console.log('📋 Existing template names:', existingTemplateNames);
+                      
+                      // Meta API template isimlerini logla
+                      console.log('📋 Meta API template names:', metaResult.data.map(t => t.name));
                       
                       // Sadece yeni template'leri filtrele
                       const newTemplates = metaResult.data.filter(metaTemplate => 
@@ -486,6 +494,7 @@ export default function WhatsAppTemplatesPage() {
                       );
                       
                       console.log(`📋 Found ${newTemplates.length} new templates to add`);
+                      console.log('📋 New template names:', newTemplates.map(t => t.name));
                       
                       if (newTemplates.length > 0) {
                         const templatesToInsert = newTemplates.map(metaTemplate => {
