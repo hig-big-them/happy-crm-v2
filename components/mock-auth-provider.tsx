@@ -53,7 +53,7 @@ const MOCK_USERS: MockUser[] = [
     avatar_url: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face'
   },
   {
-    id: '4',
+    id: '6d518f9b-fe4f-4246-942d-420fa780cb58',
     email: 'halilg@gmail.com',
     name: 'Halil G',
     role: 'superuser',
