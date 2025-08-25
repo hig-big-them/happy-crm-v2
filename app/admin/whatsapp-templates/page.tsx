@@ -466,31 +466,37 @@ export default function WhatsAppTemplatesPage() {
                         // Database'de template yoksa, Meta API'den gelen template'leri database'e ekle
                         console.log('📝 Adding Meta API templates to database...');
                         
-                        for (const metaTemplate of metaResult.data) {
-                          const { error } = await supabase
-                            .from('message_templates')
-                            .insert([{
-                              name: metaTemplate.name,
-                              category: metaTemplate.category,
-                              language: metaTemplate.language,
-                              status: metaTemplate.status,
-                              body_text: metaTemplate.components?.find(c => c.type === 'BODY')?.text || '',
-                              header_text: metaTemplate.components?.find(c => c.type === 'HEADER')?.text || null,
-                              footer_text: metaTemplate.components?.find(c => c.type === 'FOOTER')?.text || null,
-                              variables: [],
-                              buttons: metaTemplate.components?.find(c => c.type === 'BUTTONS')?.buttons || []
-                            }]);
+                        const templatesToInsert = metaResult.data.map(metaTemplate => ({
+                          name: metaTemplate.name,
+                          category: metaTemplate.category,
+                          language: metaTemplate.language,
+                          status: metaTemplate.status,
+                          body_text: metaTemplate.components?.find(c => c.type === 'BODY')?.text || '',
+                          header_text: metaTemplate.components?.find(c => c.type === 'HEADER')?.text || null,
+                          footer_text: metaTemplate.components?.find(c => c.type === 'FOOTER')?.text || null,
+                          variables: [],
+                          buttons: metaTemplate.components?.find(c => c.type === 'BUTTONS')?.buttons || []
+                        }));
+                        
+                        const { data: insertedData, error: insertError } = await supabase
+                          .from('message_templates')
+                          .insert(templatesToInsert)
+                          .select();
                             
-                          if (error) {
-                            console.error(`❌ Error adding ${metaTemplate.name}:`, error);
-                          } else {
-                            console.log(`✅ Added ${metaTemplate.name} to database`);
-                          }
+                        if (insertError) {
+                          console.error('❌ Error adding templates to database:', insertError);
+                        } else {
+                          console.log(`✅ Successfully added ${insertedData?.length || 0} templates to database`);
+                          console.log('📋 Inserted templates:', insertedData);
                         }
                       }
                       
-                      loadTemplates();
-                      loadStats();
+                      // Kısa bir bekleme süresi ekle
+                      await new Promise(resolve => setTimeout(resolve, 1000));
+                      
+                      // Database'i yeniden yükle
+                      await loadTemplates();
+                      await loadStats();
                       
                       toast({
                         title: "Senkronizasyon Tamamlandı",
