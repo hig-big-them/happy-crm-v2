@@ -235,9 +235,9 @@ function ComponentEditor({
                        }, 0);
                      }
                    }}
-                 >
-                   + {{1}}
-                 </Button>
+                                   >
+                    + Variable
+                  </Button>
                )}
              </div>
              <p className="text-xs text-gray-500 mt-1">
@@ -339,9 +339,9 @@ function ComponentEditor({
                    </div>
                    <div className="flex flex-wrap gap-2">
                      {variables.map((num, index) => (
-                       <Badge key={num} variant="secondary" className="text-xs">
-                         {{`{{${num}}}`}} - {index + 1}. sıra
-                       </Badge>
+                                               <Badge key={num} variant="secondary" className="text-xs">
+                          {`{{${num}}}`} - {index + 1}. sıra
+                        </Badge>
                      ))}
                    </div>
                    
