@@ -27,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { createClient } from '@/lib/utils/supabase/client';
+import { createClient } from '@/lib/supabase/mock-auth-client';
 
 interface MessageTemplate {
   id: string;

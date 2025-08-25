@@ -50,7 +50,7 @@ import {
   Filter,
   RefreshCw
 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/mock-auth-client';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/components/ui/use-toast';
 import TemplateBuilder from '@/components/messaging/template-builder';
