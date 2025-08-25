@@ -111,17 +111,23 @@ export default async function RootLayout({
           id="facebook-jssdk"
           src="https://connect.facebook.net/en_US/sdk.js"
           strategy="lazyOnload"
-          onLoad={() => {
-            // @ts-ignore
-            window.fbAsyncInit = function () {
+        />
+        <Script
+          id="facebook-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
               // @ts-ignore
-              FB.init({
-                appId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID,
-                cookie: true,
-                xfbml: true,
-                version: process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION || 'v20.0',
-              });
-            };
+              window.fbAsyncInit = function () {
+                // @ts-ignore
+                FB.init({
+                  appId: '${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}',
+                  cookie: true,
+                  xfbml: true,
+                  version: '${process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION || 'v20.0'}',
+                });
+              };
+            `
           }}
         />
       </body>
