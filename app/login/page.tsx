@@ -14,9 +14,10 @@ import {
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { useMockAuth } from '../../components/mock-auth-provider'
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from 'react'
+import EmbeddedSignupButton from '../../components/whatsapp/embedded-signup-button'
 
 export default function LoginPage() {
   const { signIn, user, loading } = useMockAuth()
@@ -220,7 +221,34 @@ export default function LoginPage() {
             </form>
           </CardContent>
           
-          <CardFooter className="flex flex-col space-y-2">
+          <CardFooter className="flex flex-col space-y-4">
+            <div className="w-full">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-muted-foreground">Or connect with</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="w-full">
+              <EmbeddedSignupButton
+                onSuccess={(data) => {
+                  console.log('WhatsApp signup successful:', data);
+                  // Başarılı bağlantıdan sonra dashboard'a yönlendir
+                  router.push('/dashboard?whatsapp_connected=true');
+                }}
+                onError={(error) => {
+                  console.error('WhatsApp signup error:', error);
+                  setError('WhatsApp connection failed: ' + error);
+                }}
+                className="w-full"
+                disabled={isLoading}
+              />
+            </div>
+            
             <div className="text-center text-sm text-gray-600">
               <Link href="/forgot-password" className="text-blue-600 hover:text-blue-800 underline">
                 Forgot password?
