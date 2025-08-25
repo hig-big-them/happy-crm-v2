@@ -862,18 +862,18 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
                 Sadece küçük harfler, rakamlar ve alt çizgi (_) kullanabilirsiniz
               </p>
               
-              {/* Variable Helper */}
-              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                <p className="text-xs font-medium text-blue-800 mb-2">📝 Variable Kullanımı:</p>
-                <ul className="text-xs text-blue-700 space-y-1">
-                  <li>• <code className="bg-blue-100 px-1 rounded">{{1}}</code> - İlk değişken</li>
-                  <li>• <code className="bg-blue-100 px-1 rounded">{{2}}</code> - İkinci değişken</li>
-                  <li>• <code className="bg-blue-100 px-1 rounded">{{3}}</code> - Üçüncü değişken</li>
-                  <li>• Variable'lar sıralı olmalı (1, 2, 3...)</li>
-                  <li>• Template variable ile başlayamaz veya bitemez</li>
-                  <li>• #, $, % gibi özel karakterler kullanılamaz</li>
-                </ul>
-              </div>
+                             {/* Variable Helper */}
+               <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                 <p className="text-xs font-medium text-blue-800 mb-2">📝 Variable Kullanımı:</p>
+                 <ul className="text-xs text-blue-700 space-y-1">
+                   <li>• <code className="bg-blue-100 px-1 rounded">{`{{1}}`}</code> - İlk değişken</li>
+                   <li>• <code className="bg-blue-100 px-1 rounded">{`{{2}}`}</code> - İkinci değişken</li>
+                   <li>• <code className="bg-blue-100 px-1 rounded">{`{{3}}`}</code> - Üçüncü değişken</li>
+                   <li>• Variable'lar sıralı olmalı (1, 2, 3...)</li>
+                   <li>• Template variable ile başlayamaz veya bitemez</li>
+                   <li>• #, $, % gibi özel karakterler kullanılamaz</li>
+                 </ul>
+               </div>
             </div>
             
             <div>
