@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import Script from 'next/script'
 import './globals.css'
 import './react-polyfills'
 import { Navbar } from '../components/navbar'
@@ -104,6 +105,25 @@ export default async function RootLayout({
             </MockAuthProvider>
           </QueryProvider>
         </ThemeProvider>
+        
+        {/* Facebook JavaScript SDK */}
+        <Script
+          id="facebook-jssdk"
+          src="https://connect.facebook.net/en_US/sdk.js"
+          strategy="lazyOnload"
+          onLoad={() => {
+            // @ts-ignore
+            window.fbAsyncInit = function () {
+              // @ts-ignore
+              FB.init({
+                appId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID,
+                cookie: true,
+                xfbml: true,
+                version: process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION || 'v20.0',
+              });
+            };
+          }}
+        />
       </body>
     </html>
   )

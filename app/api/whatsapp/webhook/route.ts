@@ -11,8 +11,8 @@ import { getDeduplicationService } from '@/lib/services/redis-dedup-service';
 import { rateLimitWebhook, getClientIP, createRateLimitResponse } from '@/lib/security/rate-limiter';
 
 // Webhook doğrulama jetonu ve app secret
-const WEBHOOK_VERIFY_TOKEN = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || "HAPPY_CRM_WEBHOOK_VERIFY_TOKEN_2025";
-const WHATSAPP_APP_SECRET = process.env.WHATSAPP_APP_SECRET || "";
+const WEBHOOK_VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || "HAPPY_CRM_WEBHOOK_VERIFY_TOKEN_2025";
+const WHATSAPP_APP_SECRET = process.env.FACEBOOK_APP_SECRET || process.env.WHATSAPP_APP_SECRET || "";
 
 // Get deduplication service instance
 const dedupService = getDeduplicationService();
