@@ -122,6 +122,7 @@ export default async function RootLayout({
                 // @ts-ignore
                 FB.init({
                   appId: '${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}',
+                  autoLogAppEvents: true,
                   cookie: true,
                   xfbml: true,
                   version: '${process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION || 'v20.0'}',

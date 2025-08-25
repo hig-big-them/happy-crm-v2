@@ -68,9 +68,14 @@ const EmbeddedSignupButton = ({
     window.FB.login(
       function (response) {
         // Bu callback, login penceresi kapandığında çalışır.
-        // Asıl veri 'message' event listener ile alınır, bu yüzden burası genellikle boştur.
+        console.log('📋 FB.login response:', response);
+        
         if (response.authResponse) {
           console.log('✅ Login successful, waiting for session info...');
+          // Code burada da alınabilir ama genellikle message event ile geliyor
+          if (response.authResponse.code) {
+            console.log('📋 Authorization code received:', response.authResponse.code.substring(0, 10) + '...');
+          }
         } else {
           console.log('❌ User cancelled login or did not fully authorize.');
           toast({
@@ -86,6 +91,32 @@ const EmbeddedSignupButton = ({
         override_default_response_type: true,
         extras: {
           sessionInfoVersion: 3, // WABA ID ve diğer bilgileri almak için zorunlu
+          setup: {
+            business: {
+              id: null,
+              name: null,
+              email: null,
+              phone: { code: null, number: null },
+              website: null,
+              address: {
+                streetAddress1: null,
+                streetAddress2: null,
+                city: null,
+                state: null,
+                zipPostal: null,
+                country: null
+              },
+              timezone: null
+            },
+            phone: {
+              displayName: null,
+              category: null,
+              description: null
+            },
+            preVerifiedPhone: { ids: null },
+            solutionID: null,
+            whatsAppBusinessAccount: { ids: null }
+          }
         },
       }
     );
