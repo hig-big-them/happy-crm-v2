@@ -497,6 +497,7 @@ export default function WhatsAppTemplatesPage() {
                         
                         console.log('📝 Templates to insert:', templatesToInsert);
                         
+                        console.log('📝 Attempting to insert templates...');
                         const { data: insertedData, error: insertError } = await supabase
                           .from('message_templates')
                           .insert(templatesToInsert)
@@ -504,6 +505,12 @@ export default function WhatsAppTemplatesPage() {
                             
                         if (insertError) {
                           console.error('❌ Error adding templates to database:', insertError);
+                          console.error('❌ Error details:', {
+                            message: insertError.message,
+                            details: insertError.details,
+                            hint: insertError.hint,
+                            code: insertError.code
+                          });
                         } else {
                           console.log(`✅ Successfully added ${insertedData?.length || 0} templates to database`);
                           console.log('📋 Inserted templates:', insertedData);
