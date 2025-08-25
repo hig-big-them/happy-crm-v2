@@ -469,14 +469,26 @@ export default function WhatsAppTemplatesPage() {
                       // Database'deki template'leri al
                       const { data: localTemplates } = await supabase.from('message_templates').select('*');
                       
+                      // Mevcut template'lerin status'larını güncelle
                       if (localTemplates && localTemplates.length > 0) {
-                        // Mevcut template'lerin status'larını güncelle
                         await syncTemplateStatuses(localTemplates);
-                      } else {
-                        // Database'de template yoksa, Meta API'den gelen template'leri database'e ekle
-                        console.log('📝 Adding Meta API templates to database...');
-                        
-                        const templatesToInsert = metaResult.data.map(metaTemplate => {
+                      }
+                      
+                      // Meta API'den gelen yeni template'leri database'e ekle
+                      console.log('📝 Adding new Meta API templates to database...');
+                      
+                      // Mevcut template isimlerini al
+                      const existingTemplateNames = localTemplates?.map(t => t.name) || [];
+                      
+                      // Sadece yeni template'leri filtrele
+                      const newTemplates = metaResult.data.filter(metaTemplate => 
+                        !existingTemplateNames.includes(metaTemplate.name)
+                      );
+                      
+                      console.log(`📋 Found ${newTemplates.length} new templates to add`);
+                      
+                      if (newTemplates.length > 0) {
+                        const templatesToInsert = newTemplates.map(metaTemplate => {
                           const bodyComponent = metaTemplate.components?.find(c => c.type === 'BODY');
                           const headerComponent = metaTemplate.components?.find(c => c.type === 'HEADER');
                           const footerComponent = metaTemplate.components?.find(c => c.type === 'FOOTER');
@@ -496,28 +508,28 @@ export default function WhatsAppTemplatesPage() {
                         });
                         
                         console.log('📝 Templates to insert:', templatesToInsert);
+                        console.log('📝 First template to insert:', templatesToInsert[0]);
                         
-                                                 console.log('📝 Attempting to insert templates...');
-                         console.log('📝 First template to insert:', templatesToInsert[0]);
-                         
-                         const { data: insertedData, error: insertError } = await supabase
-                           .from('message_templates')
-                           .insert(templatesToInsert)
-                           .select();
-                             
-                         if (insertError) {
-                           console.error('❌ Error adding templates to database:', insertError);
-                           console.error('❌ Error details:', {
-                             message: insertError.message,
-                             details: insertError.details,
-                             hint: insertError.hint,
-                             code: insertError.code
-                           });
-                           console.error('❌ Full error object:', insertError);
-                         } else {
-                           console.log(`✅ Successfully added ${insertedData?.length || 0} templates to database`);
-                           console.log('📋 Inserted templates:', insertedData);
-                         }
+                        const { data: insertedData, error: insertError } = await supabase
+                          .from('message_templates')
+                          .insert(templatesToInsert)
+                          .select();
+                              
+                        if (insertError) {
+                          console.error('❌ Error adding templates to database:', insertError);
+                          console.error('❌ Error details:', {
+                            message: insertError.message,
+                            details: insertError.details,
+                            hint: insertError.hint,
+                            code: insertError.code
+                          });
+                          console.error('❌ Full error object:', insertError);
+                        } else {
+                          console.log(`✅ Successfully added ${insertedData?.length || 0} templates to database`);
+                          console.log('📋 Inserted templates:', insertedData);
+                        }
+                      } else {
+                        console.log('📋 No new templates to add - all templates already exist');
                       }
                       
                       // Kısa bir bekleme süresi ekle
