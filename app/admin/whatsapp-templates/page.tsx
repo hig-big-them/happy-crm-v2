@@ -415,22 +415,22 @@ export default function WhatsAppTemplatesPage() {
                     console.log('💾 Template saved from builder:', template);
                     
                     try {
-                                             // Template'i database'e kaydet
-                       const { data, error } = await supabase
-                         .from('message_templates')
-                         .insert([{
-                           name: template.name,
-                           category: template.category.toUpperCase(),
-                           language: template.language,
-                           status: template.status || 'DRAFT',
-                           header_text: template.components?.find(c => c.type === 'HEADER')?.text || null,
-                           body_text: template.components?.find(c => c.type === 'BODY')?.text || '',
-                           footer_text: template.components?.find(c => c.type === 'FOOTER')?.text || null,
-                           variables: template.components?.find(c => c.type === 'BODY')?.variables || [],
-                           buttons: template.components?.find(c => c.type === 'BUTTONS')?.buttons || []
-                         }])
-                         .select()
-                         .maybeSingle();
+                      // Template'i database'e kaydet
+                      const { data, error } = await supabase
+                        .from('message_templates')
+                        .insert([{
+                          name: template.name,
+                          category: template.category.toUpperCase(),
+                          language: template.language,
+                          status: template.status || 'DRAFT',
+                          header_text: template.components?.find(c => c.type === 'header')?.text || null,
+                          body_text: template.components?.find(c => c.type === 'body')?.text || '',
+                          footer_text: template.components?.find(c => c.type === 'footer')?.text || null,
+                          variables: [], // Variables artık body_text içinde {{1}}, {{2}} formatında
+                          buttons: template.components?.find(c => c.type === 'buttons')?.buttons || []
+                        }])
+                        .select()
+                        .maybeSingle();
 
                       if (error) {
                         console.error('Database error:', error);
