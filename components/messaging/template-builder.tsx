@@ -621,7 +621,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
     const hasBody = currentTemplate.components.some(c => c.type === 'body');
     if (!hasBody) errors.push('Body component zorunludur');
     
-    // Check text limits
+    // Check text limits and variables
     currentTemplate.components.forEach((component, index) => {
       if (component.type === 'header' && (component.text?.length || 0) > 60) {
         errors.push(`Header ${index + 1}: Maksimum 60 karakter`);
@@ -632,7 +632,56 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
       if (component.type === 'footer' && (component.text?.length || 0) > 60) {
         errors.push(`Footer ${index + 1}: Maksimum 60 karakter`);
       }
+      
+      // Variable validation for body component
+      if (component.type === 'body' && component.text) {
+        const variableErrors = validateVariables(component.text);
+        errors.push(...variableErrors.map(err => `Body ${index + 1}: ${err}`));
+      }
     });
+
+    return errors;
+  };
+
+  // 🔍 Variable validation helper
+  const validateVariables = (text: string): string[] => {
+    const errors: string[] = [];
+    
+    // Variable pattern: {{1}}, {{2}}, etc.
+    const variablePattern = /\{\{(\d+)\}\}/g;
+    const matches = [...text.matchAll(variablePattern)];
+    const variables = matches.map(match => parseInt(match[1]));
+
+    if (variables.length === 0) return errors;
+
+    // 1. Sequential kontrol
+    const sortedVariables = [...variables].sort((a, b) => a - b);
+    for (let i = 0; i < sortedVariables.length; i++) {
+      if (sortedVariables[i] !== i + 1) {
+        errors.push(`Variable'lar sıralı olmalı (1'den başlayarak). Bulunan: ${variables.join(', ')}`);
+        break;
+      }
+    }
+
+    // 2. Dangling parameters kontrolü
+    const trimmedText = text.trim();
+    if (trimmedText.startsWith('{{') || trimmedText.endsWith('}}')) {
+      errors.push('Template variable ile başlayamaz veya bitemez');
+    }
+
+    // 3. Variable count vs text length kontrolü
+    const textLength = text.replace(/\{\{\d+\}\}/g, '').length;
+    const variableCount = variables.length;
+    
+    if (variableCount > 5 && textLength < 100) {
+      errors.push('Çok fazla variable var. Variable sayısını azaltın veya metni uzatın');
+    }
+
+    // 4. Special characters kontrolü
+    const specialCharPattern = /[#$%]/;
+    if (specialCharPattern.test(text)) {
+      errors.push('Variable'larda #, $, % gibi özel karakterler kullanılamaz');
+    }
 
     return errors;
   };
@@ -684,6 +733,19 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
               <p className="text-xs text-muted-foreground mt-1">
                 Sadece küçük harfler, rakamlar ve alt çizgi (_) kullanabilirsiniz
               </p>
+              
+              {/* Variable Helper */}
+              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-xs font-medium text-blue-800 mb-2">📝 Variable Kullanımı:</p>
+                <ul className="text-xs text-blue-700 space-y-1">
+                  <li>• <code className="bg-blue-100 px-1 rounded">{{1}}</code> - İlk değişken</li>
+                  <li>• <code className="bg-blue-100 px-1 rounded">{{2}}</code> - İkinci değişken</li>
+                  <li>• <code className="bg-blue-100 px-1 rounded">{{3}}</code> - Üçüncü değişken</li>
+                  <li>• Variable'lar sıralı olmalı (1, 2, 3...)</li>
+                  <li>• Template variable ile başlayamaz veya bitemez</li>
+                  <li>• #, $, % gibi özel karakterler kullanılamaz</li>
+                </ul>
+              </div>
             </div>
             
             <div>

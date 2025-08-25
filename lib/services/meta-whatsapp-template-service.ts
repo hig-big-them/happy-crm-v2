@@ -303,6 +303,12 @@ export class MetaWhatsAppTemplateService {
         if (component.type === 'FOOTER' && component.text.length > 60) {
           errors.push('Footer text cannot exceed 60 characters');
         }
+        
+        // Variable validation for BODY component
+        if (component.type === 'BODY') {
+          const variableErrors = this.validateVariables(component.text);
+          errors.push(...variableErrors);
+        }
       }
 
       // Button validation
@@ -338,6 +344,52 @@ export class MetaWhatsAppTemplateService {
   }
 
   /**
+   * 🔍 Variable validation helper
+   */
+  private validateVariables(text: string): string[] {
+    const errors: string[] = [];
+    
+    // Variable pattern: {{1}}, {{2}}, etc.
+    const variablePattern = /\{\{(\d+)\}\}/g;
+    const matches = [...text.matchAll(variablePattern)];
+    const variables = matches.map(match => parseInt(match[1]));
+
+    if (variables.length === 0) return errors;
+
+    // 1. Sequential kontrol
+    const sortedVariables = [...variables].sort((a, b) => a - b);
+    for (let i = 0; i < sortedVariables.length; i++) {
+      if (sortedVariables[i] !== i + 1) {
+        errors.push(`Variables must be sequential starting from 1. Found: ${variables.join(', ')}`);
+        break;
+      }
+    }
+
+    // 2. Dangling parameters kontrolü
+    const trimmedText = text.trim();
+    if (trimmedText.startsWith('{{') || trimmedText.endsWith('}}')) {
+      errors.push('Template cannot start or end with a variable parameter');
+    }
+
+    // 3. Variable count vs text length kontrolü
+    const textLength = text.replace(/\{\{\d+\}\}/g, '').length;
+    const variableCount = variables.length;
+    
+    // Eğer çok fazla variable varsa ve text kısa ise
+    if (variableCount > 5 && textLength < 100) {
+      errors.push('Too many variables relative to message length. Consider reducing variables or increasing text length');
+    }
+
+    // 4. Special characters kontrolü
+    const specialCharPattern = /[#$%]/;
+    if (specialCharPattern.test(text)) {
+      errors.push('Variables cannot contain special characters like #, $, or %');
+    }
+
+    return errors;
+  }
+
+  /**
    * 🔍 Template debug helper
    */
   debugTemplate(templateData: MetaTemplateRequest): void {
@@ -369,7 +421,7 @@ export class MetaWhatsAppTemplateService {
       components: [
         {
           type: 'BODY',
-          text: 'Test Template\n\nBu bir test template\'idir. {{1}} parametresi ile test ediliyor.'
+          text: 'Merhaba {{1}},\n\nBu bir test template\'idir. {{2}} parametresi ile test ediliyor.\n\nTest sonucu: {{3}}'
         },
         {
           type: 'FOOTER',
