@@ -47,27 +47,19 @@ export function Navbar({}: NavbarProps) {
   // Demo kullanıcı kontrolü
   const isDemoUser = user?.email?.includes('demo.') || user?.email?.includes('@happycrm.com');
   
-  // Ana navigasyon linkleri - demo kullanıcılar için messaging kısıtlı
+  // Ana navigasyon linkleri
   const mainNavItems = [
     { name: t.nav.dashboard, href: "/dashboard" },
     { name: t.nav.pipeline, href: "/pipelines" },
     { name: t.nav.leads, href: "/leads" },
-    // Messaging - sadece gerçek kullanıcılar için
-    ...(isDemoUser ? [{
-      name: t.nav.messaging, 
-      href: "/demo-messaging-info", 
-      icon: MessageSquare, 
-      restricted: true
-    }] : [{ 
-      name: t.nav.messaging, 
-      href: "/messaging", 
-      icon: MessageSquare 
-    }]),
+    { name: t.nav.messaging, href: "/messaging", icon: MessageSquare },
   ];
 
   // Admin menü öğeleri
   const adminNavItems = userRole === "superuser" ? [
     { name: "Yönetim", href: "/admin/agencies" },
+    { name: "📱 WhatsApp Templates", href: "/admin/whatsapp-templates" },
+    { name: "📧 Message Templates", href: "/admin/message-templates" },
     { name: t.common.settings, href: "/admin/messaging-settings", icon: Settings },
     { name: "🛡️ Security Test", href: "/security-test" },
     { name: "Webhook Test", href: "/admin/tools/webhook-test" },

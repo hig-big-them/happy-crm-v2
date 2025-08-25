@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '../../lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '../../components/auth-provider'
+import { useMockAuth } from '../../components/mock-auth-provider'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
 import { Badge } from '../../components/ui/badge'
 import { Button } from '../../components/ui/button'
@@ -54,7 +54,7 @@ interface StageStats {
 export default function Dashboard() {
   const router = useRouter()
   const supabase = createClient()
-  const { user, loading: authLoading, refreshSession } = useAuth()
+  const { user, loading: authLoading, refreshSession } = useMockAuth()
   const [isLoading, setIsLoading] = useState(true)
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [recentLeads, setRecentLeads] = useState<RecentLead[]>([])

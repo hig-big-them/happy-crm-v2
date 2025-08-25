@@ -53,7 +53,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/components/ui/use-toast';
-// import { TemplateBuilder } from '@/components/messaging/template-builder'; // Geçici olarak kapalı
+import TemplateBuilder from '@/components/messaging/template-builder';
 import { createWhatsAppService } from '@/lib/services/whatsapp-cloud-service';
 import { formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale';
@@ -392,10 +392,19 @@ export default function WhatsAppTemplatesPage() {
                     WhatsApp template'inizi tasarlayın ve önizleme yapın
                   </DialogDescription>
                 </DialogHeader>
-                <div className="p-8 text-center">
-                  <p className="text-muted-foreground">Template Builder yükleniyor...</p>
-                  <p className="text-sm text-muted-foreground mt-2">Component import hataları düzeltiliyor.</p>
-                </div>
+                <TemplateBuilder
+                  template={selectedTemplate}
+                  onSave={(template) => {
+                    console.log('Template saved:', template);
+                    toast({
+                      title: "Template Kaydedildi",
+                      description: "WhatsApp template başarıyla oluşturuldu ve onay için gönderildi."
+                    });
+                    setIsBuilderOpen(false);
+                    loadTemplates();
+                  }}
+                  onCancel={() => setIsBuilderOpen(false)}
+                />
               </DialogContent>
             </Dialog>
           </div>

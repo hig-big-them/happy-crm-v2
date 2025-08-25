@@ -16,11 +16,11 @@ export async function middleware(request: NextRequest) {
   const restrictedRoutes = ['/messaging', '/admin', '/dashboard']
   
   if (restrictedRoutes.some(route => pathname.startsWith(route))) {
-    // In production, check for proper authentication here
-    // For now, redirect to login if attempting to access restricted routes
+    // Check for authentication - both real Supabase auth and mock auth
     const hasAuth = request.cookies.get('sb-kvjblasewcrztzcfrkgq-auth-token')
+    const mockAuth = request.cookies.get('mock-auth-user')
     
-    if (!hasAuth) {
+    if (!hasAuth && !mockAuth) {
       return NextResponse.redirect(new URL('/login?restricted=true', request.url))
     }
   }
@@ -32,8 +32,9 @@ export async function middleware(request: NextRequest) {
 
   // For all other routes, check authentication
   const hasAuth = request.cookies.get('sb-kvjblasewcrztzcfrkgq-auth-token')
+  const mockAuth = request.cookies.get('mock-auth-user')
   
-  if (!hasAuth) {
+  if (!hasAuth && !mockAuth) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
   

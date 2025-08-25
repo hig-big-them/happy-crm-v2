@@ -615,6 +615,7 @@ function LeadFormModal({
   companies: Company[];
   onSave: (data: Partial<Lead>) => Promise<void>;
 }) {
+  const { locale, t } = useI18n();
   const [formData, setFormData] = useState({
     lead_name: '',
     contact_email: '',

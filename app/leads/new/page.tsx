@@ -15,6 +15,7 @@ import { getPipelines } from '@/lib/actions/pipeline-actions'
 import { Pipeline, CreateLeadInput } from '@/lib/actions/pipeline-types'
 import { createClient } from '@/lib/utils/supabase/client'
 import { useI18n } from '@/lib/i18n/client'
+import { WhatsAppConsent, ConsentState } from '@/components/consent/whatsapp-consent'
 
 export default function NewLeadPage() {
   const router = useRouter()
@@ -23,9 +24,13 @@ export default function NewLeadPage() {
   const [pipelines, setPipelines] = useState<Pipeline[]>([])
   const [users, setUsers] = useState<any[]>([])
   const [companies, setCompanies] = useState<any[]>([])
+  const [consents, setConsents] = useState<ConsentState>({
+    whatsapp_transactional: false,
+    whatsapp_marketing: false
+  })
   const [formData, setFormData] = useState<CreateLeadInput>({
     lead_name: '',
-    company_id: '',
+    company_id: 'none',
     contact_email: '',
     contact_phone: '',
     stage_id: '',
@@ -35,7 +40,7 @@ export default function NewLeadPage() {
     source: 'other',
     priority: 'medium',
     description: '',
-    assigned_user_id: ''
+    assigned_user_id: 'unassigned'
   })
 
   useEffect(() => {
@@ -90,12 +95,30 @@ export default function NewLeadPage() {
       const result = await createLead({
         ...formData,
         lead_value: formData.lead_value || undefined,
-        company_id: formData.company_id || undefined,
-        assigned_user_id: formData.assigned_user_id || undefined,
+        company_id: formData.company_id === 'none' ? undefined : formData.company_id || undefined,
+        assigned_user_id: formData.assigned_user_id === 'unassigned' ? undefined : formData.assigned_user_id || undefined,
         follow_up_date: formData.follow_up_date || undefined
       })
       
       if (result?.data) {
+        // Record consent if phone number is provided and consent is given
+        if (formData.contact_phone && (consents.whatsapp_transactional || consents.whatsapp_marketing)) {
+          try {
+            await fetch('/api/consent', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                customer_id: result.data.id,
+                consents: consents,
+                ip_address: null, // Will be captured from request headers
+                user_agent: navigator.userAgent
+              })
+            })
+          } catch (consentError) {
+            console.error('Failed to record consent:', consentError)
+          }
+        }
+        
         toast({
           title: locale === 'tr' ? 'Başarılı' : 'Success',
           description: locale === 'tr' ? 'Lead oluşturuldu' : 'Lead created'
@@ -157,7 +180,7 @@ export default function NewLeadPage() {
                     <SelectValue placeholder={t.leads?.dialog.companySelect || (locale === 'tr' ? 'Şirket seçin' : 'Select a company')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">{locale === 'tr' ? 'Yok' : 'None'}</SelectItem>
+                    <SelectItem value="none">{locale === 'tr' ? 'Yok' : 'None'}</SelectItem>
                     {companies.map((company) => (
                       <SelectItem key={company.id} value={company.id}>
                         {company.company_name}
@@ -257,6 +280,15 @@ export default function NewLeadPage() {
                 />
               </div>
 
+              {/* WhatsApp Consent - Only show if phone number is provided */}
+              {formData.contact_phone && (
+                <WhatsAppConsent
+                  onConsentChange={setConsents}
+                  defaultConsents={consents}
+                  showDetails={true}
+                />
+              )}
+
               <div>
                 <Label htmlFor="assigned_user_id">{locale === 'tr' ? 'Atanan Kullanıcı' : 'Assigned User'}</Label>
                 <Select value={formData.assigned_user_id} onValueChange={(value) => setFormData({ ...formData, assigned_user_id: value })}>
@@ -264,7 +296,7 @@ export default function NewLeadPage() {
                     <SelectValue placeholder={locale === 'tr' ? 'Kullanıcı seçin' : 'Select a user'} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">{locale === 'tr' ? 'Atanmamış' : 'Unassigned'}</SelectItem>
+                    <SelectItem value="unassigned">{locale === 'tr' ? 'Atanmamış' : 'Unassigned'}</SelectItem>
                     {users.map((user) => (
                       <SelectItem key={user.id} value={user.id}>
                         {user.full_name || user.email}

@@ -105,6 +105,9 @@ export function MockAuthProvider({ children }: { children: React.ReactNode }) {
     // Save to localStorage for persistence
     localStorage.setItem('mock-auth-user', JSON.stringify(mockUser))
     
+    // Set cookie for middleware
+    document.cookie = `mock-auth-user=${JSON.stringify(mockUser)}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=strict`
+    
     return { success: true }
   }
 
@@ -115,6 +118,9 @@ export function MockAuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null)
     setUserRole(null)
     localStorage.removeItem('mock-auth-user')
+    
+    // Clear cookie
+    document.cookie = 'mock-auth-user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
     
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 500))
@@ -131,6 +137,9 @@ export function MockAuthProvider({ children }: { children: React.ReactNode }) {
         console.log('✅ [MOCK-AUTH] Found saved user:', user.name)
         setUser(user)
         setUserRole(user.role)
+        
+        // Restore cookie for middleware
+        document.cookie = `mock-auth-user=${savedUser}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=strict`
       } else {
         console.log('❌ [MOCK-AUTH] No saved user found')
         setUser(null)

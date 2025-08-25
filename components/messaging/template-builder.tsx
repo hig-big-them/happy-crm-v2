@@ -8,6 +8,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
+import { createMetaTemplateService } from '@/lib/services/meta-whatsapp-template-service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
@@ -502,7 +503,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
     });
   };
 
-  // 💾 Save & Submit
+  // 💾 Save & Submit - Meta API Integration
   const handleSave = async (submitForReview = false) => {
     if (!currentTemplate.name.trim()) {
       toast({
@@ -525,31 +526,77 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
     setIsSubmitting(true);
 
     try {
-      const templateData = {
-        ...currentTemplate,
-        status: submitForReview ? 'pending' : 'draft'
-      };
+      const metaService = createMetaTemplateService();
 
-      const endpoint = template?.id ? '/api/templates/update' : '/api/templates/create';
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(templateData)
-      });
+      if (submitForReview) {
+        // Meta API'ye template gönder
+        console.log('🚀 Submitting template to Meta API:', currentTemplate.name);
 
-      const result = await response.json();
-
-      if (result.success) {
-        toast({
-          title: 'Başarılı',
-          description: submitForReview 
-            ? 'Template onaya gönderildi' 
-            : 'Template kaydedildi'
+        // UI verilerini Meta formatına çevir
+        const metaTemplateData = metaService.buildTemplateFromUI({
+          name: currentTemplate.name,
+          category: currentTemplate.category,
+          language: currentTemplate.language || 'tr',
+          headerText: currentTemplate.components.find(c => c.type === 'header')?.text,
+          bodyText: currentTemplate.components.find(c => c.type === 'body')?.text || '',
+          footerText: currentTemplate.components.find(c => c.type === 'footer')?.text,
+          buttons: currentTemplate.components
+            .find(c => c.type === 'buttons')
+            ?.buttons?.map(btn => ({
+              type: btn.type,
+              text: btn.text,
+              url: btn.url,
+              phone: btn.phone
+            }))
         });
-        
-        onSave?.(result.data);
+
+        // Component validation
+        const validation = metaService.validateTemplateComponents(metaTemplateData.components);
+        if (!validation.valid) {
+          toast({
+            title: 'Validation Error',
+            description: validation.errors.join(', '),
+            variant: 'destructive'
+          });
+          return;
+        }
+
+        // Debug template data
+        metaService.debugTemplate(metaTemplateData);
+
+        // Meta API'ye gönder
+        console.log('🚀 Submitting to Meta API with data:', metaTemplateData);
+        const result = await metaService.createTemplate(metaTemplateData);
+
+        if (result.success && result.data) {
+          toast({
+            title: '🎉 Template Onaya Gönderildi!',
+            description: `Template "${currentTemplate.name}" Meta'ya gönderildi. Status: ${result.data.status}`,
+          });
+
+          // Parent component'e notify et
+          onSave?.({
+            id: result.data.id,
+            name: currentTemplate.name,
+            status: result.data.status,
+            category: result.data.category,
+            components: metaTemplateData.components
+          });
+        } else {
+          console.error('❌ Meta API submission failed:', result.error);
+          throw new Error(result.error || 'Meta API submission failed');
+        }
       } else {
-        throw new Error(result.error);
+        // Sadece local draft olarak kaydet
+        toast({
+          title: 'Taslak Kaydedildi',
+          description: 'Template taslak olarak kaydedildi. Onaya göndermek için "Onaya Gönder" butonunu kullanın.'
+        });
+
+        onSave?.({
+          ...currentTemplate,
+          status: 'draft'
+        });
       }
 
     } catch (error) {
@@ -863,6 +910,57 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
                   İptal
                 </Button>
               )}
+              
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  const metaService = createMetaTemplateService();
+                  const testResult = await metaService.testConnection();
+                  if (testResult.success) {
+                    toast({
+                      title: '✅ API Bağlantısı Başarılı',
+                      description: 'Meta WhatsApp API bağlantısı çalışıyor',
+                    });
+                  } else {
+                    toast({
+                      title: '❌ API Bağlantı Hatası',
+                      description: testResult.error || 'Bilinmeyen hata',
+                      variant: 'destructive'
+                    });
+                  }
+                }}
+                disabled={isSubmitting}
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                API Test
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  const metaService = createMetaTemplateService();
+                  const testTemplate = metaService.createTestTemplate();
+                  console.log('🧪 Test template:', testTemplate);
+                  
+                  const result = await metaService.createTemplate(testTemplate);
+                  if (result.success) {
+                    toast({
+                      title: '✅ Test Template Başarılı',
+                      description: `Test template oluşturuldu: ${result.data?.id}`,
+                    });
+                  } else {
+                    toast({
+                      title: '❌ Test Template Hatası',
+                      description: result.error || 'Bilinmeyen hata',
+                      variant: 'destructive'
+                    });
+                  }
+                }}
+                disabled={isSubmitting}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Test Template
+              </Button>
               
               <Button
                 variant="outline"
