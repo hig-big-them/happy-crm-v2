@@ -8,6 +8,24 @@ import { NextResponse } from 'next/server';
  * adımlarını tamamlar.
  */
 
+/**
+ * GET endpoint for OAuth redirect (Meta sometimes uses GET)
+ */
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const code = searchParams.get('code');
+  const state = searchParams.get('state');
+  
+  if (code) {
+    console.log('📋 OAuth redirect received via GET:', { code: code.substring(0, 10) + '...', state });
+    
+    // Redirect to frontend with code
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || 'https://happysmileclinic.com'}/?code=${code}&state=${state || ''}`);
+  }
+  
+  return NextResponse.json({ message: 'WhatsApp OAuth endpoint' });
+}
+
 export async function POST(request: Request) {
   try {
     const { code, phone_number_id, waba_id } = await request.json();
