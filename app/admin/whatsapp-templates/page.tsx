@@ -55,6 +55,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from '@/components/ui/use-toast';
 import TemplateBuilder from '@/components/messaging/template-builder';
 import { createWhatsAppService } from '@/lib/services/whatsapp-cloud-service';
+import { createMetaTemplateService } from '@/lib/services/meta-whatsapp-template-service';
 import { formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale';
 
@@ -106,17 +107,17 @@ export default function WhatsAppTemplatesPage() {
     loadStats();
   }, [statusFilter, categoryFilter]);
 
-  const loadTemplates = async () => {
+    const loadTemplates = async () => {
     try {
       setLoading(true);
       
       console.log('📋 Loading templates from database...');
       
-             // Database'den template'leri çek
-       let query = supabase
-         .from('message_templates')
-         .select('*')
-         .order('created_at', { ascending: false });
+      // Database'den template'leri çek
+      let query = supabase
+        .from('message_templates')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       // Filtreleri uygula
       if (statusFilter !== 'all') {
@@ -136,9 +137,14 @@ export default function WhatsAppTemplatesPage() {
         throw error;
       }
 
-             console.log('✅ Templates loaded from database:', data?.length || 0);
-       
-       setTemplates(data || []);
+      console.log('✅ Templates loaded from database:', data?.length || 0);
+      
+      // Meta API'den güncel status'ları al ve senkronize et
+      if (data && data.length > 0) {
+        await syncTemplateStatuses(data);
+      }
+      
+      setTemplates(data || []);
     } catch (error) {
       console.error('Error loading templates:', error);
       toast({
@@ -148,6 +154,49 @@ export default function WhatsAppTemplatesPage() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Meta API'den template status'larını senkronize et
+  const syncTemplateStatuses = async (localTemplates: WhatsAppTemplate[]) => {
+    try {
+      console.log('🔄 Syncing template statuses from Meta API...');
+      
+      const metaService = createMetaTemplateService();
+      const metaResult = await metaService.getTemplates();
+      
+      if (metaResult.success && metaResult.data) {
+        console.log('📥 Meta API templates:', metaResult.data.length);
+        
+        // Her local template için Meta API'den status kontrol et
+        for (const localTemplate of localTemplates) {
+          const metaTemplate = metaResult.data.find(mt => mt.name === localTemplate.name);
+          
+          if (metaTemplate && metaTemplate.status !== localTemplate.status) {
+            console.log(`🔄 Updating ${localTemplate.name}: ${localTemplate.status} → ${metaTemplate.status}`);
+            
+            // Database'de status'u güncelle
+            const { error } = await supabase
+              .from('message_templates')
+              .update({ 
+                status: metaTemplate.status,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', localTemplate.id);
+              
+            if (error) {
+              console.error(`❌ Error updating ${localTemplate.name}:`, error);
+            } else {
+              console.log(`✅ Updated ${localTemplate.name} status to ${metaTemplate.status}`);
+            }
+          }
+        }
+        
+        // Stats'ı yeniden yükle
+        loadStats();
+      }
+    } catch (error) {
+      console.error('❌ Error syncing template statuses:', error);
     }
   };
 
@@ -388,11 +437,28 @@ export default function WhatsAppTemplatesPage() {
               WhatsApp Business Cloud API template'lerini oluştur ve yönet
             </p>
           </div>
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={loadTemplates}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Yenile
-            </Button>
+                     <div className="flex gap-3">
+             <Button variant="outline" onClick={loadTemplates}>
+               <RefreshCw className="h-4 w-4 mr-2" />
+               Yenile
+             </Button>
+             <Button 
+               variant="outline" 
+               onClick={async () => {
+                 const { data } = await supabase.from('message_templates').select('*');
+                 if (data && data.length > 0) {
+                   await syncTemplateStatuses(data);
+                   loadTemplates();
+                   toast({
+                     title: "Senkronizasyon Tamamlandı",
+                     description: "Template status'ları Meta API'den güncellendi"
+                   });
+                 }
+               }}
+             >
+               <Globe className="h-4 w-4 mr-2" />
+               Meta API Senkronize Et
+             </Button>
             <Dialog open={isBuilderOpen} onOpenChange={setIsBuilderOpen}>
               <DialogTrigger asChild>
                 <Button onClick={() => setSelectedTemplate(null)}>
