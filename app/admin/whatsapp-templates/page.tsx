@@ -61,19 +61,23 @@ import { tr } from 'date-fns/locale';
 interface WhatsAppTemplate {
   id: string;
   name: string;
-  category: 'MARKETING' | 'UTILITY' | 'AUTHENTICATION';
+  category: string;
   language: string;
-  status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'DISABLED';
-  components: any[];
+  status: string;
+  header_text?: string;
+  body_text: string;
+  footer_text?: string;
+  variables?: any[];
+  buttons?: any[];
   created_at: string;
   updated_at: string;
   approved_at?: string;
   rejected_reason?: string;
-  usage_count: number;
-  delivery_rate: number;
-  read_rate: number;
-  click_rate: number;
-  cost_per_message: number;
+  usage_count?: number;
+  delivery_rate?: number;
+  read_rate?: number;
+  click_rate?: number;
+  cost_per_message?: number;
 }
 
 export default function WhatsAppTemplatesPage() {
@@ -106,41 +110,35 @@ export default function WhatsAppTemplatesPage() {
     try {
       setLoading(true);
       
-      // Geçici mock data
-      const mockTemplates = [
-        {
-          id: '1',
-          name: 'Hoş Geldin Mesajı',
-          category: 'UTILITY',
-          language: 'tr',
-          status: 'APPROVED',
-          components: [],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          usage_count: 150,
-          delivery_rate: 0.95,
-          read_rate: 0.78,
-          click_rate: 0.12,
-          cost_per_message: 0.05
-        },
-        {
-          id: '2',
-          name: 'Randevu Hatırlatma',
-          category: 'MARKETING',
-          language: 'tr',
-          status: 'PENDING',
-          components: [],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          usage_count: 89,
-          delivery_rate: 0.92,
-          read_rate: 0.85,
-          click_rate: 0.18,
-          cost_per_message: 0.08
-        }
-      ];
+      console.log('📋 Loading templates from database...');
       
-      setTemplates(mockTemplates);
+             // Database'den template'leri çek
+       let query = supabase
+         .from('message_templates')
+         .select('*')
+         .order('created_at', { ascending: false });
+
+      // Filtreleri uygula
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+      if (categoryFilter !== 'all') {
+        query = query.eq('category', categoryFilter);
+      }
+      if (searchQuery.trim()) {
+        query = query.ilike('name', `%${searchQuery}%`);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+
+             console.log('✅ Templates loaded from database:', data?.length || 0);
+       
+       setTemplates(data || []);
     } catch (error) {
       console.error('Error loading templates:', error);
       toast({
@@ -155,15 +153,34 @@ export default function WhatsAppTemplatesPage() {
 
   const loadStats = async () => {
     try {
-      // Mock stats
-      setStats({
-        total_templates: 2,
-        approved_templates: 1,
-        pending_templates: 1,
-        total_sent: 239,
-        avg_delivery_rate: 0.935,
-        avg_read_rate: 0.815
-      });
+      console.log('📊 Loading stats from database...');
+      
+             // Database'den stats çek
+       const { data: templates, error } = await supabase
+         .from('message_templates')
+         .select('status');
+
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+
+      // Stats hesapla
+      const totalTemplates = templates?.length || 0;
+      const approvedTemplates = templates?.filter(t => t.status === 'APPROVED').length || 0;
+      const pendingTemplates = templates?.filter(t => t.status === 'PENDING').length || 0;
+      const draftTemplates = templates?.filter(t => t.status === 'DRAFT').length || 0;
+
+      console.log('✅ Stats calculated:', { totalTemplates, approvedTemplates, pendingTemplates, draftTemplates });
+
+             setStats({
+         total_templates: totalTemplates,
+         approved_templates: approvedTemplates,
+         pending_templates: pendingTemplates,
+         total_sent: 239, // Mock data
+         avg_delivery_rate: 0.935, // Mock data
+         avg_read_rate: 0.815 // Mock data
+       });
     } catch (error) {
       console.error('Error loading stats:', error);
     }
@@ -173,10 +190,10 @@ export default function WhatsAppTemplatesPage() {
     if (!confirm(`"${template.name}" template'ini silmek istediğinize emin misiniz?`)) return;
 
     try {
-      const { error } = await supabase
-        .from('whatsapp_templates')
-        .delete()
-        .eq('id', template.id);
+             const { error } = await supabase
+         .from('message_templates')
+         .delete()
+         .eq('id', template.id);
 
       if (error) throw error;
 
@@ -206,14 +223,14 @@ export default function WhatsAppTemplatesPage() {
         components: template.components
       });
 
-      // Database'de durumu güncelle
-      const { error } = await supabase
-        .from('whatsapp_templates')
-        .update({ 
-          status: 'PENDING',
-          submitted_at: new Date().toISOString()
-        })
-        .eq('id', template.id);
+             // Database'de durumu güncelle
+       const { error } = await supabase
+         .from('message_templates')
+         .update({ 
+           status: 'PENDING',
+           submitted_at: new Date().toISOString()
+         })
+         .eq('id', template.id);
 
       if (error) throw error;
 
@@ -288,25 +305,25 @@ export default function WhatsAppTemplatesPage() {
       header: 'Durum',
       cell: ({ row }) => getStatusBadge(row.original.status)
     },
-    {
-      accessorKey: 'usage_count',
-      header: 'Kullanım',
-      cell: ({ row }) => (
-        <div className="text-center">
-          <div className="font-medium">{row.original.usage_count.toLocaleString()}</div>
-          <div className="text-xs text-muted-foreground">mesaj</div>
-        </div>
-      )
-    },
-    {
-      accessorKey: 'delivery_rate',
-      header: 'Teslimat Oranı',
-      cell: ({ row }) => (
-        <div className="text-center">
-          <div className="font-medium">{(row.original.delivery_rate * 100).toFixed(1)}%</div>
-        </div>
-      )
-    },
+         {
+       accessorKey: 'usage_count',
+       header: 'Kullanım',
+       cell: ({ row }) => (
+         <div className="text-center">
+           <div className="font-medium">{(row.original.usage_count || 0).toLocaleString()}</div>
+           <div className="text-xs text-muted-foreground">mesaj</div>
+         </div>
+       )
+     },
+         {
+       accessorKey: 'delivery_rate',
+       header: 'Teslimat Oranı',
+       cell: ({ row }) => (
+         <div className="text-center">
+           <div className="font-medium">{((row.original.delivery_rate || 0) * 100).toFixed(1)}%</div>
+         </div>
+       )
+     },
     {
       accessorKey: 'created_at',
       header: 'Oluşturulma',
@@ -394,14 +411,51 @@ export default function WhatsAppTemplatesPage() {
                 </DialogHeader>
                 <TemplateBuilder
                   template={selectedTemplate}
-                  onSave={(template) => {
-                    console.log('Template saved:', template);
-                    toast({
-                      title: "Template Kaydedildi",
-                      description: "WhatsApp template başarıyla oluşturuldu ve onay için gönderildi."
-                    });
-                    setIsBuilderOpen(false);
-                    loadTemplates();
+                  onSave={async (template) => {
+                    console.log('💾 Template saved from builder:', template);
+                    
+                    try {
+                                             // Template'i database'e kaydet
+                       const { data, error } = await supabase
+                         .from('message_templates')
+                         .insert([{
+                           name: template.name,
+                           category: template.category.toUpperCase(),
+                           language: template.language,
+                           status: template.status || 'DRAFT',
+                           header_text: template.components?.find(c => c.type === 'HEADER')?.text || null,
+                           body_text: template.components?.find(c => c.type === 'BODY')?.text || '',
+                           footer_text: template.components?.find(c => c.type === 'FOOTER')?.text || null,
+                           variables: template.components?.find(c => c.type === 'BODY')?.variables || [],
+                           buttons: template.components?.find(c => c.type === 'BUTTONS')?.buttons || []
+                         }])
+                         .select()
+                         .single();
+
+                      if (error) {
+                        console.error('Database error:', error);
+                        throw error;
+                      }
+
+                      console.log('✅ Template saved to database:', data);
+
+                      toast({
+                        title: template.status === 'DRAFT' ? "Taslak Kaydedildi" : "Template Onaya Gönderildi",
+                        description: template.status === 'DRAFT' 
+                          ? "Template taslak olarak kaydedildi" 
+                          : "Template Meta'ya gönderildi ve onay bekliyor"
+                      });
+                      
+                      setIsBuilderOpen(false);
+                      loadTemplates(); // Listeyi yenile
+                    } catch (error) {
+                      console.error('Error saving template:', error);
+                      toast({
+                        title: "Hata",
+                        description: "Template kaydedilirken hata oluştu",
+                        variant: "destructive"
+                      });
+                    }
                   }}
                   onCancel={() => setIsBuilderOpen(false)}
                 />
