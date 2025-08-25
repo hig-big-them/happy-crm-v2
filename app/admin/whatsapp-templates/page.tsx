@@ -442,23 +442,81 @@ export default function WhatsAppTemplatesPage() {
                <RefreshCw className="h-4 w-4 mr-2" />
                Yenile
              </Button>
-             <Button 
-               variant="outline" 
-               onClick={async () => {
-                 const { data } = await supabase.from('message_templates').select('*');
-                 if (data && data.length > 0) {
-                   await syncTemplateStatuses(data);
-                   loadTemplates();
-                   toast({
-                     title: "Senkronizasyon Tamamlandı",
-                     description: "Template status'ları Meta API'den güncellendi"
-                   });
-                 }
-               }}
-             >
-               <Globe className="h-4 w-4 mr-2" />
-               Meta API Senkronize Et
-             </Button>
+                           <Button 
+                variant="outline" 
+                onClick={async () => {
+                  try {
+                    console.log('🔄 Manual Meta API sync started...');
+                    
+                    // Meta API'den direkt template'leri al
+                    const metaService = createMetaTemplateService();
+                    const metaResult = await metaService.getTemplates();
+                    
+                    if (metaResult.success && metaResult.data) {
+                      console.log('📥 Meta API templates found:', metaResult.data.length);
+                      console.log('📋 Meta API templates:', metaResult.data);
+                      
+                      // Database'deki template'leri al
+                      const { data: localTemplates } = await supabase.from('message_templates').select('*');
+                      
+                      if (localTemplates && localTemplates.length > 0) {
+                        // Mevcut template'lerin status'larını güncelle
+                        await syncTemplateStatuses(localTemplates);
+                      } else {
+                        // Database'de template yoksa, Meta API'den gelen template'leri database'e ekle
+                        console.log('📝 Adding Meta API templates to database...');
+                        
+                        for (const metaTemplate of metaResult.data) {
+                          const { error } = await supabase
+                            .from('message_templates')
+                            .insert([{
+                              name: metaTemplate.name,
+                              category: metaTemplate.category,
+                              language: metaTemplate.language,
+                              status: metaTemplate.status,
+                              body_text: metaTemplate.components?.find(c => c.type === 'BODY')?.text || '',
+                              header_text: metaTemplate.components?.find(c => c.type === 'HEADER')?.text || null,
+                              footer_text: metaTemplate.components?.find(c => c.type === 'FOOTER')?.text || null,
+                              variables: [],
+                              buttons: metaTemplate.components?.find(c => c.type === 'BUTTONS')?.buttons || []
+                            }]);
+                            
+                          if (error) {
+                            console.error(`❌ Error adding ${metaTemplate.name}:`, error);
+                          } else {
+                            console.log(`✅ Added ${metaTemplate.name} to database`);
+                          }
+                        }
+                      }
+                      
+                      loadTemplates();
+                      loadStats();
+                      
+                      toast({
+                        title: "Senkronizasyon Tamamlandı",
+                        description: `Meta API'den ${metaResult.data.length} template bulundu ve güncellendi`
+                      });
+                    } else {
+                      console.error('❌ Meta API sync failed:', metaResult.error);
+                      toast({
+                        title: "Senkronizasyon Hatası",
+                        description: metaResult.error || "Meta API'den template'ler alınamadı",
+                        variant: "destructive"
+                      });
+                    }
+                  } catch (error) {
+                    console.error('❌ Manual sync error:', error);
+                    toast({
+                      title: "Senkronizasyon Hatası",
+                      description: "Meta API senkronizasyonu sırasında hata oluştu",
+                      variant: "destructive"
+                    });
+                  }
+                }}
+              >
+                <Globe className="h-4 w-4 mr-2" />
+                Meta API Senkronize Et
+              </Button>
             <Dialog open={isBuilderOpen} onOpenChange={setIsBuilderOpen}>
               <DialogTrigger asChild>
                 <Button onClick={() => setSelectedTemplate(null)}>
