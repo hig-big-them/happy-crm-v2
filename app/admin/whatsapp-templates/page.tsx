@@ -92,6 +92,7 @@ export default function WhatsAppTemplatesPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<WhatsAppTemplate | null>(null);
   const [stats, setStats] = useState({
     total_templates: 0,
@@ -396,7 +397,10 @@ export default function WhatsAppTemplatesPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setSelectedTemplate(row.original)}>
+            <DropdownMenuItem onClick={() => {
+              setSelectedTemplate(row.original);
+              setIsViewDialogOpen(true);
+            }}>
               <Eye className="h-4 w-4 mr-2" />
               Görüntüle
             </DropdownMenuItem>
@@ -595,22 +599,42 @@ export default function WhatsAppTemplatesPage() {
                     console.log('💾 Template saved from builder:', template);
                     
                     try {
-                      // Template'i database'e kaydet
-                      const { data, error } = await supabase
-                        .from('message_templates')
-                        .insert([{
-                          name: template.name,
-                          category: template.category.toUpperCase(),
-                          language: template.language,
-                          status: template.status || 'DRAFT',
-                          header_text: template.components?.find(c => c.type === 'header')?.text || null,
-                          body_text: template.components?.find(c => c.type === 'body')?.text || '',
-                          footer_text: template.components?.find(c => c.type === 'footer')?.text || null,
-                          variables: [], // Variables artık body_text içinde {{1}}, {{2}} formatında
-                          buttons: template.components?.find(c => c.type === 'buttons')?.buttons || []
-                        }])
-                        .select()
-                        .maybeSingle();
+                      const templateData = {
+                        name: template.name,
+                        category: template.category.toUpperCase(),
+                        language: template.language,
+                        status: template.status || 'DRAFT',
+                        header_text: template.components?.find(c => c.type === 'header')?.text || null,
+                        body_text: template.components?.find(c => c.type === 'body')?.text || '',
+                        footer_text: template.components?.find(c => c.type === 'footer')?.text || null,
+                        variables: [], // Variables artık body_text içinde {{1}}, {{2}} formatında
+                        buttons: template.components?.find(c => c.type === 'buttons')?.buttons || []
+                      };
+
+                      let data, error;
+                      
+                      if (selectedTemplate?.id) {
+                        // Template güncelle
+                        console.log('🔄 Updating existing template:', selectedTemplate.id);
+                        const result = await supabase
+                          .from('message_templates')
+                          .update(templateData)
+                          .eq('id', selectedTemplate.id)
+                          .select()
+                          .single();
+                        data = result.data;
+                        error = result.error;
+                      } else {
+                        // Yeni template oluştur
+                        console.log('➕ Creating new template');
+                        const result = await supabase
+                          .from('message_templates')
+                          .insert([templateData])
+                          .select()
+                          .single();
+                        data = result.data;
+                        error = result.error;
+                      }
 
                       if (error) {
                         console.error('Database error:', error);
@@ -619,14 +643,20 @@ export default function WhatsAppTemplatesPage() {
 
                       console.log('✅ Template saved to database:', data);
 
+                      const isUpdate = !!selectedTemplate?.id;
                       toast({
-                        title: template.status === 'DRAFT' ? "Taslak Kaydedildi" : "Template Onaya Gönderildi",
-                        description: template.status === 'DRAFT' 
-                          ? "Template taslak olarak kaydedildi" 
-                          : "Template Meta'ya gönderildi ve onay bekliyor"
+                        title: isUpdate 
+                          ? (template.status === 'DRAFT' ? "Template Güncellendi" : "Template Onaya Gönderildi")
+                          : (template.status === 'DRAFT' ? "Taslak Kaydedildi" : "Template Onaya Gönderildi"),
+                        description: isUpdate
+                          ? "Template başarıyla güncellendi"
+                          : (template.status === 'DRAFT' 
+                              ? "Template taslak olarak kaydedildi" 
+                              : "Template Meta'ya gönderildi ve onay bekliyor")
                       });
                       
                       setIsBuilderOpen(false);
+                      setSelectedTemplate(null);
                       loadTemplates(); // Listeyi yenile
                     } catch (error) {
                       console.error('Error saving template:', error);
@@ -637,8 +667,108 @@ export default function WhatsAppTemplatesPage() {
                       });
                     }
                   }}
-                  onCancel={() => setIsBuilderOpen(false)}
+                  onCancel={() => {
+                    setIsBuilderOpen(false);
+                    setSelectedTemplate(null);
+                  }}
                 />
+              </DialogContent>
+            </Dialog>
+
+            {/* Template View Dialog */}
+            <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Template Görüntüle</DialogTitle>
+                  <DialogDescription>
+                    {selectedTemplate?.name} template'inin detaylarını görüntüleyin
+                  </DialogDescription>
+                </DialogHeader>
+                
+                {selectedTemplate && (
+                  <div className="space-y-6">
+                    {/* Template Bilgileri */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Template Adı</label>
+                        <p className="mt-1 text-sm text-gray-900">{selectedTemplate.name}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Kategori</label>
+                        <p className="mt-1">{selectedTemplate.category}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Dil</label>
+                        <p className="mt-1 text-sm text-gray-900">{selectedTemplate.language}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Durum</label>
+                        <p className="mt-1">{getStatusBadge(selectedTemplate.status)}</p>
+                      </div>
+                    </div>
+
+                    {/* Template İçeriği */}
+                    <div className="space-y-4">
+                      {selectedTemplate.header_text && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Başlık</label>
+                          <div className="mt-1 p-3 bg-blue-50 rounded-md">
+                            <p className="text-sm font-medium text-blue-900">{selectedTemplate.header_text}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">İçerik</label>
+                        <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                          <p className="text-sm text-gray-900 whitespace-pre-wrap">{selectedTemplate.body_text}</p>
+                        </div>
+                      </div>
+
+                      {selectedTemplate.footer_text && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Alt Bilgi</label>
+                          <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                            <p className="text-xs text-gray-600">{selectedTemplate.footer_text}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedTemplate.buttons && selectedTemplate.buttons.length > 0 && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Butonlar</label>
+                          <div className="mt-1 space-y-2">
+                            {selectedTemplate.buttons.map((button: any, index: number) => (
+                              <div key={index} className="p-2 bg-blue-100 rounded-md">
+                                <p className="text-sm font-medium text-blue-900">{button.text}</p>
+                                {button.url && <p className="text-xs text-blue-700">{button.url}</p>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Meta API Bilgileri */}
+                    {selectedTemplate.meta_template_id && (
+                      <div className="border-t pt-4">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Meta API Bilgileri</h4>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-600">Meta Template ID:</span>
+                            <p className="font-mono text-xs">{selectedTemplate.meta_template_id}</p>
+                          </div>
+                          {selectedTemplate.created_at && (
+                            <div>
+                              <span className="text-gray-600">Oluşturma Tarihi:</span>
+                              <p>{new Date(selectedTemplate.created_at).toLocaleDateString('tr-TR')}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </DialogContent>
             </Dialog>
           </div>
