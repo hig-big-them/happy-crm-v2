@@ -181,84 +181,212 @@ function ComponentEditor({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Text Content */}
-        {(component.type === 'header' || component.type === 'body' || component.type === 'footer') && (
-          <div>
-            <Label>Metin İçeriği</Label>
-            <Textarea
-              value={localComponent.text || ''}
-              onChange={(e) => setLocalComponent(prev => ({ ...prev, text: e.target.value }))}
-              placeholder={`${component.type} metni girin... Değişkenler için {{variable_name}} kullanın`}
-              rows={component.type === 'body' ? 4 : 2}
-              className="mt-1"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              {component.type === 'header' && 'Maksimum 60 karakter'}
-              {component.type === 'body' && 'Maksimum 1024 karakter'}
-              {component.type === 'footer' && 'Maksimum 60 karakter'}
-            </p>
-          </div>
-        )}
+                 {/* Text Content */}
+         {(component.type === 'header' || component.type === 'body' || component.type === 'footer') && (
+           <div>
+             <Label>Metin İçeriği</Label>
+             <div className="relative">
+               <Textarea
+                 value={localComponent.text || ''}
+                 onChange={(e) => setLocalComponent(prev => ({ ...prev, text: e.target.value }))}
+                 placeholder={`${component.type} metni girin... Değişkenler için {{variable_name}} kullanın`}
+                 rows={component.type === 'body' ? 4 : 2}
+                 className="mt-1 pr-20"
+                 ref={(textarea) => {
+                   if (textarea && component.type === 'body') {
+                     // Cursor pozisyonunu takip etmek için ref'i sakla
+                     (component as any).textareaRef = textarea;
+                   }
+                 }}
+               />
+               
+               {/* Variable Ekle Butonu - Sadece Body için */}
+               {component.type === 'body' && (
+                 <Button
+                   type="button"
+                   variant="outline"
+                   size="sm"
+                   className="absolute top-1 right-1 h-8 px-2 text-xs"
+                   onClick={() => {
+                     const textarea = (component as any).textareaRef;
+                     if (textarea) {
+                       const cursorPos = textarea.selectionStart;
+                       const text = localComponent.text || '';
+                       
+                       // Mevcut variable'ları say
+                       const existingVariables = (text.match(/\{\{(\d+)\}\}/g) || [])
+                         .map(v => parseInt(v.replace(/\{\{|\}\}/g, '')));
+                       
+                       // Sıradaki variable numarasını bul
+                       const nextVariableNumber = existingVariables.length > 0 
+                         ? Math.max(...existingVariables) + 1 
+                         : 1;
+                       
+                       // Yeni text oluştur
+                       const newText = text.slice(0, cursorPos) + `{{${nextVariableNumber}}}` + text.slice(cursorPos);
+                       
+                       setLocalComponent(prev => ({ ...prev, text: newText }));
+                       
+                       // Cursor'u variable'dan sonraya taşı
+                       setTimeout(() => {
+                         textarea.focus();
+                         const newCursorPos = cursorPos + `{{${nextVariableNumber}}}`.length;
+                         textarea.setSelectionRange(newCursorPos, newCursorPos);
+                       }, 0);
+                     }
+                   }}
+                 >
+                   + {{1}}
+                 </Button>
+               )}
+             </div>
+             <p className="text-xs text-gray-500 mt-1">
+               {component.type === 'header' && 'Maksimum 60 karakter'}
+               {component.type === 'body' && 'Maksimum 1024 karakter - Variable eklemek için butona tıklayın'}
+               {component.type === 'footer' && 'Maksimum 60 karakter'}
+             </p>
+           </div>
+         )}
 
-        {/* Parameters */}
-        {(component.type === 'header' || component.type === 'body') && (
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <Label>Değişkenler (Parameters)</Label>
-              <Button variant="outline" size="sm" onClick={addParameter}>
-                <Plus className="h-4 w-4 mr-1" />
-                Ekle
-              </Button>
-            </div>
-            
-            {localComponent.parameters?.map((param, index) => (
-              <div key={index} className="grid grid-cols-12 gap-2 mb-2">
-                <div className="col-span-3">
-                  <Input
-                    placeholder="Değişken adı"
-                    value={param.key}
-                    onChange={(e) => updateParameter(index, 'key', e.target.value)}
-                    className="text-sm"
-                  />
-                </div>
-                <div className="col-span-3">
-                  <Select 
-                    value={param.type} 
-                    onValueChange={(value) => updateParameter(index, 'type', value)}
-                  >
-                    <SelectTrigger className="text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="text">Metin</SelectItem>
-                      <SelectItem value="number">Sayı</SelectItem>
-                      <SelectItem value="date">Tarih</SelectItem>
-                      <SelectItem value="currency">Para</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="col-span-4">
-                  <Input
-                    placeholder="Açıklama"
-                    value={param.placeholder || ''}
-                    onChange={(e) => updateParameter(index, 'placeholder', e.target.value)}
-                    className="text-sm"
-                  />
-                </div>
-                <div className="col-span-2 flex items-center justify-end">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeParameter(index)}
-                    className="h-8 w-8 p-0 text-red-600"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                 {/* Variable Management - Sadece Body için */}
+         {component.type === 'body' && (
+           <div>
+             <div className="flex items-center justify-between mb-2">
+               <Label>Variable Yönetimi</Label>
+               <div className="flex gap-2">
+                 <Button
+                   variant="outline"
+                   size="sm"
+                   onClick={() => {
+                     const textarea = (component as any).textareaRef;
+                     if (textarea) {
+                       const cursorPos = textarea.selectionStart;
+                       const text = localComponent.text || '';
+                       
+                       // Mevcut variable'ları say
+                       const existingVariables = (text.match(/\{\{(\d+)\}\}/g) || [])
+                         .map(v => parseInt(v.replace(/\{\{|\}\}/g, '')));
+                       
+                       // Sıradaki variable numarasını bul
+                       const nextVariableNumber = existingVariables.length > 0 
+                         ? Math.max(...existingVariables) + 1 
+                         : 1;
+                       
+                       // Yeni text oluştur
+                       const newText = text.slice(0, cursorPos) + `{{${nextVariableNumber}}}` + text.slice(cursorPos);
+                       
+                       setLocalComponent(prev => ({ ...prev, text: newText }));
+                       
+                       // Cursor'u variable'dan sonraya taşı
+                       setTimeout(() => {
+                         textarea.focus();
+                         const newCursorPos = cursorPos + `{{${nextVariableNumber}}}`.length;
+                         textarea.setSelectionRange(newCursorPos, newCursorPos);
+                       }, 0);
+                     }
+                   }}
+                 >
+                   <Plus className="h-4 w-4 mr-1" />
+                   Variable Ekle
+                 </Button>
+                 
+                 <Button
+                   variant="outline"
+                   size="sm"
+                   onClick={() => {
+                     const text = localComponent.text || '';
+                     const variables = (text.match(/\{\{(\d+)\}\}/g) || [])
+                       .map(v => parseInt(v.replace(/\{\{|\}\}/g, '')))
+                       .sort((a, b) => a - b);
+                     
+                     if (variables.length > 0) {
+                       // Variable'ları yeniden sırala
+                       let newText = text;
+                       variables.forEach((oldNum, index) => {
+                         const newNum = index + 1;
+                         const regex = new RegExp(`\\{\\{${oldNum}\\}\\}`, 'g');
+                         newText = newText.replace(regex, `{{${newNum}}}`);
+                       });
+                       
+                       setLocalComponent(prev => ({ ...prev, text: newText }));
+                     }
+                   }}
+                 >
+                   🔄 Sırala
+                 </Button>
+               </div>
+             </div>
+             
+             {/* Variable Listesi */}
+             {(() => {
+               const text = localComponent.text || '';
+               const variables = (text.match(/\{\{(\d+)\}\}/g) || [])
+                 .map(v => parseInt(v.replace(/\{\{|\}\}/g, '')))
+                 .sort((a, b) => a - b);
+               
+               if (variables.length === 0) {
+                 return (
+                   <div className="text-sm text-gray-500 italic">
+                     Henüz variable eklenmedi. Metin içinde istediğiniz yere tıklayıp "Variable Ekle" butonuna basın.
+                   </div>
+                 );
+               }
+               
+               return (
+                 <div className="space-y-2">
+                   <div className="text-sm font-medium text-gray-700">
+                     Bulunan Variable'lar ({variables.length}):
+                   </div>
+                   <div className="flex flex-wrap gap-2">
+                     {variables.map((num, index) => (
+                       <Badge key={num} variant="secondary" className="text-xs">
+                         {{`{{${num}}}`}} - {index + 1}. sıra
+                       </Badge>
+                     ))}
+                   </div>
+                   
+                   {/* Variable Validation */}
+                   {(() => {
+                     const errors: string[] = [];
+                     
+                     // Sequential kontrol
+                     for (let i = 0; i < variables.length; i++) {
+                       if (variables[i] !== i + 1) {
+                         errors.push(`Variable'lar sıralı değil: ${variables.join(', ')}`);
+                         break;
+                       }
+                     }
+                     
+                     // Dangling parameters kontrolü
+                     const trimmedText = text.trim();
+                     if (trimmedText.startsWith('{{') || trimmedText.endsWith('}}')) {
+                       errors.push('Template variable ile başlayamaz veya bitemez');
+                     }
+                     
+                     if (errors.length > 0) {
+                       return (
+                         <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                           <div className="font-medium mb-1">⚠️ Variable Hataları:</div>
+                           <ul className="space-y-1">
+                             {errors.map((error, index) => (
+                               <li key={index}>• {error}</li>
+                             ))}
+                           </ul>
+                         </div>
+                       );
+                     }
+                     
+                     return (
+                       <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
+                         ✅ Variable'lar doğru formatta
+                       </div>
+                     );
+                   })()}
+                 </div>
+               );
+             })()}
+           </div>
+         )}
 
         {/* Buttons */}
         {component.type === 'buttons' && (
@@ -677,11 +805,11 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
       errors.push('Çok fazla variable var. Variable sayısını azaltın veya metni uzatın');
     }
 
-    // 4. Special characters kontrolü
-    const specialCharPattern = /[#$%]/;
-    if (specialCharPattern.test(text)) {
-      errors.push('Variable'larda #, $, % gibi özel karakterler kullanılamaz');
-    }
+         // 4. Special characters kontrolü
+     const specialCharPattern = /[#$%]/;
+     if (specialCharPattern.test(text)) {
+       errors.push('Variable\'larda #, $, % gibi ozel karakterler kullanılamaz');
+     }
 
     return errors;
   };
