@@ -380,11 +380,9 @@ export class MetaWhatsAppTemplateService {
       errors.push('Too many variables relative to message length. Consider reducing variables or increasing text length');
     }
 
-    // 4. Special characters kontrolü
-    const specialCharPattern = /[#$%]/;
-    if (specialCharPattern.test(text)) {
-      errors.push('Variables cannot contain special characters like #, $, or %');
-    }
+    // 4. Special characters kontrolü - Kaldırıldı
+    // Variable'ların içinde özel karakter kontrolü gereksiz çünkü {{1}}, {{2}} gibi format zaten sadece sayı içeriyor
+    // Emoji'ler ve diğer karakterler metin içinde olabilir, variable'da değil
 
     return errors;
   }
