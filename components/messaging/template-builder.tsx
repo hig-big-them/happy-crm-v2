@@ -802,10 +802,6 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
 
          // 4. Special characters kontrolü - Sadece variable içindeki karakterleri kontrol et
      // Variable'ların içinde özel karakter olup olmadığını kontrol et
-     const variablePattern = /\{\{(\d+)\}\}/g;
-     const variableMatches = [...text.matchAll(variablePattern)];
-     
-     // Variable'ların içinde özel karakter yok, sadece sayı var
      // Bu kontrol gereksiz çünkü {{1}}, {{2}} gibi format zaten sadece sayı içeriyor
      // Emoji'ler ve diğer karakterler metin içinde olabilir, variable'da değil
 
