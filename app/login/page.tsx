@@ -103,8 +103,15 @@ export default function LoginPage() {
     setIsSigningUp(true)
     
     try {
+      // Test modu kontrolü (development için)
+      const isTestMode = process.env.NODE_ENV === 'development' && window.location.hostname === 'localhost'
+      
+      const apiEndpoint = isTestMode ? '/api/auth/test-signup' : '/api/auth/simple-signup'
+      
+      console.log('📝 Signup attempt:', { email: signupEmail, endpoint: apiEndpoint })
+      
       // Basit kayıt API çağrısı
-      const response = await fetch('/api/auth/simple-signup', {
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -127,10 +134,16 @@ export default function LoginPage() {
           router.push('/dashboard')
         }
       } else {
+        console.error('Signup API error:', result)
         setSignupError(result.error || 'Kayıt başarısız')
       }
     } catch (error) {
-      setSignupError('Beklenmeyen bir hata oluştu')
+      console.error('Signup error:', error)
+      if (error instanceof Error) {
+        setSignupError(`Kayıt hatası: ${error.message}`)
+      } else {
+        setSignupError('Beklenmeyen bir hata oluştu')
+      }
     } finally {
       setIsSigningUp(false)
     }
