@@ -147,7 +147,7 @@ function FacebookLoginDemo() {
             </div>
             <Separator />
             <div className="text-sm text-muted-foreground">
-              <p><strong>App ID:</strong> 1369235900792698</p>
+              <p><strong>App ID:</strong> 1824928921450494</p>
               <p><strong>Version:</strong> v23.0</p>
               <p><strong>Scopes:</strong> email, public_profile, whatsapp_business_management</p>
             </div>

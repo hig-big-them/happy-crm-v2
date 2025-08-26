@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/utils/supabase/server';
 
 // Facebook App credentials
-const FACEBOOK_CLIENT_ID = process.env.FACEBOOK_CLIENT_ID || "1369235900792698";
+const FACEBOOK_CLIENT_ID = process.env.FACEBOOK_CLIENT_ID || "1824928921450494";
 const FACEBOOK_CLIENT_SECRET = process.env.FACEBOOK_CLIENT_SECRET || "";
 const FACEBOOK_REDIRECT_URI = process.env.FACEBOOK_REDIRECT_URI || "https://developers.facebook.com/es/oauth/callback/";
 

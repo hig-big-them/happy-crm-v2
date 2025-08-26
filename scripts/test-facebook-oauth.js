@@ -139,7 +139,7 @@ async function simulateOAuthFlow() {
   
   // Gerçek OAuth URL'i oluştur
   const authUrl = new URL('https://www.facebook.com/v22.0/dialog/oauth');
-  authUrl.searchParams.set('client_id', '1369235900792698');
+  authUrl.searchParams.set('client_id', '1824928921450494');
   authUrl.searchParams.set('redirect_uri', TEST_REDIRECT_URI);
   authUrl.searchParams.set('scope', 'whatsapp_business_management,whatsapp_business_messaging');
   authUrl.searchParams.set('response_type', 'code');
