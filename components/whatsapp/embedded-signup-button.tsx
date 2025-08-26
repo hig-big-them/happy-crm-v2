@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { MessageSquare, Loader2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { TermsOfServiceModal } from './terms-of-service-modal';
+import { SignupModal } from './signup-modal';
 
 declare global {
   interface Window {
@@ -45,6 +46,8 @@ const EmbeddedSignupButton = ({
   className = ""
 }: EmbeddedSignupButtonProps) => {
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showSignupModal, setShowSignupModal] = useState(false);
+  const [whatsappData, setWhatsappData] = useState<any>(null);
   const [isFbSdkLoaded, setIsFbSdkLoaded] = useState(false);
   
   // Facebook SDK'nın yüklenmesini bekle
@@ -89,6 +92,12 @@ const EmbeddedSignupButton = ({
   }, []);
 
   const handleButtonClick = () => {
+    // Eğer zaten bir modal açıksa, yeni modal açma
+    if (showTermsModal || showSignupModal) {
+      console.log('⚠️ Modal already open, ignoring click');
+      return;
+    }
+    
     // Show terms modal first
     setShowTermsModal(true);
   };
@@ -106,6 +115,10 @@ const EmbeddedSignupButton = ({
       description: "Hizmet şartlarını kabul etmeden WhatsApp entegrasyonu yapılamaz.",
       variant: "destructive"
     });
+  };
+
+  const handleTermsClose = () => {
+    setShowTermsModal(false);
   };
 
   const handleLogin = () => {
@@ -192,9 +205,17 @@ const EmbeddedSignupButton = ({
   };
 
   useEffect(() => {
+    let isProcessing = false; // Popup'ın sürekli açılmasını engellemek için flag
+
     const handleMessage = async (event: MessageEvent) => {
       // Güvenlik: Sadece Facebook domain'lerinden gelen mesajları kabul et
       if (event.origin !== 'https://www.facebook.com' && event.origin !== 'https://web.facebook.com') {
+        return;
+      }
+
+      // Eğer zaten işlem yapılıyorsa, yeni mesajları görmezden gel
+      if (isProcessing) {
+        console.log('⚠️ Already processing a message, ignoring new one');
         return;
       }
 
@@ -205,6 +226,8 @@ const EmbeddedSignupButton = ({
           console.log('📱 WhatsApp Embedded Signup event:', data);
           
           if (data.event === 'FINISH' || data.event === 'FINISH_ONLY_WABA') {
+            isProcessing = true; // İşlem başladı
+            
             const { code, phone_number_id, waba_id } = data.data;
             console.log('🎉 Onboarding successful!', { code, phone_number_id, waba_id });
 
@@ -229,11 +252,21 @@ const EmbeddedSignupButton = ({
 
               if (response.ok) {
                 console.log('✅ Backend onboarding completed:', result);
-                onSuccess?.({ code, phone_number_id, waba_id });
+                
+                // WhatsApp verilerini state'e kaydet ve signup modal'ını göster
+                setWhatsappData({
+                  waba_id,
+                  phone_number_id,
+                  verified_name: result.data?.verified_name,
+                  display_phone_number: result.data?.display_phone_number,
+                  status: result.data?.status,
+                  quality_rating: result.data?.quality_rating
+                });
+                setShowSignupModal(true);
                 
                 toast({
-                  title: "Kurulum Tamamlandı",
-                  description: "WhatsApp Business entegrasyonu başarıyla tamamlandı.",
+                  title: "WhatsApp Bağlandı!",
+                  description: "Şimdi hesap bilgilerinizi girin.",
                 });
               } else {
                 console.error('❌ Backend onboarding failed:', result);
@@ -254,6 +287,8 @@ const EmbeddedSignupButton = ({
                 description: "Backend ile iletişimde hata oluştu.",
                 variant: "destructive"
               });
+            } finally {
+              isProcessing = false; // İşlem bitti
             }
             
           } else if (data.event === 'CANCEL') {
@@ -317,10 +352,30 @@ const EmbeddedSignupButton = ({
 
       <TermsOfServiceModal
         open={showTermsModal}
-        onOpenChange={setShowTermsModal}
+        onOpenChange={handleTermsClose}
         onAccept={handleTermsAccept}
         onDecline={handleTermsDecline}
       />
+
+      {whatsappData && (
+        <SignupModal
+          isOpen={showSignupModal}
+          onClose={() => {
+            setShowSignupModal(false);
+            setWhatsappData(null); // WhatsApp verilerini temizle
+          }}
+          whatsappData={whatsappData}
+          onSuccess={(userData) => {
+            onSuccess?.({ 
+              code: '', 
+              phone_number_id: whatsappData.phone_number_id, 
+              waba_id: whatsappData.waba_id 
+            });
+            setShowSignupModal(false);
+            setWhatsappData(null);
+          }}
+        />
+      )}
     </>
   );
 };
