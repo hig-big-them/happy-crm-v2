@@ -12,6 +12,12 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 const FACEBOOK_APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || '1824928921450494';
 const FACEBOOK_SDK_VERSION = 'v23.0';
 
+// Domain kontrolü için helper function
+const getCurrentDomain = () => {
+  if (typeof window === 'undefined') return '';
+  return window.location.hostname;
+};
+
 // TypeScript definitions for Facebook SDK
 declare global {
   interface Window {
@@ -24,6 +30,7 @@ interface FacebookSDKContextType {
   isSDKLoaded: boolean;
   isInitialized: boolean;
   FB: any;
+  domainError: string | null;
   login: (callback?: (response: any) => void, options?: any) => void;
   logout: (callback?: (response: any) => void) => void;
   getLoginStatus: (callback: (response: any) => void) => void;
@@ -50,8 +57,23 @@ export function FacebookSDKProvider({
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [FB, setFB] = useState<any>(null);
+  const [domainError, setDomainError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Domain kontrolü
+    const currentDomain = getCurrentDomain();
+    console.log('🌐 Current domain:', currentDomain);
+    
+    // Localhost kontrolü
+    if (currentDomain === 'localhost' || currentDomain === '127.0.0.1') {
+      console.log('✅ Localhost domain detected');
+      setDomainError(null);
+    } else {
+      // Production domain kontrolü - kullanıcıya uyarı göster
+      console.log('⚠️ Production domain detected:', currentDomain);
+      setDomainError(`Current domain: ${currentDomain}. Make sure this domain is added to Facebook App Dashboard > Facebook Login > Settings > Allowed Domains for JavaScript SDK`);
+    }
+
     // Eğer SDK zaten yüklenmiş ise skip et
     if (window.FB) {
       setFB(window.FB);
@@ -61,35 +83,42 @@ export function FacebookSDKProvider({
     }
 
     console.log('🔄 Loading Facebook SDK...');
+    console.log('🌐 Current domain:', getCurrentDomain());
 
     // Facebook SDK initialization function
     window.fbAsyncInit = function() {
       console.log('🔧 Initializing Facebook SDK...');
       
-      window.FB.init({
-        appId: FACEBOOK_APP_ID,
-        autoLogAppEvents: autoLogAppEvents,
-        xfbml: xfbml,
-        cookie: cookie,
-        version: FACEBOOK_SDK_VERSION
-      });
+      try {
+        window.FB.init({
+          appId: FACEBOOK_APP_ID,
+          autoLogAppEvents: autoLogAppEvents,
+          xfbml: xfbml,
+          cookie: cookie,
+          version: FACEBOOK_SDK_VERSION
+        });
 
-      console.log('✅ Facebook SDK initialized', {
-        appId: FACEBOOK_APP_ID,
-        version: FACEBOOK_SDK_VERSION,
-        autoLogAppEvents,
-        xfbml,
-        cookie
-      });
+        console.log('✅ Facebook SDK initialized', {
+          appId: FACEBOOK_APP_ID,
+          version: FACEBOOK_SDK_VERSION,
+          domain: getCurrentDomain(),
+          autoLogAppEvents,
+          xfbml,
+          cookie
+        });
 
-      setFB(window.FB);
-      setIsSDKLoaded(true);
-      setIsInitialized(true);
+        setFB(window.FB);
+        setIsSDKLoaded(true);
+        setIsInitialized(true);
 
-      // Debug mode
-      if (debug) {
-        window.FB.AppEvents.logPageView();
-        console.log('📊 Facebook Analytics: Page view logged');
+        // Debug mode
+        if (debug) {
+          window.FB.AppEvents.logPageView();
+          console.log('📊 Facebook Analytics: Page view logged');
+        }
+      } catch (error) {
+        console.error('❌ Facebook SDK initialization failed:', error);
+        setIsInitialized(false);
       }
     };
 
@@ -113,8 +142,9 @@ export function FacebookSDKProvider({
         setIsSDKLoaded(true);
       };
       
-      script.onerror = () => {
-        console.error('❌ Failed to load Facebook SDK');
+      script.onerror = (error) => {
+        console.error('❌ Failed to load Facebook SDK:', error);
+        setIsSDKLoaded(false);
       };
 
       document.head.appendChild(script);
@@ -213,6 +243,7 @@ export function FacebookSDKProvider({
     isSDKLoaded,
     isInitialized,
     FB,
+    domainError,
     login,
     logout,
     getLoginStatus,

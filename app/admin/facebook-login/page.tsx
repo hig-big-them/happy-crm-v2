@@ -14,7 +14,7 @@ import { FacebookSDKProvider, useFacebookSDK } from '@/components/auth/facebook-
 import { FacebookLoginButton, FacebookLogoutButton } from '@/components/auth/facebook-login-button';
 
 function FacebookLoginDemo() {
-  const { isSDKLoaded, isInitialized, FB } = useFacebookSDK();
+  const { isSDKLoaded, isInitialized, FB, domainError } = useFacebookSDK();
   const [loginData, setLoginData] = useState<any>(null);
   const [apiData, setApiData] = useState<any>(null);
 
@@ -83,10 +83,41 @@ function FacebookLoginDemo() {
           <Badge variant={isInitialized ? "default" : "secondary"}>
             Status: {isInitialized ? 'Ready' : 'Initializing...'}
           </Badge>
+          <Badge variant={domainError ? "destructive" : "default"}>
+            Domain: {domainError ? 'Error' : 'OK'}
+          </Badge>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Domain Error Card */}
+        {domainError && (
+          <Card className="md:col-span-2 border-orange-200 bg-orange-50">
+            <CardHeader>
+              <CardTitle className="text-orange-800 flex items-center">
+                ⚠️ Domain Configuration Warning
+              </CardTitle>
+              <CardDescription className="text-orange-700">
+                Facebook App Dashboard ayarlarını kontrol edin
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-orange-100 p-3 rounded-md">
+                <p className="text-sm text-orange-800">{domainError}</p>
+                <div className="mt-3 text-xs text-orange-700">
+                  <p><strong>Çözüm:</strong></p>
+                  <ol className="list-decimal list-inside mt-1 space-y-1">
+                    <li>Facebook Developers Dashboard'a gidin</li>
+                    <li>Uygulamanızı seçin</li>
+                    <li>Facebook Login > Settings</li>
+                    <li>"Allowed Domains for JavaScript SDK" listesine domaininizi ekleyin</li>
+                  </ol>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* SDK Status Card */}
         <Card>
           <CardHeader>
