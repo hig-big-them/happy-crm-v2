@@ -29,6 +29,7 @@ declare global {
       ) => void;
     };
     fbAsyncInit: () => void;
+    whatsappAuthCode?: string;
   }
 }
 
@@ -157,6 +158,8 @@ const EmbeddedSignupButton = ({
           // Code burada da alınabilir ama genellikle message event ile geliyor
           if (response.authResponse.code) {
             console.log('📋 Authorization code received:', response.authResponse.code.substring(0, 10) + '...');
+            // Code'u global olarak sakla
+            window.whatsappAuthCode = response.authResponse.code;
           }
         } else {
           console.log('❌ User cancelled login or did not fully authorize.');
@@ -238,8 +241,26 @@ const EmbeddedSignupButton = ({
           if (data.event === 'FINISH' || data.event === 'FINISH_ONLY_WABA') {
             isProcessing = true; // İşlem başladı
             
-            const { code, phone_number_id, waba_id } = data.data;
+            const { phone_number_id, waba_id } = data.data;
+            // Code'u önce message event'ten al, yoksa global'den al
+            let code = data.data.code;
+            if (!code && window.whatsappAuthCode) {
+              code = window.whatsappAuthCode;
+              console.log('📋 Using authorization code from FB.login response');
+            }
+            
             console.log('🎉 Onboarding successful!', { code, phone_number_id, waba_id });
+
+            if (!code) {
+              console.error('❌ No authorization code available');
+              toast({
+                title: "Kod Hatası",
+                description: "Authorization code bulunamadı. Lütfen tekrar deneyin.",
+                variant: "destructive"
+              });
+              isProcessing = false;
+              return;
+            }
 
             toast({
               title: "Başarılı!",
@@ -345,6 +366,8 @@ const EmbeddedSignupButton = ({
       if (messageTimeout) {
         clearTimeout(messageTimeout);
       }
+      // Global code'u temizle
+      delete window.whatsappAuthCode;
     };
   }, [onSuccess, onError]);
 
