@@ -1,5 +1,0 @@
-[33m37e9966e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m feat: Mock authentication system and Supabase client fixes - Added mock authentication provider for demo mode - Fixed Supabase client query methods (order, limit, eq, etc.) - Resolved Next.js config ES module issues - Updated all Supabase clients to mock versions - Added environment variable examples - Added WhatsApp and Supabase test scripts
-[33mfdd1ffd9[m Production-ready updates: Pipeline and Leads management
-[33m53a66618[m Add WhatsApp template status webhook endpoint and test scripts
-[33maf0ab5ef[m[33m ([m[1;31morigin/master[m[33m)[m Lead timeline area. v4.
-[33m80bec8f8[m Lead timeline area. v2.
