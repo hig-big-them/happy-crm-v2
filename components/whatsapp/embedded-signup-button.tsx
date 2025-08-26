@@ -149,17 +149,71 @@ const EmbeddedSignupButton = ({
     });
 
     window.FB.login(
-      function (response) {
+      async function (response) {
         
         console.log('📋 FB.login response:', response);
         
         if (response.authResponse) {
-          console.log('✅ Login successful, waiting for session info...');
-          // Code burada da alınabilir ama genellikle message event ile geliyor
+          console.log('✅ Login successful, processing authorization...');
+          
           if (response.authResponse.code) {
             console.log('📋 Authorization code received:', response.authResponse.code.substring(0, 10) + '...');
-            // Code'u global olarak sakla
-            window.whatsappAuthCode = response.authResponse.code;
+            
+            // Code'u direkt kullan, message event'i bekleme
+            try {
+              const response = await fetch('/api/whatsapp/onboard', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                  code: response.authResponse.code,
+                  phone_number_id: null, // Backend'den alınacak
+                  waba_id: null // Backend'den alınacak
+                }),
+              });
+
+              const result = await response.json();
+
+              if (response.ok) {
+                console.log('✅ Backend onboarding completed:', result);
+                
+                // WhatsApp verilerini state'e kaydet ve signup modal'ını göster
+                setWhatsappData({
+                  waba_id: result.data?.waba_id,
+                  phone_number_id: result.data?.phone_number_id,
+                  verified_name: result.data?.verified_name,
+                  display_phone_number: result.data?.display_phone_number,
+                  status: result.data?.status,
+                  quality_rating: result.data?.quality_rating
+                });
+                setShowSignupModal(true);
+                
+                toast({
+                  title: "WhatsApp Bağlandı!",
+                  description: "Şimdi hesap bilgilerinizi girin.",
+                });
+              } else {
+                console.error('❌ Backend onboarding failed:', result);
+                toast({
+                  title: "Kurulum Hatası",
+                  description: result.error || "Backend kurulumu sırasında hata oluştu.",
+                  variant: "destructive"
+                });
+              }
+            } catch (error) {
+              console.error('❌ Error sending code to backend:', error);
+              toast({
+                title: "Ağ Hatası",
+                description: "Backend ile iletişimde hata oluştu.",
+                variant: "destructive"
+              });
+            }
+          } else {
+            console.log('⚠️ No authorization code in response');
+            toast({
+              title: "Kod Hatası",
+              description: "Authorization code alınamadı. Lütfen tekrar deneyin.",
+              variant: "destructive"
+            });
           }
         } else {
           console.log('❌ User cancelled login or did not fully authorize.');
@@ -216,18 +270,9 @@ const EmbeddedSignupButton = ({
   };
 
   useEffect(() => {
-    let isProcessing = false; // Popup'ın sürekli açılmasını engellemek için flag
-    let messageTimeout: NodeJS.Timeout | null = null;
-
     const handleMessage = async (event: MessageEvent) => {
       // Güvenlik: Sadece Facebook domain'lerinden gelen mesajları kabul et
       if (event.origin !== 'https://www.facebook.com' && event.origin !== 'https://web.facebook.com') {
-        return;
-      }
-
-      // Eğer zaten işlem yapılıyorsa, yeni mesajları görmezden gel
-      if (isProcessing) {
-        console.log('⚠️ Already processing a message, ignoring new one');
         return;
       }
 
@@ -238,108 +283,13 @@ const EmbeddedSignupButton = ({
         if (data.type === 'WA_EMBEDDED_SIGNUP') {
           console.log('📱 WhatsApp Embedded Signup event:', data);
           
+          // Sadece log'la, ana işlem FB.login response'unda yapılıyor
           if (data.event === 'FINISH' || data.event === 'FINISH_ONLY_WABA') {
-            isProcessing = true; // İşlem başladı
-            
-            const { phone_number_id, waba_id } = data.data;
-            // Code'u önce message event'ten al, yoksa global'den al
-            let code = data.data.code;
-            if (!code && window.whatsappAuthCode) {
-              code = window.whatsappAuthCode;
-              console.log('📋 Using authorization code from FB.login response');
-            }
-            
-            console.log('🎉 Onboarding successful!', { code, phone_number_id, waba_id });
-
-            if (!code) {
-              console.error('❌ No authorization code available');
-              toast({
-                title: "Kod Hatası",
-                description: "Authorization code bulunamadı. Lütfen tekrar deneyin.",
-                variant: "destructive"
-              });
-              isProcessing = false;
-              return;
-            }
-
-            toast({
-              title: "Başarılı!",
-              description: "WhatsApp Business hesabı başarıyla bağlandı.",
-            });
-
-            try {
-              // Alınan 'code'u backend'e gönder
-              const response = await fetch('/api/whatsapp/onboard', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                  code,
-                  phone_number_id,
-                  waba_id 
-                }),
-              });
-
-              const result = await response.json();
-
-              if (response.ok) {
-                console.log('✅ Backend onboarding completed:', result);
-                
-                // WhatsApp verilerini state'e kaydet ve signup modal'ını göster
-                setWhatsappData({
-                  waba_id,
-                  phone_number_id,
-                  verified_name: result.data?.verified_name,
-                  display_phone_number: result.data?.display_phone_number,
-                  status: result.data?.status,
-                  quality_rating: result.data?.quality_rating
-                });
-                setShowSignupModal(true);
-                
-                toast({
-                  title: "WhatsApp Bağlandı!",
-                  description: "Şimdi hesap bilgilerinizi girin.",
-                });
-              } else {
-                console.error('❌ Backend onboarding failed:', result);
-                onError?.(result.error || 'Backend onboarding failed');
-                
-                toast({
-                  title: "Kurulum Hatası",
-                  description: result.error || "Backend kurulumu sırasında hata oluştu.",
-                  variant: "destructive"
-                });
-              }
-            } catch (error) {
-              console.error('❌ Error sending code to backend:', error);
-              onError?.('Network error during onboarding');
-              
-              toast({
-                title: "Ağ Hatası",
-                description: "Backend ile iletişimde hata oluştu.",
-                variant: "destructive"
-              });
-            } finally {
-              isProcessing = false; // İşlem bitti
-            }
-            
+            console.log('🎉 WhatsApp Embedded Signup completed via message event');
           } else if (data.event === 'CANCEL') {
             console.warn('⚠️ User cancelled at step:', data.data.current_step);
-            
-            toast({
-              title: "İptal Edildi",
-              description: `Kullanıcı ${data.data.current_step} adımında işlemi iptal etti.`,
-              variant: "destructive"
-            });
-            
           } else if (data.event === 'ERROR') {
             console.error('💥 An error occurred:', data.data.error_message);
-            onError?.(data.data.error_message);
-            
-            toast({
-              title: "Hata Oluştu",
-              description: data.data.error_message || "WhatsApp entegrasyonu sırasında hata oluştu.",
-              variant: "destructive"
-            });
           }
         }
       } catch (error) {
@@ -347,29 +297,14 @@ const EmbeddedSignupButton = ({
       }
     };
 
-    // Message timeout'u ayarla (10 dakika)
-    messageTimeout = setTimeout(() => {
-      console.log('⏰ Message timeout reached - no response from Facebook');
-      toast({
-        title: "Zaman Aşımı",
-        description: "Facebook'tan yanıt alınamadı. Lütfen tekrar deneyin.",
-        variant: "destructive"
-      });
-    }, 600000); // 10 dakika
-
     // Event listener'ı ekle
     window.addEventListener('message', handleMessage);
 
     // Cleanup: Component unmount olduğunda event listener'ı kaldır
     return () => {
       window.removeEventListener('message', handleMessage);
-      if (messageTimeout) {
-        clearTimeout(messageTimeout);
-      }
-      // Global code'u temizle
-      delete window.whatsappAuthCode;
     };
-  }, [onSuccess, onError]);
+  }, []);
 
   return (
     <>
