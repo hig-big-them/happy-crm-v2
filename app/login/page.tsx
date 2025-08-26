@@ -104,7 +104,7 @@ export default function LoginPage() {
     
     try {
       // Test modu kontrolü (development için)
-      const isTestMode = process.env.NODE_ENV === 'development' && window.location.hostname === 'localhost'
+      const isTestMode = true // Geçici olarak test modunu aktif et
       
       const apiEndpoint = isTestMode ? '/api/auth/test-signup' : '/api/auth/simple-signup'
       

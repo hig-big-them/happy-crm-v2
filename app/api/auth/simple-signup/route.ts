@@ -94,44 +94,61 @@ export async function POST(request: Request) {
         // Kritik değil, devam et
       }
 
-    console.log('✅ Simple user account created successfully:', {
-      userId,
-      email
-    })
-
-    // Hoş geldin emaili gönder (opsiyonel)
-    try {
-      // SMTP ayarları var mı kontrol et
-      if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
-        const emailResult = await sendEmailTemplate(
-          email,
-          'WELCOME_SIGNUP',
-          {
-            userEmail: email
-          }
-        )
-
-        if (emailResult.success) {
-          console.log('✅ Welcome email sent successfully:', emailResult.messageId)
-        } else {
-          console.warn('⚠️ Welcome email could not be sent:', emailResult.error)
-        }
-      } else {
-        console.log('ℹ️ SMTP settings not configured, skipping welcome email')
-      }
-    } catch (emailError) {
-      console.error('❌ Welcome email error:', emailError)
-      // Email hatası kritik değil, devam et
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: 'Hesap başarıyla oluşturuldu',
-      user: {
-        id: userId,
+      console.log('✅ Simple user account created successfully:', {
+        userId,
         email
+      })
+
+      // Hoş geldin emaili gönder (opsiyonel)
+      try {
+        // SMTP ayarları var mı kontrol et
+        if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
+          const emailResult = await sendEmailTemplate(
+            email,
+            'WELCOME_SIGNUP',
+            {
+              userEmail: email
+            }
+          )
+
+          if (emailResult.success) {
+            console.log('✅ Welcome email sent successfully:', emailResult.messageId)
+          } else {
+            console.warn('⚠️ Welcome email could not be sent:', emailResult.error)
+          }
+        } else {
+          console.log('ℹ️ SMTP settings not configured, skipping welcome email')
+        }
+      } catch (emailError) {
+        console.error('❌ Welcome email error:', emailError)
+        // Email hatası kritik değil, devam et
       }
-    })
+
+      return NextResponse.json({
+        success: true,
+        message: 'Hesap başarıyla oluşturuldu',
+        user: {
+          id: userId,
+          email
+        }
+      })
+
+    } catch (error) {
+      console.error('💥 Simple signup error:', error)
+      
+      // Daha detaylı hata mesajı
+      let errorMessage = 'Hesap oluşturulurken hata oluştu'
+      
+      if (error instanceof Error) {
+        console.error('Error details:', error.message)
+        errorMessage = `Hesap oluşturulurken hata oluştu: ${error.message}`
+      }
+      
+      return NextResponse.json(
+        { error: errorMessage },
+        { status: 500 }
+      )
+    }
 
   } catch (error) {
     console.error('💥 Simple signup error:', error)
