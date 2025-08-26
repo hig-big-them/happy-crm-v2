@@ -122,6 +122,56 @@ const EmbeddedSignupButton = ({
     setShowTermsModal(false);
   };
 
+  const handleOnboarding = async (code: string) => {
+    try {
+      const response = await fetch('/api/whatsapp/onboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          code,
+          phone_number_id: null, // Backend'den alınacak
+          waba_id: null // Backend'den alınacak
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        console.log('✅ Backend onboarding completed:', result);
+        
+        // WhatsApp verilerini state'e kaydet ve signup modal'ını göster
+        setWhatsappData({
+          waba_id: result.data?.waba_id,
+          phone_number_id: result.data?.phone_number_id,
+          verified_name: result.data?.verified_name,
+          display_phone_number: result.data?.display_phone_number,
+          status: result.data?.status,
+          quality_rating: result.data?.quality_rating
+        });
+        setShowSignupModal(true);
+        
+        toast({
+          title: "WhatsApp Bağlandı!",
+          description: "Şimdi hesap bilgilerinizi girin.",
+        });
+      } else {
+        console.error('❌ Backend onboarding failed:', result);
+        toast({
+          title: "Kurulum Hatası",
+          description: result.error || "Backend kurulumu sırasında hata oluştu.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('❌ Error sending code to backend:', error);
+      toast({
+        title: "Ağ Hatası",
+        description: "Backend ile iletişimde hata oluştu.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleLogin = () => {
     if (!isFbSdkLoaded || !window.FB) {
       toast({
@@ -149,7 +199,7 @@ const EmbeddedSignupButton = ({
     });
 
     window.FB.login(
-      async function (response) {
+      function (response) {
         
         console.log('📋 FB.login response:', response);
         
@@ -159,54 +209,8 @@ const EmbeddedSignupButton = ({
           if (response.authResponse.code) {
             console.log('📋 Authorization code received:', response.authResponse.code.substring(0, 10) + '...');
             
-            // Code'u direkt kullan, message event'i bekleme
-            try {
-              const response = await fetch('/api/whatsapp/onboard', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                  code: response.authResponse.code,
-                  phone_number_id: null, // Backend'den alınacak
-                  waba_id: null // Backend'den alınacak
-                }),
-              });
-
-              const result = await response.json();
-
-              if (response.ok) {
-                console.log('✅ Backend onboarding completed:', result);
-                
-                // WhatsApp verilerini state'e kaydet ve signup modal'ını göster
-                setWhatsappData({
-                  waba_id: result.data?.waba_id,
-                  phone_number_id: result.data?.phone_number_id,
-                  verified_name: result.data?.verified_name,
-                  display_phone_number: result.data?.display_phone_number,
-                  status: result.data?.status,
-                  quality_rating: result.data?.quality_rating
-                });
-                setShowSignupModal(true);
-                
-                toast({
-                  title: "WhatsApp Bağlandı!",
-                  description: "Şimdi hesap bilgilerinizi girin.",
-                });
-              } else {
-                console.error('❌ Backend onboarding failed:', result);
-                toast({
-                  title: "Kurulum Hatası",
-                  description: result.error || "Backend kurulumu sırasında hata oluştu.",
-                  variant: "destructive"
-                });
-              }
-            } catch (error) {
-              console.error('❌ Error sending code to backend:', error);
-              toast({
-                title: "Ağ Hatası",
-                description: "Backend ile iletişimde hata oluştu.",
-                variant: "destructive"
-              });
-            }
+            // Async işlemi ayrı fonksiyonda yap
+            handleOnboarding(response.authResponse.code);
           } else {
             console.log('⚠️ No authorization code in response');
             toast({
