@@ -9,7 +9,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
 // Facebook SDK configuration
-const FACEBOOK_APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || '1369235900792698';
+const FACEBOOK_APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || '1824928921450494';
 const FACEBOOK_SDK_VERSION = 'v23.0';
 
 // TypeScript definitions for Facebook SDK

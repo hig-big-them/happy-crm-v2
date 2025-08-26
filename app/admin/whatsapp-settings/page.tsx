@@ -146,7 +146,7 @@ export default function WhatsAppSettingsPage() {
       phone_number: process.env.NEXT_PUBLIC_TWILIO_PHONE_NUMBER || ''
     },
     happy_cloud: {
-      facebook_app_id: '1369235900792698',
+      facebook_app_id: '1824928921450494',
       facebook_app_secret: '',
       whatsapp_business_account_id: '',
       phone_number_id: '',
@@ -226,7 +226,7 @@ export default function WhatsAppSettingsPage() {
     script.onload = () => {
       if (window.FB) {
         window.FB.init({
-          appId: config.happy_cloud?.facebook_app_id || '1369235900792698',
+          appId: config.happy_cloud?.facebook_app_id || '1824928921450494',
           autoLogAppEvents: true,
           xfbml: true,
           version: 'v23.0'
