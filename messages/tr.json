@@ -213,5 +213,43 @@
       "phone": "Telefon:"
     },
     "back": "Ana Sayfaya Dön"
+  },
+  "terms": {
+    "title": "Hizmet Şartları ve Gizlilik Politikası",
+    "description": "WhatsApp Business entegrasyonunu kullanmadan önce aşağıdaki şartları okuyup kabul etmeniz gerekmektedir.",
+    "happyCrmTerms": {
+      "title": "Happy CRM Hizmet Şartları",
+      "serviceUsage": "Hizmet Kullanımı: Happy CRM platformunu kullanarak müşteri ilişkileri yönetimi ve WhatsApp mesajlaşma hizmetlerinden faydalanabilirsiniz.",
+      "dataSecurity": "Veri Güvenliği: Tüm müşteri verileri şifrelenmiş olarak saklanır ve üçüncü taraflarla paylaşılmaz.",
+      "usageResponsibilities": "Kullanım Sorumlulukları: Platform üzerinden gönderilen mesajların içeriğinden kullanıcı sorumludur.",
+      "serviceInterruptions": "Hizmet Kesintileri: Bakım ve güncelleme çalışmaları sırasında geçici hizmet kesintileri yaşanabilir.",
+      "checkbox": "Happy CRM Hizmet Şartlarını okudum ve kabul ediyorum"
+    },
+    "privacyPolicy": {
+      "title": "Gizlilik Politikası",
+      "dataCollection": "Veri Toplama: Hizmet kalitesini artırmak için kullanım istatistikleri ve mesaj meta verileri toplanır.",
+      "dataStorage": "Veri Saklama: Kişisel veriler yalnızca hizmet süresi boyunca saklanır ve gerekli güvenlik önlemleri alınır.",
+      "thirdPartySharing": "Üçüncü Taraf Paylaşımı: Verileriniz yasal zorunluluklar dışında üçüncü taraflarla paylaşılmaz.",
+      "dataRights": "Veri Hakları: Verilerinize erişim, düzeltme ve silme haklarınız bulunmaktadır.",
+      "checkbox": "Gizlilik Politikasını okudum ve kabul ediyorum"
+    },
+    "whatsappTerms": {
+      "title": "WhatsApp Business API Şartları",
+      "whatsappPolicies": "WhatsApp Politikaları: WhatsApp Business API kullanımı Meta'nın ticari politikalarına tabidir.",
+      "messageLimits": "Mesaj Limitleri: WhatsApp tarafından belirlenen günlük mesaj limitleri geçerlidir.",
+      "contentRules": "İçerik Kuralları: Spam, yanıltıcı veya zararlı içerik gönderilmesi yasaktır.",
+      "accountSuspension": "Hesap Askıya Alma: Kurallara aykırı kullanım durumunda WhatsApp hesabınız askıya alınabilir.",
+      "checkbox": "WhatsApp Business API şartlarını okudum ve kabul ediyorum",
+      "viewPolicy": "WhatsApp Business Politikasını görüntüle"
+    },
+    "importantNotice": {
+      "title": "⚠️ Önemli Uyarı",
+      "content": "WhatsApp Business entegrasyonu aktif olduktan sonra, müşterilerinizle olan tüm iletişimler WhatsApp'ın ticari mesajlaşma politikalarına tabi olacaktır. Müşteri onayı olmadan mesaj gönderilmesi hesabınızın askıya alınmasına neden olabilir."
+    },
+    "buttons": {
+      "decline": "Reddet",
+      "accept": "Kabul Et ve Devam Et",
+      "pleaseRead": "Lütfen tüm şartları okuyun"
+    }
   }
 }

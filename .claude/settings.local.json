@@ -42,7 +42,8 @@
       "Bash(npm update:*)",
       "Bash(npx next build:*)",
       "Bash(git checkout:*)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(psql:*)"
     ],
     "deny": []
   }

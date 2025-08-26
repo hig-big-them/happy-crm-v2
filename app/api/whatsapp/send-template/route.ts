@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createWhatsAppService } from '@/lib/services/whatsapp-cloud-service'
 import { createClient } from '@/lib/supabase/client'
+import { rateLimitMiddleware, createRateLimitResponse } from '@/lib/security/rate-limiter'
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,6 +13,13 @@ export async function POST(request: NextRequest) {
         { error: 'to ve templateName parametreleri gerekli' },
         { status: 400 }
       )
+    }
+
+    // Apply rate limiting for WhatsApp messages
+    const rateLimitResult = await rateLimitMiddleware(request, 'whatsapp', `whatsapp:${to}`)
+    if (rateLimitResult && !rateLimitResult.success) {
+      console.log('🚫 Rate limit exceeded for WhatsApp message to:', to)
+      return createRateLimitResponse(rateLimitResult, 'Too many WhatsApp messages. Please wait before sending another.')
     }
 
     console.log('🚀 WhatsApp Template mesajı gönderiliyor:')

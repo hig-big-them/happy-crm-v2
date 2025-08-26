@@ -213,5 +213,43 @@
       "phone": "Phone:"
     },
     "back": "Back to Home"
+  },
+  "terms": {
+    "title": "Terms of Service and Privacy Policy",
+    "description": "Before using WhatsApp Business integration, you must read and accept the following terms.",
+    "happyCrmTerms": {
+      "title": "Happy CRM Terms of Service",
+      "serviceUsage": "Service Usage: You can benefit from customer relationship management and WhatsApp messaging services by using the Happy CRM platform.",
+      "dataSecurity": "Data Security: All customer data is stored encrypted and not shared with third parties.",
+      "usageResponsibilities": "Usage Responsibilities: The user is responsible for the content of messages sent through the platform.",
+      "serviceInterruptions": "Service Interruptions: Temporary service interruptions may occur during maintenance and update work.",
+      "checkbox": "I have read and accept the Happy CRM Terms of Service"
+    },
+    "privacyPolicy": {
+      "title": "Privacy Policy",
+      "dataCollection": "Data Collection: Usage statistics and message metadata are collected to improve service quality.",
+      "dataStorage": "Data Storage: Personal data is stored only during the service period and necessary security measures are taken.",
+      "thirdPartySharing": "Third Party Sharing: Your data is not shared with third parties except for legal obligations.",
+      "dataRights": "Data Rights: You have the right to access, correct and delete your data.",
+      "checkbox": "I have read and accept the Privacy Policy"
+    },
+    "whatsappTerms": {
+      "title": "WhatsApp Business API Terms",
+      "whatsappPolicies": "WhatsApp Policies: WhatsApp Business API usage is subject to Meta's commercial policies.",
+      "messageLimits": "Message Limits: Daily message limits set by WhatsApp apply.",
+      "contentRules": "Content Rules: Sending spam, misleading or harmful content is prohibited.",
+      "accountSuspension": "Account Suspension: Your WhatsApp account may be suspended in case of violation of rules.",
+      "checkbox": "I have read and accept the WhatsApp Business API terms",
+      "viewPolicy": "View WhatsApp Business Policy"
+    },
+    "importantNotice": {
+      "title": "⚠️ Important Notice",
+      "content": "After WhatsApp Business integration is activated, all communications with your customers will be subject to WhatsApp's commercial messaging policies. Sending messages without customer consent may result in your account being suspended."
+    },
+    "buttons": {
+      "decline": "Decline",
+      "accept": "Accept and Continue",
+      "pleaseRead": "Please read all terms"
+    }
   }
 }

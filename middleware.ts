@@ -4,12 +4,17 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   
   // Public routes that don't require authentication
-  const publicRoutes = ['/login', '/auth/callback', '/forgot-password', '/', '/privacy', '/terms']
+  const publicRoutes = ['/login', '/auth/callback', '/forgot-password', '/', '/privacy', '/terms', '/whatsapp-signup', '/oauth']
   const skipAuthRoutes = ['/api/webhooks', '/api/whatsapp/webhook']
   
-  // Remove bypass-login from allowed routes - security fix
-  if (pathname.includes('bypass')) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  // SECURITY: Block all bypass routes in production
+  if (pathname.includes('bypass') || pathname.includes('admin-bypass')) {
+    if (process.env.NODE_ENV === 'production') {
+      console.warn(`🚨 SECURITY: Blocked bypass attempt from ${request.ip} to ${pathname}`)
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+    // In development, log the bypass usage
+    console.log(`⚠️ DEV: Bypass route accessed: ${pathname}`)
   }
   
   // Restricted routes requiring authentication

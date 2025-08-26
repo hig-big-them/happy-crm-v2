@@ -27,7 +27,29 @@ export const metadata: Metadata = {
   icons: {
     icon: '/icon-192.png',
     apple: '/icon-192.png'
-  }
+  },
+  openGraph: {
+    title: 'Happy CRM',
+    description: 'Customer relationship management and WhatsApp messaging platform',
+    url: 'https://happycrm.vercel.app',
+    siteName: 'Happy CRM',
+    images: [
+      {
+        url: '/icon-512.png',
+        width: 512,
+        height: 512,
+        alt: 'Happy CRM Logo',
+      },
+    ],
+    locale: 'tr_TR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Happy CRM',
+    description: 'Customer relationship management and WhatsApp messaging platform',
+    images: ['/icon-512.png'],
+  },
 }
 
 export const viewport = {

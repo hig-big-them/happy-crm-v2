@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
+import { TermsOfServiceModal } from './terms-of-service-modal';
 
 interface FacebookLoginButtonProps {
   onSuccess?: (data: { code: string; phone_number_id: string; waba_id: string }) => void;
@@ -14,6 +15,7 @@ interface FacebookLoginButtonProps {
 declare global {
   interface Window {
     checkLoginState: () => void;
+    checkLoginStateWithTerms: () => void;
   }
 }
 
@@ -25,6 +27,32 @@ const FacebookLoginButton = ({
   className = ''
 }: FacebookLoginButtonProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [pendingLogin, setPendingLogin] = useState(false);
+
+  // Terms-aware login callback
+  const checkLoginStateWithTerms = () => {
+    setShowTermsModal(true);
+    setPendingLogin(true);
+  };
+
+  const handleTermsAccept = () => {
+    setShowTermsModal(false);
+    if (pendingLogin) {
+      setPendingLogin(false);
+      checkLoginState();
+    }
+  };
+
+  const handleTermsDecline = () => {
+    setShowTermsModal(false);
+    setPendingLogin(false);
+    toast({
+      title: "İptal Edildi",
+      description: "Hizmet şartlarını kabul etmeden WhatsApp entegrasyonu yapılamaz.",
+      variant: "destructive"
+    });
+  };
 
   // Login status callback
   const checkLoginState = () => {
@@ -161,9 +189,11 @@ const FacebookLoginButton = ({
   // Set up global callback function
   useEffect(() => {
     window.checkLoginState = checkLoginState;
+    window.checkLoginStateWithTerms = checkLoginStateWithTerms;
     
     return () => {
       delete window.checkLoginState;
+      delete window.checkLoginStateWithTerms;
     };
   }, []);
 
@@ -205,21 +235,30 @@ const FacebookLoginButton = ({
   };
 
   return (
-    <div ref={containerRef} className={className}>
-      <div
-        className="fb-login-button"
-        data-config-id={process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID}
-        data-button-type="login_with"
-        data-layout="default"
-        data-size={getSizeClass()}
-        data-button-text={buttonText}
-        data-use-continue-as="false"
-        data-width=""
-        data-show-faces="false"
-        data-auto-logout-link="false"
-        data-onlogin="checkLoginState"
+    <>
+      <div ref={containerRef} className={className}>
+        <div
+          className="fb-login-button"
+          data-config-id={process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID}
+          data-button-type="login_with"
+          data-layout="default"
+          data-size={getSizeClass()}
+          data-button-text={buttonText}
+          data-use-continue-as="false"
+          data-width=""
+          data-show-faces="false"
+          data-auto-logout-link="false"
+          data-onlogin="checkLoginStateWithTerms"
+        />
+      </div>
+
+      <TermsOfServiceModal
+        open={showTermsModal}
+        onOpenChange={setShowTermsModal}
+        onAccept={handleTermsAccept}
+        onDecline={handleTermsDecline}
       />
-    </div>
+    </>
   );
 };
 

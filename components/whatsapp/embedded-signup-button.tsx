@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, Loader2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import { TermsOfServiceModal } from './terms-of-service-modal';
 
 declare global {
   interface Window {
@@ -43,32 +44,72 @@ const EmbeddedSignupButton = ({
   disabled = false,
   className = ""
 }: EmbeddedSignupButtonProps) => {
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [isFbSdkLoaded, setIsFbSdkLoaded] = useState(false);
   
-  // Check Facebook login status
-  const checkLoginStatus = () => {
-    if (!window.FB) {
-      console.warn('Facebook SDK not loaded yet');
-      return;
+  // Facebook SDK'nın yüklenmesini bekle
+  useEffect(() => {
+    const checkFbSdk = () => {
+      if (window.FB) {
+        setIsFbSdkLoaded(true);
+        console.log('✅ Facebook SDK loaded successfully');
+      } else {
+        // SDK henüz yüklenmemiş, tekrar dene
+        setTimeout(checkFbSdk, 100);
+      }
+    };
+    
+    // fbAsyncInit callback'ini dinle
+    const originalFbAsyncInit = window.fbAsyncInit;
+    window.fbAsyncInit = function() {
+      if (originalFbAsyncInit) {
+        originalFbAsyncInit();
+      }
+      // SDK yüklendiğinde state'i güncelle
+      setTimeout(() => {
+        if (window.FB) {
+          setIsFbSdkLoaded(true);
+          console.log('✅ Facebook SDK initialized via fbAsyncInit');
+        }
+      }, 100);
+    };
+    
+    // Eğer SDK zaten yüklenmişse
+    if (window.FB) {
+      setIsFbSdkLoaded(true);
+      console.log('✅ Facebook SDK already loaded');
+    } else {
+      checkFbSdk();
     }
     
-    window.FB.getLoginStatus(function(response) {
-      console.log('📋 Facebook login status:', response);
-      
-      if (response.status === 'connected') {
-        console.log('✅ User is connected to Facebook');
-        // User is logged into Facebook and your app
-      } else if (response.status === 'not_authorized') {
-        console.log('⚠️ User is logged into Facebook but not authorized');
-        // User is logged into Facebook, but has not logged into your app
-      } else {
-        console.log('❌ User is not logged into Facebook');
-        // User is not logged into Facebook
-      }
+    // Cleanup
+    return () => {
+      window.fbAsyncInit = originalFbAsyncInit;
+    };
+  }, []);
+
+  const handleButtonClick = () => {
+    // Show terms modal first
+    setShowTermsModal(true);
+  };
+
+  const handleTermsAccept = () => {
+    setShowTermsModal(false);
+    // Proceed with actual login
+    handleLogin();
+  };
+
+  const handleTermsDecline = () => {
+    setShowTermsModal(false);
+    toast({
+      title: "İptal Edildi",
+      description: "Hizmet şartlarını kabul etmeden WhatsApp entegrasyonu yapılamaz.",
+      variant: "destructive"
     });
   };
 
   const handleLogin = () => {
-    if (!window.FB) {
+    if (!isFbSdkLoaded || !window.FB) {
       toast({
         title: "Hata",
         description: "Facebook SDK henüz yüklenmedi. Lütfen bekleyin.",
@@ -86,10 +127,12 @@ const EmbeddedSignupButton = ({
       return;
     }
 
-    // Check login status before starting WhatsApp signup
-    checkLoginStatus();
-    
     console.log('🚀 Starting WhatsApp Embedded Signup...');
+    console.log('🔍 Debug info:', {
+      configId: process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID,
+      currentDomain: window.location.hostname,
+      protocol: window.location.protocol
+    });
 
     window.FB.login(
       function (response) {
@@ -248,23 +291,37 @@ const EmbeddedSignupButton = ({
   }, [onSuccess, onError]);
 
   return (
-    <Button 
-      onClick={handleLogin} 
-      disabled={disabled}
-      className={`flex items-center gap-2 ${className}`}
-    >
-      {disabled ? (
-        <>
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Bağlanıyor...
-        </>
-      ) : (
-        <>
-          <MessageSquare className="h-4 w-4" />
-          WhatsApp Business'a Bağlan
-        </>
-      )}
-    </Button>
+    <>
+      <Button 
+        onClick={handleButtonClick} 
+        disabled={disabled || !isFbSdkLoaded}
+        className={`flex items-center gap-2 ${className}`}
+      >
+        {disabled ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Bağlanıyor...
+          </>
+        ) : !isFbSdkLoaded ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Hazırlanıyor...
+          </>
+        ) : (
+          <>
+            <MessageSquare className="h-4 w-4" />
+            WhatsApp Business'a Bağlan
+          </>
+        )}
+      </Button>
+
+      <TermsOfServiceModal
+        open={showTermsModal}
+        onOpenChange={setShowTermsModal}
+        onAccept={handleTermsAccept}
+        onDecline={handleTermsDecline}
+      />
+    </>
   );
 };
 

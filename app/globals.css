@@ -124,6 +124,44 @@ input, textarea, [contenteditable] {
   }
 }
 
+/* WhatsApp Modal özel stilleri */
+.whatsapp-modal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 9999 !important;
+  max-height: 90vh !important;
+  max-width: 95vw !important;
+  overflow: hidden !important;
+}
+
+/* Modal overlay için daha yüksek z-index */
+.modal-overlay {
+  z-index: 9998 !important;
+}
+
+/* Dialog Portal için özel stiller */
+[data-radix-dialog-portal] {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 9998 !important;
+}
+
+/* Dialog Content için özel stiller */
+[data-radix-dialog-content] {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 9999 !important;
+  max-height: 90vh !important;
+  max-width: 95vw !important;
+  overflow: hidden !important;
+}
 
 
 @layer base {
