@@ -98,18 +98,6 @@ const EmbeddedSignupButton = ({
       return;
     }
     
-    // Popup blocker kontrolü
-    const popupTest = window.open('', '_blank', 'width=1,height=1');
-    if (!popupTest || popupTest.closed || typeof popupTest.closed === 'undefined') {
-      toast({
-        title: "Popup Engellendi",
-        description: "Popup'lar engellenmiş. Lütfen popup blocker'ı devre dışı bırakın ve tekrar deneyin.",
-        variant: "destructive"
-      });
-      return;
-    }
-    popupTest.close();
-    
     // Show terms modal first
     setShowTermsModal(true);
   };
@@ -159,20 +147,8 @@ const EmbeddedSignupButton = ({
       protocol: window.location.protocol
     });
 
-    // Login timeout'u ayarla
-    const loginTimeout = setTimeout(() => {
-      console.log('⏰ Login timeout reached');
-      toast({
-        title: "Zaman Aşımı",
-        description: "Login işlemi zaman aşımına uğradı. Lütfen tekrar deneyin.",
-        variant: "destructive"
-      });
-    }, 300000); // 5 dakika
-
     window.FB.login(
       function (response) {
-        // Timeout'u temizle
-        clearTimeout(loginTimeout);
         
         console.log('📋 FB.login response:', response);
         
@@ -184,15 +160,12 @@ const EmbeddedSignupButton = ({
           }
         } else {
           console.log('❌ User cancelled login or did not fully authorize.');
+          console.log('📋 Response status:', response.status);
           
-          // Status'u kontrol et
+          // Status'u kontrol et ama daha esnek ol
           if (response.status === 'unknown') {
-            console.log('⚠️ Login status unknown - popup might have been blocked or timed out');
-            toast({
-              title: "Popup Engellendi",
-              description: "Popup engellendi. Lütfen popup blocker'ı devre dışı bırakın ve tekrar deneyin.",
-              variant: "destructive"
-            });
+            console.log('⚠️ Login status unknown - this might be normal for embedded signup');
+            // Unknown status normal olabilir, sadece log'la
           } else {
             toast({
               title: "İptal Edildi",
