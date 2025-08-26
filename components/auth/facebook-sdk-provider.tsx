@@ -71,7 +71,7 @@ export function FacebookSDKProvider({
     } else {
       // Production domain kontrolü - kullanıcıya uyarı göster
       console.log('⚠️ Production domain detected:', currentDomain);
-      setDomainError(`Current domain: ${currentDomain}. Make sure this domain is added to Facebook App Dashboard > Facebook Login > Settings > Allowed Domains for JavaScript SDK`);
+      setDomainError(`Current domain: ${currentDomain}. Make sure this domain is added to Facebook App Dashboard &gt; Facebook Login &gt; Settings &gt; Allowed Domains for JavaScript SDK`);
     }
 
     // Eğer SDK zaten yüklenmiş ise skip et

@@ -109,7 +109,7 @@ function FacebookLoginDemo() {
                   <ol className="list-decimal list-inside mt-1 space-y-1">
                     <li>Facebook Developers Dashboard'a gidin</li>
                     <li>Uygulamanızı seçin</li>
-                    <li>Facebook Login > Settings</li>
+                    <li>Facebook Login &gt; Settings</li>
                     <li>"Allowed Domains for JavaScript SDK" listesine domaininizi ekleyin</li>
                   </ol>
                 </div>
