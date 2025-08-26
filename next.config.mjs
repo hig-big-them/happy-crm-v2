@@ -37,7 +37,7 @@ const securityHeaders = [
       font-src 'self' https://fonts.gstatic.com;
       img-src 'self' data: blob: https: http:;
       media-src 'self' data: blob: https:;
-      connect-src 'self' https://*.supabase.co https://graph.facebook.com https://api.whatsapp.com https://www.facebook.com https://connect.facebook.net https://sentry.io;
+      connect-src 'self' https://*.supabase.co https://graph.facebook.com https://api.whatsapp.com https://www.facebook.com https://web.facebook.com https://connect.facebook.net https://sentry.io;
       frame-src 'self' https://www.facebook.com https://web.facebook.com;
       object-src 'none';
       base-uri 'self';
@@ -92,7 +92,9 @@ const nextConfig = {
     return [
       {
         source: '/(.*)',
-        headers: securityHeaders,
+        headers: process.env.NODE_ENV === 'development' 
+          ? securityHeaders.filter(header => header.key !== 'Content-Security-Policy')
+          : securityHeaders,
       },
     ];
   },
