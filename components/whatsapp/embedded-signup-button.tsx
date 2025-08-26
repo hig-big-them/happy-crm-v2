@@ -98,6 +98,18 @@ const EmbeddedSignupButton = ({
       return;
     }
     
+    // Popup blocker kontrolü
+    const popupTest = window.open('', '_blank', 'width=1,height=1');
+    if (!popupTest || popupTest.closed || typeof popupTest.closed === 'undefined') {
+      toast({
+        title: "Popup Engellendi",
+        description: "Popup'lar engellenmiş. Lütfen popup blocker'ı devre dışı bırakın ve tekrar deneyin.",
+        variant: "destructive"
+      });
+      return;
+    }
+    popupTest.close();
+    
     // Show terms modal first
     setShowTermsModal(true);
   };
@@ -147,9 +159,21 @@ const EmbeddedSignupButton = ({
       protocol: window.location.protocol
     });
 
+    // Login timeout'u ayarla
+    const loginTimeout = setTimeout(() => {
+      console.log('⏰ Login timeout reached');
+      toast({
+        title: "Zaman Aşımı",
+        description: "Login işlemi zaman aşımına uğradı. Lütfen tekrar deneyin.",
+        variant: "destructive"
+      });
+    }, 300000); // 5 dakika
+
     window.FB.login(
       function (response) {
-        // Bu callback, login penceresi kapandığında çalışır.
+        // Timeout'u temizle
+        clearTimeout(loginTimeout);
+        
         console.log('📋 FB.login response:', response);
         
         if (response.authResponse) {
@@ -160,11 +184,22 @@ const EmbeddedSignupButton = ({
           }
         } else {
           console.log('❌ User cancelled login or did not fully authorize.');
-          toast({
-            title: "İptal Edildi",
-            description: "Kullanıcı giriş işlemini iptal etti.",
-            variant: "destructive"
-          });
+          
+          // Status'u kontrol et
+          if (response.status === 'unknown') {
+            console.log('⚠️ Login status unknown - popup might have been blocked or timed out');
+            toast({
+              title: "Popup Engellendi",
+              description: "Popup engellendi. Lütfen popup blocker'ı devre dışı bırakın ve tekrar deneyin.",
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "İptal Edildi",
+              description: "Kullanıcı giriş işlemini iptal etti.",
+              variant: "destructive"
+            });
+          }
         }
       },
       {
@@ -206,6 +241,7 @@ const EmbeddedSignupButton = ({
 
   useEffect(() => {
     let isProcessing = false; // Popup'ın sürekli açılmasını engellemek için flag
+    let messageTimeout: NodeJS.Timeout | null = null;
 
     const handleMessage = async (event: MessageEvent) => {
       // Güvenlik: Sadece Facebook domain'lerinden gelen mesajları kabul et
@@ -221,6 +257,7 @@ const EmbeddedSignupButton = ({
 
       try {
         const data = JSON.parse(event.data);
+        console.log('📨 Received message from Facebook:', data);
         
         if (data.type === 'WA_EMBEDDED_SIGNUP') {
           console.log('📱 WhatsApp Embedded Signup event:', data);
@@ -316,12 +353,25 @@ const EmbeddedSignupButton = ({
       }
     };
 
+    // Message timeout'u ayarla (10 dakika)
+    messageTimeout = setTimeout(() => {
+      console.log('⏰ Message timeout reached - no response from Facebook');
+      toast({
+        title: "Zaman Aşımı",
+        description: "Facebook'tan yanıt alınamadı. Lütfen tekrar deneyin.",
+        variant: "destructive"
+      });
+    }, 600000); // 10 dakika
+
     // Event listener'ı ekle
     window.addEventListener('message', handleMessage);
 
     // Cleanup: Component unmount olduğunda event listener'ı kaldır
     return () => {
       window.removeEventListener('message', handleMessage);
+      if (messageTimeout) {
+        clearTimeout(messageTimeout);
+      }
     };
   }, [onSuccess, onError]);
 
