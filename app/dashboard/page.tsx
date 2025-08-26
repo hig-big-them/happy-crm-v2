@@ -475,7 +475,7 @@ export default function Dashboard() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Button asChild variant="outline" className="h-20 flex-col gap-2">
               <Link href="/leads/new">
                 <Plus className="h-6 w-6" />

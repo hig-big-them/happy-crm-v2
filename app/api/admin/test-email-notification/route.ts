@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
 
     // Test parametreleri (eğer gönderilmemişse)
     const defaultParams = {
+      userEmail: emailAddress,
       patientName: 'Test Hasta',
       status: 'Sürücü Atandı',
       location: 'Otel - Havalimanı (Volley Hotel)',

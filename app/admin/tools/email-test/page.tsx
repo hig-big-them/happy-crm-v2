@@ -106,12 +106,21 @@ export default function EmailTestPage() {
                 <SelectValue placeholder="Template seçin" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="WELCOME_SIGNUP">Hoş Geldin Emaili</SelectItem>
                 <SelectItem value="STATUS_CHANGED">Durum Değişikliği</SelectItem>
                 <SelectItem value="TRANSFER_ASSIGNED">Transfer Ataması</SelectItem>
                 <SelectItem value="TRANSFER_DEADLINE">Deadline Uyarısı</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {templateType === 'WELCOME_SIGNUP' && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Hoş Geldin Emaili:</strong> Yeni üye kaydı sonrası gönderilen hoş geldin mesajı ve başlangıç rehberi.
+              </p>
+            </div>
+          )}
 
           <Button 
             onClick={handleTestEmail} 

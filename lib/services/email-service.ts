@@ -31,6 +31,61 @@ export interface EmailTemplate {
 
 // E-posta template'lerini tanımla
 const EMAIL_TEMPLATES = {
+  WELCOME_SIGNUP: {
+    subject: '🎉 Happy CRM\'e Hoş Geldiniz!',
+    htmlContent: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 4px solid #28a745;">
+          <h2 style="color: #28a745; margin-top: 0;">🎉 Happy CRM'e Hoş Geldiniz!</h2>
+          
+          <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 15px 0;">
+            <h3 style="margin-top: 0; color: #333;">Hesabınız Başarıyla Oluşturuldu</h3>
+            <p>Merhaba <strong>{{userEmail}}</strong>,</p>
+            <p>Happy CRM ailesine katıldığınız için teşekkür ederiz! Hesabınız başarıyla oluşturuldu ve artık CRM sistemimizi kullanmaya başlayabilirsiniz.</p>
+            
+            <div style="background-color: #e8f5e8; padding: 15px; border-radius: 5px; margin: 15px 0;">
+              <h4 style="margin-top: 0; color: #2d5a2d;">🚀 Başlamak İçin:</h4>
+              <ul style="margin: 0; padding-left: 20px;">
+                <li>Dashboard'ınızı keşfedin</li>
+                <li>Müşteri ve lead yönetimi özelliklerini inceleyin</li>
+                <li>WhatsApp Business entegrasyonunu kurun</li>
+                <li>İlk mesajlaşma kampanyanızı oluşturun</li>
+              </ul>
+            </div>
+            
+            <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; border-left: 3px solid #ffc107;">
+              <p style="margin: 0; color: #856404;">
+                <strong>🔐 Güvenlik:</strong> Hesabınızın güvenliği için güçlü bir şifre kullandığınızdan emin olun.
+              </p>
+            </div>
+          </div>
+          
+          <div style="background-color: #e9ecef; padding: 10px; border-radius: 5px; font-size: 12px; color: #6c757d;">
+            Bu e-posta Happy CRM hesap oluşturma işleminiz sonrasında gönderilmiştir.
+            Sorularınız için <a href="mailto:support@happycrm.com" style="color: #007bff;">support@happycrm.com</a> adresinden bizimle iletişime geçebilirsiniz.
+          </div>
+        </div>
+      </div>
+    `,
+    textContent: `
+HAPPY CRM'E HOŞ GELDİNİZ!
+
+Merhaba {{userEmail}},
+
+Happy CRM ailesine katıldığınız için teşekkür ederiz! Hesabınız başarıyla oluşturuldu ve artık CRM sistemimizi kullanmaya başlayabilirsiniz.
+
+BAŞLAMAK İÇİN:
+- Dashboard'ınızı keşfedin
+- Müşteri ve lead yönetimi özelliklerini inceleyin
+- WhatsApp Business entegrasyonunu kurun
+- İlk mesajlaşma kampanyanızı oluşturun
+
+GÜVENLİK: Hesabınızın güvenliği için güçlü bir şifre kullandığınızdan emin olun.
+
+Bu e-posta Happy CRM hesap oluşturma işleminiz sonrasında gönderilmiştir.
+Sorularınız için support@happycrm.com adresinden bizimle iletişime geçebilirsiniz.
+    `
+  },
   STATUS_CHANGED: {
     subject: '📋 Transfer Durumu Güncellendi - {{patientName}}',
     htmlContent: `

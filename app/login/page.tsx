@@ -14,10 +14,11 @@ import {
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { useMockAuth } from '../../components/mock-auth-provider'
-import { Loader2, Eye, EyeOff, MessageSquare } from "lucide-react";
+import { Loader2, Eye, EyeOff, UserPlus, Check, X } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from 'react'
-import EmbeddedSignupButton from '../../components/whatsapp/embedded-signup-button'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../../components/ui/dialog"
+import { Checkbox } from "../../components/ui/checkbox"
 
 export default function LoginPage() {
   const { signIn, user, loading } = useMockAuth()
@@ -30,6 +31,16 @@ export default function LoginPage() {
   
   // URL'den restriction parametresini kontrol et
   const [restrictionMessage, setRestrictionMessage] = useState<string | null>(null)
+  
+  // Kayıt modal state'leri
+  const [showTermsModal, setShowTermsModal] = useState(false)
+  const [showSignupForm, setShowSignupForm] = useState(false)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [signupEmail, setSignupEmail] = useState('')
+  const [signupPassword, setSignupPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [signupError, setSignupError] = useState<string | null>(null)
+  const [isSigningUp, setIsSigningUp] = useState(false)
   
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
@@ -68,6 +79,73 @@ export default function LoginPage() {
     }
   }
 
+  const handleTermsAccept = () => {
+    if (acceptedTerms) {
+      setShowTermsModal(false)
+      setShowSignupForm(true)
+    }
+  }
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSignupError(null)
+    
+    if (signupPassword !== confirmPassword) {
+      setSignupError('Şifreler eşleşmiyor')
+      return
+    }
+    
+    if (signupPassword.length < 6) {
+      setSignupError('Şifre en az 6 karakter olmalıdır')
+      return
+    }
+    
+    setIsSigningUp(true)
+    
+    try {
+      // Basit kayıt API çağrısı
+      const response = await fetch('/api/auth/simple-signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: signupEmail,
+          password: signupPassword
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        setShowSignupForm(false)
+        setEmail(signupEmail)
+        setPassword(signupPassword)
+        // Auto login after successful signup
+        const loginResult = await signIn(signupEmail, signupPassword)
+        if (loginResult.success) {
+          router.push('/dashboard')
+        }
+      } else {
+        setSignupError(result.error || 'Kayıt başarısız')
+      }
+    } catch (error) {
+      setSignupError('Beklenmeyen bir hata oluştu')
+    } finally {
+      setIsSigningUp(false)
+    }
+  }
+
+  const resetSignupState = () => {
+    setShowTermsModal(false)
+    setShowSignupForm(false)
+    setAcceptedTerms(false)
+    setSignupEmail('')
+    setSignupPassword('')
+    setConfirmPassword('')
+    setSignupError(null)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
@@ -97,8 +175,8 @@ export default function LoginPage() {
                 </svg>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 mb-2">WhatsApp Business API</h3>
-                <p className="text-gray-600 text-sm">Professional messaging with customers via WhatsApp. Template messages and automated responses.</p>
+                <h3 className="font-semibold text-gray-900 mb-2">WhatsApp Business Entegrasyonu</h3>
+                <p className="text-gray-600 text-sm">Müşterilerinizle WhatsApp üzerinden profesyonel mesajlaşma. Template mesajları ve otomatik yanıtlar.</p>
               </div>
             </div>
             
@@ -109,8 +187,8 @@ export default function LoginPage() {
                 </svg>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Customer & Lead Management</h3>
-                <p className="text-gray-600 text-sm">Lead tracking, pipeline management and customer relationships. Optimize your sales processes.</p>
+                <h3 className="font-semibold text-gray-900 mb-2">Müşteri ve Lead Yönetimi</h3>
+                <p className="text-gray-600 text-sm">Lead takibi, pipeline yönetimi ve müşteri ilişkileri. Satış süreçlerinizi optimize edin.</p>
               </div>
             </div>
             
@@ -121,8 +199,8 @@ export default function LoginPage() {
                 </svg>
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Analytics & Reporting</h3>
-                <p className="text-gray-600 text-sm">Detailed performance reports, message analytics and customer behavior analysis.</p>
+                <h3 className="font-semibold text-gray-900 mb-2">Analitik ve Raporlama</h3>
+                <p className="text-gray-600 text-sm">Detaylı performans raporları, mesaj analizleri ve müşteri davranış analizleri.</p>
               </div>
             </div>
           </div>
@@ -132,10 +210,10 @@ export default function LoginPage() {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold text-gray-900">
-              Sign In
+              Happy CRM'e Giriş
             </CardTitle>
             <CardDescription className="text-gray-600">
-              Enter your credentials to access your account
+              CRM hesabınıza giriş yapmak için bilgilerinizi girin
             </CardDescription>
           </CardHeader>
 
@@ -212,10 +290,10 @@ export default function LoginPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
+                    Giriş yapılıyor...
                   </>
                 ) : (
-                  'Sign In'
+                  'Giriş Yap'
                 )}
               </Button>
             </form>
@@ -228,35 +306,211 @@ export default function LoginPage() {
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-muted-foreground">Or connect with</span>
+                  <span className="bg-white px-2 text-muted-foreground">Hesabınız yok mu?</span>
                 </div>
               </div>
             </div>
 
             <div className="w-full">
-              <EmbeddedSignupButton
-                onSuccess={(data) => {
-                  console.log('WhatsApp signup successful:', data);
-                  // Başarılı bağlantıdan sonra dashboard'a yönlendir
-                  router.push('/dashboard?whatsapp_connected=true');
-                }}
-                onError={(error) => {
-                  console.error('WhatsApp signup error:', error);
-                  setError('WhatsApp connection failed: ' + error);
-                }}
-                className="w-full"
+              <Button 
+                variant="outline" 
+                className="w-full" 
                 disabled={isLoading}
-              />
+                onClick={() => setShowTermsModal(true)}
+              >
+                <UserPlus className="mr-2 h-4 w-4" />
+                Hesap Oluştur
+              </Button>
             </div>
             
             <div className="text-center text-sm text-gray-600">
               <Link href="/forgot-password" className="text-blue-600 hover:text-blue-800 underline">
-                Forgot password?
+                Şifrenizi mi unuttunuz?
               </Link>
             </div>
           </CardFooter>
         </Card>
       </div>
+
+      {/* Terms of Service Modal */}
+      <Dialog open={showTermsModal} onOpenChange={setShowTermsModal}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Kullanım Şartları ve Gizlilik Politikası</DialogTitle>
+            <DialogDescription>
+              Happy CRM hizmetlerini kullanmadan önce lütfen aşağıdaki şartları okuyun ve kabul edin.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 text-sm text-gray-700 leading-relaxed">
+            <div className="bg-gray-50 p-4 rounded-lg max-h-96 overflow-y-auto">
+              <h3 className="font-semibold text-gray-900 mb-3">1. Hizmet Kullanımı</h3>
+              <p className="mb-3">
+                Happy CRM, müşteri ilişkileri yönetimi ve WhatsApp Business entegrasyonu sağlayan bir platformdur. 
+                Hizmetimizi kullanarak aşağıdaki şartları kabul etmiş sayılırsınız.
+              </p>
+              
+              <h3 className="font-semibold text-gray-900 mb-3">2. Hesap Güvenliği</h3>
+              <p className="mb-3">
+                Hesabınızın güvenliğinden siz sorumlusunuz. Güçlü şifreler kullanın ve hesap bilgilerinizi 
+                kimseyle paylaşmayın. Şüpheli aktiviteleri hemen bildirin.
+              </p>
+              
+              <h3 className="font-semibold text-gray-900 mb-3">3. Veri Gizliliği</h3>
+              <p className="mb-3">
+                Müşteri verilerinizi güvenle saklarız. Verileriniz sadece hizmet sağlamak amacıyla kullanılır 
+                ve üçüncü taraflarla paylaşılmaz. GDPR ve KVKK uyumluluğu sağlanmıştır.
+              </p>
+              
+              <h3 className="font-semibold text-gray-900 mb-3">4. WhatsApp Business Kullanımı</h3>
+              <p className="mb-3">
+                WhatsApp Business API kullanımı Meta'nın politikalarına uygun olmalıdır. Spam, 
+                yanıltıcı içerik veya kötüye kullanım yasaktır.
+              </p>
+              
+              <h3 className="font-semibold text-gray-900 mb-3">5. Hizmet Sınırlamaları</h3>
+              <p className="mb-3">
+                Hizmetimiz "olduğu gibi" sunulur. Kesintisiz hizmet garantisi verilmez. 
+                Önemli güncellemeler önceden bildirilir.
+              </p>
+              
+              <h3 className="font-semibold text-gray-900 mb-3">6. Fesih</h3>
+              <p className="mb-3">
+                Bu anlaşmayı herhangi bir zamanda feshedebilirsiniz. Fesih sonrası verileriniz 
+                30 gün içinde silinir.
+              </p>
+              
+              <h3 className="font-semibold text-gray-900 mb-3">7. İletişim</h3>
+              <p className="mb-3">
+                Sorularınız için support@happycrm.com adresinden bizimle iletişime geçebilirsiniz.
+              </p>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="terms" 
+                checked={acceptedTerms}
+                onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
+              />
+              <Label htmlFor="terms" className="text-sm">
+                Kullanım şartlarını ve gizlilik politikasını okudum ve kabul ediyorum
+              </Label>
+            </div>
+          </div>
+          
+          <div className="flex gap-2 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setShowTermsModal(false)
+                resetSignupState()
+              }}
+            >
+              <X className="mr-2 h-4 w-4" />
+              İptal
+            </Button>
+            <Button
+              type="button"
+              className="w-full"
+              disabled={!acceptedTerms}
+              onClick={handleTermsAccept}
+            >
+              <Check className="mr-2 h-4 w-4" />
+              Kabul Ediyorum
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Signup Form Modal */}
+      <Dialog open={showSignupForm} onOpenChange={setShowSignupForm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>CRM Hesabı Oluştur</DialogTitle>
+            <DialogDescription>
+              Happy CRM'e hoş geldiniz. Yeni hesabınızı oluşturun.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleSignup} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="signup-email">Email</Label>
+              <Input
+                id="signup-email"
+                type="email"
+                placeholder="example@company.com"
+                value={signupEmail}
+                onChange={(e) => setSignupEmail(e.target.value)}
+                required
+                disabled={isSigningUp}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="signup-password">Şifre</Label>
+              <Input
+                id="signup-password"
+                type="password"
+                placeholder="En az 6 karakter"
+                value={signupPassword}
+                onChange={(e) => setSignupPassword(e.target.value)}
+                required
+                disabled={isSigningUp}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Şifre Tekrar</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                placeholder="Şifrenizi tekrar girin"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                disabled={isSigningUp}
+              />
+            </div>
+
+            {signupError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-sm text-red-600">{signupError}</p>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setShowSignupForm(false)
+                  resetSignupState()
+                }}
+                disabled={isSigningUp}
+              >
+                İptal
+              </Button>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isSigningUp}
+              >
+                {isSigningUp ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Oluşturuluyor...
+                  </>
+                ) : (
+                  'Hesap Oluştur'
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
