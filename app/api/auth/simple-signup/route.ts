@@ -37,6 +37,24 @@ export async function POST(request: Request) {
     console.log('📝 Creating simple user account:', { email })
 
     try {
+      // URL'yi belirle (production vs development)
+      const getURL = () => {
+        let url = process.env.NEXT_PUBLIC_SITE_URL ?? 
+                  process.env.NEXT_PUBLIC_VERCEL_URL ?? 
+                  'https://happysmileclinic.com'
+        
+        // Development'ta localhost kullan
+        if (process.env.NODE_ENV === 'development') {
+          url = 'http://localhost:3001'
+        }
+        
+        // HTTPS ekle (localhost değilse)
+        url = url.startsWith('http') ? url : `https://${url}`
+        // Trailing slash ekle
+        url = url.endsWith('/') ? url : `${url}/`
+        return url
+      }
+
       // Kullanıcı hesabı oluştur
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
@@ -44,7 +62,8 @@ export async function POST(request: Request) {
         options: {
           data: {
             role: 'agency' // Varsayılan rol
-          }
+          },
+          emailRedirectTo: getURL()
         }
       })
 
