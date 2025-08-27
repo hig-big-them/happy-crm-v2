@@ -108,7 +108,7 @@ export default function LoginPage() {
       
       const apiEndpoint = isTestMode ? '/api/auth/test-signup' : '/api/auth/simple-signup'
       
-      console.log('📝 Signup attempt:', { email: signupEmail, endpoint: apiEndpoint })
+      console.log('📝 Signup attempt:', { email: signupEmail, endpoint: apiEndpoint, isTestMode })
       
       // Basit kayıt API çağrısı
       const response = await fetch(apiEndpoint, {
@@ -122,7 +122,20 @@ export default function LoginPage() {
         })
       })
       
-      const result = await response.json()
+      console.log('🔍 Response status:', response.status, response.statusText)
+      console.log('🔍 Response headers:', Object.fromEntries(response.headers.entries()))
+      
+      const responseText = await response.text()
+      console.log('🔍 Raw response:', responseText)
+      
+      let result
+      try {
+        result = JSON.parse(responseText)
+      } catch (parseError) {
+        console.error('❌ JSON parse error:', parseError)
+        console.error('❌ Response was:', responseText)
+        throw new Error(`API returned invalid JSON: ${responseText.substring(0, 100)}...`)
+      }
       
       if (result.success) {
         setShowSignupForm(false)

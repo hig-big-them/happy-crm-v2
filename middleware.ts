@@ -5,7 +5,7 @@ export async function middleware(request: NextRequest) {
   
   // Public routes that don't require authentication
   const publicRoutes = ['/login', '/auth/callback', '/forgot-password', '/', '/privacy', '/terms', '/whatsapp-signup', '/oauth']
-  const skipAuthRoutes = ['/api/webhooks', '/api/whatsapp/webhook', '/api/whatsapp/onboard']
+  const skipAuthRoutes = ['/api/webhooks', '/api/whatsapp/webhook', '/api/whatsapp/onboard', '/api/auth']
   
   // SECURITY: Block all bypass routes in production
   if (pathname.includes('bypass') || pathname.includes('admin-bypass')) {
