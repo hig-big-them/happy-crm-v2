@@ -141,11 +141,22 @@ export default function LoginPage() {
         setShowSignupForm(false)
         setEmail(signupEmail)
         setPassword(signupPassword)
-        // Auto login after successful signup
-        const loginResult = await signIn(signupEmail, signupPassword)
-        if (loginResult.success) {
-          router.push('/dashboard')
-        }
+        
+        // Email confirmation mesajı göster
+        setSignupError(null)
+        setError(`✅ Hesap başarıyla oluşturuldu! 
+        
+📧 ${signupEmail} adresine gönderilen onay linkine tıklayarak hesabınızı aktifleştirin.
+        
+⚠️ Email gelmezse spam klasörünüzü kontrol edin.`)
+        
+        // Auto login denemesi (email onaylandıysa çalışır)
+        setTimeout(async () => {
+          const loginResult = await signIn(signupEmail, signupPassword)
+          if (loginResult.success) {
+            router.push('/dashboard')
+          }
+        }, 2000)
       } else {
         console.error('Signup API error:', result)
         setSignupError(result.error || 'Kayıt başarısız')
