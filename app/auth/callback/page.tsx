@@ -73,6 +73,52 @@ function AuthCallbackContent() {
           }
         }
 
+        // Handle email confirmation (token-based)
+        const token = searchParams.get('token');
+        const tokenHash = searchParams.get('token_hash');
+        
+        if (token || tokenHash) {
+          setStatus('Email onayı işleniyor...');
+          console.log('📧 [AUTH-CALLBACK] Processing email confirmation...');
+          
+          try {
+            const { data, error } = await supabase.auth.verifyOtp({
+              token_hash: tokenHash || token || '',
+              type: 'email'
+            });
+            
+            if (error) {
+              console.error('❌ [AUTH-CALLBACK] Email verification error:', error);
+              setStatus('Email onay hatası: ' + error.message);
+              setTimeout(() => {
+                router.push('/login?error=verification_failed&message=' + encodeURIComponent(error.message));
+              }, 3000);
+              return;
+            }
+            
+            if (data.session) {
+              console.log('✅ [AUTH-CALLBACK] Email verified, session created');
+              setStatus('Email onaylandı! Giriş yapılıyor...');
+              
+              setTimeout(() => {
+                router.push(next);
+              }, 1000);
+              return;
+            } else if (data.user) {
+              console.log('✅ [AUTH-CALLBACK] Email verified, but no session');
+              setStatus('Email onaylandı! Login sayfasına yönlendiriliyor...');
+              
+              setTimeout(() => {
+                router.push('/login?success=email_verified&message=' + encodeURIComponent('Email adresiniz onaylandı. Şimdi giriş yapabilirsiniz.'));
+              }, 2000);
+              return;
+            }
+          } catch (verifyError) {
+            console.error('❌ [AUTH-CALLBACK] Verification failed:', verifyError);
+            setStatus('Onay işlemi başarısız');
+          }
+        }
+
         if (type === 'recovery') {
           setStatus('Recovery token işleniyor...');
           

@@ -45,8 +45,15 @@ export default function LoginPage() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const restricted = urlParams.get('restricted')
+    const success = urlParams.get('success')
+    const message = urlParams.get('message')
+    
     if (restricted === 'messaging') {
       setRestrictionMessage('Access to messaging features is restricted for security reasons. Please sign in with valid credentials.')
+    }
+    
+    if (success === 'email_verified' && message) {
+      setError(`✅ ${decodeURIComponent(message)}`)
     }
   }, [])
 
