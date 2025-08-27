@@ -65,6 +65,13 @@ const MOCK_USERS: MockUser[] = [
     name: 'Test User',
     role: 'agency',
     avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
+  },
+  {
+    id: '1adceb54-79b6-409a-92cb-0fe329eb7c68',
+    email: 'hello@happysmileclinics.com',
+    name: 'Happy Smile Clinic',
+    role: 'agency',
+    avatar_url: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face'
   }
 ]
 
@@ -74,7 +81,8 @@ const REQUIRED_PASSWORDS: { [email: string]: string } = {
   'demo.manager@happycrm.com': 'DemoManager2024!@#',
   'demo.user@happycrm.com': 'DemoUser2024!@#',
   'halilg@gmail.com': 'h4ppyh0ur5',
-  'them4a1@gmail.com': '123456'
+  'them4a1@gmail.com': '123456',
+  'hello@happysmileclinics.com': '123456'
 }
 
 export function MockAuthProvider({ children }: { children: React.ReactNode }) {

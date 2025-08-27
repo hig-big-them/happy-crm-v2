@@ -19,6 +19,29 @@ function AuthCallbackContent() {
         const next = searchParams.get('next') || '/dashboard';
         const bypass = searchParams.get('bypass');
         const userId = searchParams.get('user');
+        
+        // Error handling for URL parameters
+        const error = searchParams.get('error');
+        const errorCode = searchParams.get('error_code');
+        const errorDescription = searchParams.get('error_description');
+        
+        if (error) {
+          console.error('❌ [AUTH-CALLBACK] URL Error:', { error, errorCode, errorDescription });
+          
+          if (errorCode === 'otp_expired') {
+            setStatus('⏰ Email linki süresi dolmuş. Yeni bir onay emaili gönderin.');
+            setTimeout(() => {
+              router.push('/login?error=otp_expired&message=' + encodeURIComponent('Email linki süresi dolmuş. Yeni hesap oluşturun veya şifre sıfırlayın.'));
+            }, 3000);
+            return;
+          }
+          
+          setStatus(`❌ Hata: ${errorDescription || error}`);
+          setTimeout(() => {
+            router.push('/login?error=' + error);
+          }, 3000);
+          return;
+        }
 
         setStatus('Auth callback işleniyor...');
 
