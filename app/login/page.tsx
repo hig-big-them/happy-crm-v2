@@ -104,7 +104,7 @@ export default function LoginPage() {
     
     try {
       // Test modu kontrolü (development için)
-      const isTestMode = true // Geçici olarak test modunu aktif et
+      const isTestMode = false // Gerçek Supabase kayıt işlemi
       
       const apiEndpoint = isTestMode ? '/api/auth/test-signup' : '/api/auth/simple-signup'
       
