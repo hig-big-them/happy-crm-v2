@@ -273,24 +273,45 @@ const EmbeddedSignupButton = ({
     const handleWindowFocus = () => {
       console.log('🔍 Window focus event triggered');
       console.log('🔍 Current state:', { waitingForEvents, popupClosed, fallbackTriggered, onboardingInProgress });
+      console.log('🔍 Auth code check:', window.whatsappAuthCode ? window.whatsappAuthCode.substring(0, 10) + '...' : 'None');
       
-      if (waitingForEvents && !popupClosed && !fallbackTriggered) {
+      // State'e bakmaksızın auth code varsa kullan
+      if (window.whatsappAuthCode && !onboardingInProgress && !fallbackTriggered) {
         popupClosed = true;
         fallbackTriggered = true;
-        console.log('🔍 Window focused - popup likely closed, checking for auth code...');
-        console.log('🔍 Current auth code:', window.whatsappAuthCode ? window.whatsappAuthCode.substring(0, 10) + '...' : 'None');
+        console.log('🎯 Found auth code in window focus, starting onboarding immediately');
+        setWaitingForEvents(false);
+        handleOnboarding(window.whatsappAuthCode, {});
+        return;
+      }
+      
+      // Eğer waitingForEvents false ama auth code yoksa, biraz bekle ve tekrar kontrol et
+      if (!waitingForEvents && !window.whatsappAuthCode && !fallbackTriggered) {
+        console.log('🔍 Waiting for events is false but no auth code, checking multiple times...');
         
-        // Kısa bir gecikme sonrası auth code kontrol et
-        setTimeout(() => {
-          if (window.whatsappAuthCode && !onboardingInProgress) {
-            console.log('🎯 Found auth code after window focus, starting onboarding');
-            setWaitingForEvents(false);
-            handleOnboarding(window.whatsappAuthCode, {});
-          } else {
-            console.log('❌ No auth code found after window focus');
-            triggerManualFallback();
-          }
-        }, 1000);
+        // Birden fazla kez kontrol et (bazen auth code geç gelir)
+        const checkMultipleTimes = (attempt: number) => {
+          setTimeout(() => {
+            console.log(`🔍 Auth code check attempt ${attempt}:`, window.whatsappAuthCode ? 'Found' : 'Not found');
+            
+            if (window.whatsappAuthCode && !onboardingInProgress && !fallbackTriggered) {
+              console.log('🎯 Found auth code after delayed check');
+              fallbackTriggered = true;
+              handleOnboarding(window.whatsappAuthCode, {});
+            } else if (attempt < 5) {
+              checkMultipleTimes(attempt + 1);
+            } else {
+              console.log('❌ No auth code found after 5 attempts');
+              toast({
+                title: "Veri Alınamadı",
+                description: "WhatsApp popup'ından authorization code alınamadı. Lütfen tekrar deneyin.",
+                variant: "destructive"
+              });
+            }
+          }, attempt * 1000); // 1s, 2s, 3s, 4s, 5s
+        };
+        
+        checkMultipleTimes(1);
       }
     };
     
