@@ -76,42 +76,90 @@ export async function POST(request: Request) {
 
     console.log('✅ Access token obtained successfully');
 
-    // 2. WABA (WhatsApp Business Account) bilgilerini al
+    // 2. Eğer WABA ID veya Phone Number ID yoksa, bunları access token ile çek
+    let finalWabaId = waba_id;
+    let finalPhoneNumberId = phone_number_id;
+    
+    if (!finalWabaId || !finalPhoneNumberId) {
+      console.log('🔍 WABA ID or Phone Number ID missing, fetching from Graph API...');
+      
+      try {
+        // Kullanıcının sahip olduğu WABA'ları listele
+        const wabaListResponse = await fetch(
+          `https://graph.facebook.com/${process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION}/me/businesses?fields=owned_whatsapp_business_accounts{id,name,phone_numbers{id,verified_name,display_phone_number}}&access_token=${accessToken}`
+        );
+        
+        if (wabaListResponse.ok) {
+          const businessData = await wabaListResponse.json();
+          console.log('📊 Business data from Graph API:', businessData);
+          
+          // İlk WABA'yı ve phone number'ını al
+          if (businessData.data && businessData.data.length > 0) {
+            const business = businessData.data[0];
+            if (business.owned_whatsapp_business_accounts && business.owned_whatsapp_business_accounts.data.length > 0) {
+              const waba = business.owned_whatsapp_business_accounts.data[0];
+              finalWabaId = waba.id;
+              
+              if (waba.phone_numbers && waba.phone_numbers.data.length > 0) {
+                finalPhoneNumberId = waba.phone_numbers.data[0].id;
+              }
+              
+              console.log('✅ Found WABA and Phone Number:', { 
+                waba_id: finalWabaId, 
+                phone_number_id: finalPhoneNumberId 
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('⚠️ Could not fetch WABA list from Graph API:', error);
+      }
+    }
+
+    // 3. WABA (WhatsApp Business Account) bilgilerini al
     console.log('📋 Fetching WABA information...');
     
-    const wabaResponse = await fetch(
-      `https://graph.facebook.com/${process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION}/${waba_id}?fields=id,name,status,currency,timezone_offset_minutes,business_verification_status&access_token=${accessToken}`
-    );
-
     let wabaData = null;
-    if (wabaResponse.ok) {
-      wabaData = await wabaResponse.json();
-      console.log('📊 WABA Info:', wabaData);
+    if (finalWabaId) {
+      const wabaResponse = await fetch(
+        `https://graph.facebook.com/${process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION}/${finalWabaId}?fields=id,name,status,currency,timezone_offset_minutes,business_verification_status&access_token=${accessToken}`
+      );
+
+      if (wabaResponse.ok) {
+        wabaData = await wabaResponse.json();
+        console.log('📊 WABA Info:', wabaData);
+      } else {
+        console.warn('⚠️ Could not fetch WABA info:', await wabaResponse.text());
+      }
     } else {
-      console.warn('⚠️ Could not fetch WABA info:', await wabaResponse.text());
+      console.warn('⚠️ No WABA ID available to fetch info');
     }
 
-    // 3. Telefon numarası bilgilerini al
+    // 4. Telefon numarası bilgilerini al
     console.log('📞 Fetching phone number information...');
     
-    const phoneResponse = await fetch(
-      `https://graph.facebook.com/${process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION}/${phone_number_id}?fields=id,verified_name,display_phone_number,quality_rating,status&access_token=${accessToken}`
-    );
-
     let phoneData = null;
-    if (phoneResponse.ok) {
-      phoneData = await phoneResponse.json();
-      console.log('📱 Phone Info:', phoneData);
+    if (finalPhoneNumberId) {
+      const phoneResponse = await fetch(
+        `https://graph.facebook.com/${process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION}/${finalPhoneNumberId}?fields=id,verified_name,display_phone_number,quality_rating,status&access_token=${accessToken}`
+      );
+
+      if (phoneResponse.ok) {
+        phoneData = await phoneResponse.json();
+        console.log('📱 Phone Info:', phoneData);
+      } else {
+        console.warn('⚠️ Could not fetch phone info:', await phoneResponse.text());
+      }
     } else {
-      console.warn('⚠️ Could not fetch phone info:', await phoneResponse.text());
+      console.warn('⚠️ No Phone Number ID available to fetch info');
     }
 
-    // 4. (İsteğe bağlı) Telefon numarasını kaydet
-    if (phone_number_id) {
+    // 5. (İsteğe bağlı) Telefon numarasını kaydet
+    if (finalPhoneNumberId) {
       try {
         console.log('📝 Registering phone number...');
         const registerResponse = await fetch(
-          `https://graph.facebook.com/${process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION}/${phone_number_id}/register`,
+          `https://graph.facebook.com/${process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION}/${finalPhoneNumberId}/register`,
           {
             method: 'POST',
             headers: {
@@ -136,12 +184,12 @@ export async function POST(request: Request) {
       }
     }
 
-    // 5. (İsteğe bağlı) Webhook'lara abone ol
-    if (waba_id) {
+    // 6. (İsteğe bağlı) Webhook'lara abone ol
+    if (finalWabaId) {
       try {
         console.log('🔗 Subscribing to webhooks...');
         const subscribeResponse = await fetch(
-          `https://graph.facebook.com/${process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION}/${waba_id}/subscribed_apps`,
+          `https://graph.facebook.com/${process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION}/${finalWabaId}/subscribed_apps`,
           {
             method: 'POST',
             headers: {
@@ -165,14 +213,14 @@ export async function POST(request: Request) {
       }
     }
 
-    // 6. Database'e kaydet (TODO: Implement database storage)
+    // 7. Database'e kaydet (TODO: Implement database storage)
     console.log('💾 Saving to database...');
     
     // TODO: Burada access token, WABA ID, phone number ID'yi database'e kaydedin
     // Örnek database structure:
     const onboardingData = {
-      waba_id,
-      phone_number_id,
+      waba_id: finalWabaId,
+      phone_number_id: finalPhoneNumberId,
       access_token: accessToken, // Bu token'ı güvenli şekilde encrypt edin!
       waba_info: wabaData,
       phone_info: phoneData,
@@ -196,8 +244,8 @@ export async function POST(request: Request) {
       success: true, 
       message: 'WhatsApp onboarding completed successfully.',
       data: {
-        waba_id,
-        phone_number_id,
+        waba_id: finalWabaId,
+        phone_number_id: finalPhoneNumberId,
         verified_name: phoneData?.verified_name,
         display_phone_number: phoneData?.display_phone_number,
         status: phoneData?.status,

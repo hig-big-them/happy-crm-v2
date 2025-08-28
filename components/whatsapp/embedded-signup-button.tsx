@@ -122,15 +122,20 @@ const EmbeddedSignupButton = ({
     setShowTermsModal(false);
   };
 
-  const handleOnboarding = async (code: string) => {
+  const handleOnboarding = async (code: string, sessionInfo?: any) => {
     try {
+      console.log('🔄 Starting onboarding with:', { 
+        code: code.substring(0, 10) + '...', 
+        sessionInfo 
+      });
+
       const response = await fetch('/api/whatsapp/onboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           code,
-          phone_number_id: null, // Backend'den alınacak
-          waba_id: null // Backend'den alınacak
+          phone_number_id: sessionInfo?.phone_number_id || null,
+          waba_id: sessionInfo?.waba_id || null
         }),
       });
 
@@ -209,8 +214,15 @@ const EmbeddedSignupButton = ({
           if (response.authResponse.code) {
             console.log('📋 Authorization code received:', response.authResponse.code.substring(0, 10) + '...');
             
+            // Authorization code'u window'a kaydet (message event için fallback)
+            window.whatsappAuthCode = response.authResponse.code;
+            
+            // Session info'yu çıkar (WABA ID ve Phone Number ID burada olabilir)
+            const sessionInfo = response.authResponse.sessionInfo || {};
+            console.log('📊 Session info from Facebook:', sessionInfo);
+            
             // Async işlemi ayrı fonksiyonda yap
-            handleOnboarding(response.authResponse.code);
+            handleOnboarding(response.authResponse.code, sessionInfo);
           } else {
             console.log('⚠️ No authorization code in response');
             toast({
@@ -287,13 +299,25 @@ const EmbeddedSignupButton = ({
         if (data.type === 'WA_EMBEDDED_SIGNUP') {
           console.log('📱 WhatsApp Embedded Signup event:', data);
           
-          // Sadece log'la, ana işlem FB.login response'unda yapılıyor
           if (data.event === 'FINISH' || data.event === 'FINISH_ONLY_WABA') {
             console.log('🎉 WhatsApp Embedded Signup completed via message event');
+            
+            // Message event'ten gelen verileri de kontrol et
+            const messageSessionInfo = data.data || {};
+            console.log('📊 Session info from message event:', messageSessionInfo);
+            
+            // Eğer FB.login callback'i henüz çalışmadıysa, bu verileri kullan
+            if (messageSessionInfo.phone_number_id && messageSessionInfo.waba_id) {
+              console.log('🔄 Using session info from message event as fallback');
+              // Bu durumda authorization code'u window'dan al (eğer varsa)
+              if (window.whatsappAuthCode) {
+                handleOnboarding(window.whatsappAuthCode, messageSessionInfo);
+              }
+            }
           } else if (data.event === 'CANCEL') {
-            console.warn('⚠️ User cancelled at step:', data.data.current_step);
+            console.warn('⚠️ User cancelled at step:', data.data?.current_step);
           } else if (data.event === 'ERROR') {
-            console.error('💥 An error occurred:', data.data.error_message);
+            console.error('💥 An error occurred:', data.data?.error_message);
           }
         }
       } catch (error) {
