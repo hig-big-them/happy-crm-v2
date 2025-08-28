@@ -378,19 +378,98 @@ const EmbeddedSignupButton = ({
     window.addEventListener('focus', handleWindowFocus, { once: true });
     document.addEventListener('visibilitychange', handleVisibilityChange, { once: true });
 
-            // Production'da embedded signup yerine direkt OAuth kullan
+            // Production'da embedded signup yerine popup OAuth kullan
         if (process.env.NODE_ENV === 'production') {
-          console.log('🔄 Production mode: Using direct OAuth instead of embedded signup');
+          console.log('🔄 Production mode: Using popup OAuth instead of embedded signup');
           const redirectUri = `${window.location.origin}/`;
           const authUrl = `https://www.facebook.com/v23.0/dialog/oauth?client_id=${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=whatsapp_business_management,whatsapp_business_messaging&response_type=code&config_id=${process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID}`;
           
           toast({
             title: "WhatsApp Business'a Bağlanıyor",
-            description: "Facebook sayfasına yönlendiriliyorsunuz...",
+            description: "Facebook popup'ı açılıyor...",
           });
           
-          // Aynı pencerede yönlendir (popup değil)
-          window.location.href = authUrl;
+          // Popup açarak OAuth yap
+          const popup = window.open(authUrl, 'whatsapp_auth_popup', 'width=600,height=700,scrollbars=yes,resizable=yes');
+          
+          // Popup takibi başlat
+          setWaitingForEvents(true);
+          
+          // Popup'tan gelen mesajları dinle
+          const handlePopupMessage = (event: MessageEvent) => {
+            // Güvenlik kontrolü
+            if (event.origin !== window.location.origin && !event.origin.includes('facebook.com')) {
+              return;
+            }
+            
+            console.log('📨 Popup message received:', event.data);
+            
+            if (event.data && event.data.type === 'WHATSAPP_AUTH_SUCCESS') {
+              console.log('🎯 Auth code received from popup:', event.data.code?.substring(0, 10) + '...');
+              clearInterval(checkPopupClosed);
+              setWaitingForEvents(false);
+              
+              if (popup && !popup.closed) {
+                popup.close();
+              }
+              
+              handleOnboarding(event.data.code, {});
+              window.removeEventListener('message', handlePopupMessage);
+            }
+          };
+          
+          window.addEventListener('message', handlePopupMessage);
+          
+          // Popup kapanma kontrolü (fallback)
+          const checkPopupClosed = setInterval(() => {
+            if (popup && popup.closed) {
+              console.log('🚪 OAuth popup closed');
+              clearInterval(checkPopupClosed);
+              window.removeEventListener('message', handlePopupMessage);
+              
+              // Fallback: URL'den auth code kontrol et
+              setTimeout(() => {
+                if (waitingForEvents) {
+                  console.log('🔍 Checking for auth code in URL as fallback...');
+                  const urlParams = new URLSearchParams(window.location.search);
+                  const code = urlParams.get('code');
+                  
+                  if (code && !onboardingInProgress) {
+                    console.log('🎯 Found auth code in URL fallback:', code.substring(0, 10) + '...');
+                    setWaitingForEvents(false);
+                    handleOnboarding(code, {});
+                  } else {
+                    console.log('❌ No auth code found in fallback');
+                    setWaitingForEvents(false);
+                    toast({
+                      title: "Bağlantı Tamamlanamadı",
+                      description: "WhatsApp Business bağlantısı tamamlanamadı. Lütfen tekrar deneyin.",
+                      variant: "destructive"
+                    });
+                  }
+                }
+              }, 2000);
+            }
+          }, 1000);
+          
+          // 60 saniye timeout
+          const timeoutId = setTimeout(() => {
+            if (popup && !popup.closed) {
+              popup.close();
+            }
+            clearInterval(checkPopupClosed);
+            window.removeEventListener('message', handlePopupMessage);
+            
+            if (waitingForEvents) {
+              setWaitingForEvents(false);
+              toast({
+                title: "Zaman Aşımı",
+                description: "WhatsApp Business bağlantısı zaman aşımına uğradı.",
+                variant: "destructive"
+              });
+            }
+          }, 60000);
+          
           return;
         }
 

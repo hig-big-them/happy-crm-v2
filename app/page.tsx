@@ -16,9 +16,22 @@ export default function Home() {
     const code = urlParams.get('code');
     
     if (code) {
-      console.log('🎯 Auth code found on home page, redirecting to welcome:', code.substring(0, 10) + '...');
+      console.log('🎯 Auth code found on home page:', code.substring(0, 10) + '...');
       
-      // Welcome sayfasına auth code ile redirect et
+      // Eğer popup'tan geliyorsa, parent window'a mesaj gönder
+      if (window.opener && !window.opener.closed) {
+        console.log('📤 Sending auth code to parent window');
+        window.opener.postMessage({
+          type: 'WHATSAPP_AUTH_SUCCESS',
+          code: code
+        }, window.location.origin);
+        
+        // Popup'ı kapat
+        window.close();
+        return;
+      }
+      
+      // Normal akış: Welcome sayfasına redirect et
       router.push(`/welcome?code=${code}`);
     }
   }, [router]);
