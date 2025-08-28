@@ -50,6 +50,8 @@ const EmbeddedSignupButton = ({
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [whatsappData, setWhatsappData] = useState<any>(null);
   const [isFbSdkLoaded, setIsFbSdkLoaded] = useState(false);
+  const [onboardingInProgress, setOnboardingInProgress] = useState(false);
+  const [messageEventData, setMessageEventData] = useState<any>(null);
   
   // Facebook SDK'nın yüklenmesini bekle
   useEffect(() => {
@@ -123,19 +125,31 @@ const EmbeddedSignupButton = ({
   };
 
   const handleOnboarding = async (code: string, sessionInfo?: any) => {
+    // Eğer onboarding zaten devam ediyorsa, tekrar başlatma
+    if (onboardingInProgress) {
+      console.log('⚠️ Onboarding already in progress, skipping...');
+      return;
+    }
+
+    setOnboardingInProgress(true);
+    
     try {
       console.log('🔄 Starting onboarding with:', { 
         code: code.substring(0, 10) + '...', 
-        sessionInfo 
+        sessionInfo,
+        messageEventData
       });
+
+      // Message event'ten gelen verileri öncelikli olarak kullan
+      const finalSessionInfo = messageEventData || sessionInfo || {};
 
       const response = await fetch('/api/whatsapp/onboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           code,
-          phone_number_id: sessionInfo?.phone_number_id || null,
-          waba_id: sessionInfo?.waba_id || null
+          phone_number_id: finalSessionInfo?.phone_number_id || null,
+          waba_id: finalSessionInfo?.waba_id || null
         }),
       });
 
@@ -199,6 +213,8 @@ const EmbeddedSignupButton = ({
         description: "Backend ile iletişimde hata oluştu.",
         variant: "destructive"
       });
+    } finally {
+      setOnboardingInProgress(false);
     }
   };
 
@@ -278,8 +294,12 @@ const EmbeddedSignupButton = ({
               phone_number_id: extractedPhoneId
             };
             
-            // Async işlemi ayrı fonksiyonda yap
-            handleOnboarding(response.authResponse.code, enhancedSessionInfo);
+            // Async işlemi ayrı fonksiyonda yap (sadece onboarding devam etmiyorsa)
+            if (!onboardingInProgress) {
+              handleOnboarding(response.authResponse.code, enhancedSessionInfo);
+            } else {
+              console.log('⚠️ Onboarding already in progress via message event, skipping FB.login callback');
+            }
           } else {
             console.log('⚠️ No authorization code in response');
             toast({
@@ -392,8 +412,14 @@ const EmbeddedSignupButton = ({
             console.log('📋 Authorization code from URL params:', code.substring(0, 10) + '...');
             window.whatsappAuthCode = code;
             
-            // Eğer henüz onboarding başlatılmadıysa, başlat
-            handleOnboarding(code, {});
+            // Eğer message event verisi varsa onu kullan, yoksa boş obje gönder
+            if (messageEventData && !onboardingInProgress) {
+              console.log('🔄 Using stored message event data with URL authorization code');
+              handleOnboarding(code, messageEventData);
+            } else if (!onboardingInProgress) {
+              console.log('🔄 Starting onboarding with URL authorization code only');
+              handleOnboarding(code, {});
+            }
           }
         }
         return;
@@ -426,18 +452,21 @@ const EmbeddedSignupButton = ({
             phone_number_id: messagePhoneId
           });
           
+          // Message event verilerini kaydet
+          const enhancedMessageInfo = {
+            ...messageSessionInfo,
+            waba_id: messageWabaId,
+            phone_number_id: messagePhoneId
+          };
+          setMessageEventData(enhancedMessageInfo);
+          
           // Authorization code'u al
           const authCode = window.whatsappAuthCode;
-          if (authCode) {
+          if (authCode && !onboardingInProgress) {
             console.log('🔄 Using message event data for onboarding');
-            const enhancedMessageInfo = {
-              ...messageSessionInfo,
-              waba_id: messageWabaId,
-              phone_number_id: messagePhoneId
-            };
             handleOnboarding(authCode, enhancedMessageInfo);
-          } else {
-            console.warn('⚠️ No authorization code available for message event');
+          } else if (!authCode) {
+            console.log('📋 Message event received, waiting for authorization code...');
           }
         } else if (data.event === 'CANCEL') {
           console.warn('⚠️ User cancelled at step:', data.data?.current_step);
