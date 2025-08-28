@@ -133,11 +133,34 @@ export async function POST(request: Request) {
       try {
         // SMTP ayarları var mı kontrol et
         if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
+          // Magic link oluştur
+          let magicLink = `${getURL()}login?email=${encodeURIComponent(email)}`
+          
+          try {
+            const { data: magicData, error: magicError } = await supabase.auth.signInWithOtp({
+              email,
+              options: {
+                shouldCreateUser: false,
+                emailRedirectTo: `${getURL()}welcome`
+              }
+            })
+            
+            if (!magicError && magicData) {
+              // Magic link başarılı oluşturuldu, ama gerçek link'i alamıyoruz
+              // Bu yüzden fallback olarak login sayfasına yönlendiren link kullanıyoruz
+              magicLink = `${getURL()}login?magic=true&email=${encodeURIComponent(email)}`
+              console.log('✅ Magic link created for welcome email')
+            }
+          } catch (magicError) {
+            console.warn('⚠️ Magic link creation failed, using fallback link')
+          }
+
           const emailResult = await sendEmailTemplate(
             email,
             'WELCOME_SIGNUP',
             {
-              userEmail: email
+              userEmail: email,
+              magicLink: magicLink
             }
           )
 

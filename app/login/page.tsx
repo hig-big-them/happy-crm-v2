@@ -47,6 +47,8 @@ export default function LoginPage() {
     const restricted = urlParams.get('restricted')
     const success = urlParams.get('success')
     const message = urlParams.get('message')
+    const magic = urlParams.get('magic')
+    const emailParam = urlParams.get('email')
     
     if (restricted === 'messaging') {
       setRestrictionMessage('Access to messaging features is restricted for security reasons. Please sign in with valid credentials.')
@@ -54,6 +56,14 @@ export default function LoginPage() {
     
     if (success === 'email_verified' && message) {
       setError(`✅ ${decodeURIComponent(message)}`)
+    }
+    
+    // Magic link handling
+    if (magic === 'true' && emailParam) {
+      setEmail(decodeURIComponent(emailParam))
+      setError(`🎉 Hoş geldin emailinizden geldiniz! 
+      
+Şifrenizi girin veya "Şifremi Unuttum" ile magic link alın.`)
     }
   }, [])
 

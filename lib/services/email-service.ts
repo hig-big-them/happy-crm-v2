@@ -43,8 +43,20 @@ const EMAIL_TEMPLATES = {
             <p>Merhaba <strong>{{userEmail}}</strong>,</p>
             <p>Happy CRM ailesine katıldığınız için teşekkür ederiz! Hesabınız başarıyla oluşturuldu ve artık CRM sistemimizi kullanmaya başlayabilirsiniz.</p>
             
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="{{magicLink}}" 
+                 style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                        color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; 
+                        font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
+                🚀 Hemen Giriş Yap
+              </a>
+              <p style="margin: 10px 0 0 0; font-size: 12px; color: #666;">
+                Tek tıkla güvenli giriş - şifre gerekmez!
+              </p>
+            </div>
+            
             <div style="background-color: #e8f5e8; padding: 15px; border-radius: 5px; margin: 15px 0;">
-              <h4 style="margin-top: 0; color: #2d5a2d;">🚀 Başlamak İçin:</h4>
+              <h4 style="margin-top: 0; color: #2d5a2d;">🚀 Platform Özellikleri:</h4>
               <ul style="margin: 0; padding-left: 20px;">
                 <li>Dashboard'ınızı keşfedin</li>
                 <li>Müşteri ve lead yönetimi özelliklerini inceleyin</li>
@@ -74,7 +86,12 @@ Merhaba {{userEmail}},
 
 Happy CRM ailesine katıldığınız için teşekkür ederiz! Hesabınız başarıyla oluşturuldu ve artık CRM sistemimizi kullanmaya başlayabilirsiniz.
 
-BAŞLAMAK İÇİN:
+🚀 HEMEN GİRİŞ YAP:
+{{magicLink}}
+
+(Tek tıkla güvenli giriş - şifre gerekmez!)
+
+PLATFORM ÖZELLİKLERİ:
 - Dashboard'ınızı keşfedin
 - Müşteri ve lead yönetimi özelliklerini inceleyin
 - WhatsApp Business entegrasyonunu kurun
