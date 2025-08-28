@@ -28,7 +28,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { code, phone_number_id, waba_id } = await request.json();
+    const body = await request.json();
+    const { code, phone_number_id, waba_id, redirect_uri } = body;
 
     if (!code) {
       return NextResponse.json(
@@ -76,7 +77,7 @@ export async function POST(request: Request) {
     const apiVersion = process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION || 'v23.0';
     const tokenUrl = `https://graph.facebook.com/${apiVersion}/oauth/access_token`;
     // Frontend'den gelen redirect_uri'yi kullan veya default
-    const redirectUri = body.redirect_uri || `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.happysmileclinic.com'}/`;
+    const redirectUri = redirect_uri || `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.happysmileclinic.com'}/`;
     
     const tokenParams = new URLSearchParams({
       client_id: facebookAppId,
