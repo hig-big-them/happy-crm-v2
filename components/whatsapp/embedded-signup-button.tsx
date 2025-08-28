@@ -328,25 +328,49 @@ const EmbeddedSignupButton = ({
               description: "WhatsApp Business bağlantısı kuruluyor, lütfen bekleyin...",
             });
             
-            // 30 saniye timeout - eğer message event gelmezse fallback
-            setTimeout(() => {
-              if (waitingForEvents && !onboardingInProgress) {
-                console.warn('⏰ Timeout waiting for message events, trying fallback...');
-                setWaitingForEvents(false);
+            // Popup takibi ve hızlı fallback
+            const checkPopupStatus = () => {
+              // 2 saniye sonra popup durumunu kontrol etmeye başla
+              setTimeout(() => {
+                const checkInterval = setInterval(() => {
+                  if (waitingForEvents && !onboardingInProgress) {
+                    // Authorization code varsa hemen fallback'e geç
+                    if (window.whatsappAuthCode) {
+                      console.warn('🔄 Authorization code found, starting fallback (message events not received)');
+                      setWaitingForEvents(false);
+                      clearInterval(checkInterval);
+                      handleOnboarding(window.whatsappAuthCode, {});
+                      return;
+                    }
+                  } else {
+                    // Waiting durumu değişmişse interval'ı temizle
+                    clearInterval(checkInterval);
+                  }
+                }, 1000); // Her saniye kontrol et
                 
-                // Fallback: Graph API ile WABA bilgilerini çekmeye çalış
-                if (window.whatsappAuthCode) {
-                  console.log('🔄 Fallback: Using authorization code without session info');
-                  handleOnboarding(window.whatsappAuthCode, {});
-                } else {
-                  toast({
-                    title: "Zaman Aşımı",
-                    description: "WhatsApp bağlantısı zaman aşımına uğradı. Lütfen tekrar deneyin.",
-                    variant: "destructive"
-                  });
-                }
-              }
-            }, 30000);
+                // 30 saniye sonra kesin timeout
+                setTimeout(() => {
+                  if (waitingForEvents && !onboardingInProgress) {
+                    console.warn('⏰ Final timeout waiting for message events');
+                    setWaitingForEvents(false);
+                    clearInterval(checkInterval);
+                    
+                    if (window.whatsappAuthCode) {
+                      console.log('🔄 Final fallback: Using authorization code');
+                      handleOnboarding(window.whatsappAuthCode, {});
+                    } else {
+                      toast({
+                        title: "Zaman Aşımı",
+                        description: "WhatsApp bağlantısı zaman aşımına uğradı. Lütfen tekrar deneyin.",
+                        variant: "destructive"
+                      });
+                    }
+                  }
+                }, 30000);
+              }, 2000);
+            };
+            
+            checkPopupStatus();
           } else if (response.status === 'not_authorized') {
             console.log('❌ User did not authorize the app');
             toast({
@@ -407,21 +431,28 @@ const EmbeddedSignupButton = ({
       console.log('📨 Raw message received:', {
         origin: event.origin,
         data: event.data,
-        type: typeof event.data
+        type: typeof event.data,
+        timestamp: new Date().toISOString()
       });
-
-      // Güvenlik: Sadece Facebook domain'lerinden gelen mesajları kabul et
-      const allowedOrigins = [
-        'https://www.facebook.com',
-        'https://web.facebook.com',
-        'https://connect.facebook.net',
-        'https://business.facebook.com',
-        'https://developers.facebook.com'
-      ];
       
-      if (!allowedOrigins.includes(event.origin)) {
+      // Özel durumlar için ek kontroller
+      if (typeof event.data === 'string') {
+        if (event.data.includes('whatsapp') || event.data.includes('WABA') || event.data.includes('WA_')) {
+          console.log('🔍 Potential WhatsApp related message:', event.data);
+        }
+      }
+
+      // Güvenlik: Facebook domain'lerini kontrol et (daha esnek)
+      const isFacebookDomain = event.origin.includes('facebook.com') || 
+                              event.origin.includes('facebook.net') ||
+                              event.origin === 'null' || // Bazı popup'lar null origin kullanabilir
+                              event.origin === window.location.origin; // Aynı origin
+      
+      if (!isFacebookDomain) {
         console.log('🚫 Message rejected - invalid origin:', event.origin);
         return;
+      } else {
+        console.log('✅ Message accepted from origin:', event.origin);
       }
 
       // JSON parse etmeye çalış
@@ -585,12 +616,29 @@ const EmbeddedSignupButton = ({
       
       {/* Debug: Modal state'ini göster */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="fixed bottom-4 right-4 bg-black text-white p-2 text-xs rounded z-50">
-          Modal: {showSignupModal ? 'OPEN' : 'CLOSED'} | 
-          Data: {whatsappData ? 'YES' : 'NO'} |
-          WABA: {whatsappData?.waba_id || 'N/A'} |
-          Waiting: {waitingForEvents ? 'YES' : 'NO'} |
-          Onboarding: {onboardingInProgress ? 'YES' : 'NO'}
+        <div className="fixed bottom-4 right-4 bg-black text-white p-2 text-xs rounded z-50 space-y-1">
+          <div>
+            Modal: {showSignupModal ? 'OPEN' : 'CLOSED'} | 
+            Data: {whatsappData ? 'YES' : 'NO'} |
+            WABA: {whatsappData?.waba_id || 'N/A'}
+          </div>
+          <div>
+            Waiting: {waitingForEvents ? 'YES' : 'NO'} |
+            Onboarding: {onboardingInProgress ? 'YES' : 'NO'} |
+            AuthCode: {window.whatsappAuthCode ? 'YES' : 'NO'}
+          </div>
+          {waitingForEvents && window.whatsappAuthCode && (
+            <button 
+              onClick={() => {
+                console.log('🔧 Manual fallback triggered');
+                setWaitingForEvents(false);
+                handleOnboarding(window.whatsappAuthCode, {});
+              }}
+              className="bg-red-500 text-white px-2 py-1 rounded text-xs"
+            >
+              Force Fallback
+            </button>
+          )}
         </div>
       )}
     </>
