@@ -832,9 +832,11 @@ const EmbeddedSignupButton = ({
                   handleOnboarding(code, {});
                 } else {
                   console.log('❌ No auth code found in URL');
-                  // Popup ile manuel olarak Facebook'a git
-                  const authUrl = `https://www.facebook.com/v23.0/dialog/oauth?client_id=${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/welcome')}&scope=whatsapp_business_management,whatsapp_business_messaging&response_type=code&config_id=${process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID}`;
+                  // Popup ile manuel olarak Facebook'a git (backend ile aynı redirect_uri kullan)
+                  const redirectUri = `${window.location.origin}/`;
+                  const authUrl = `https://www.facebook.com/v23.0/dialog/oauth?client_id=${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=whatsapp_business_management,whatsapp_business_messaging&response_type=code&config_id=${process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID}`;
                   console.log('🔗 Opening manual auth URL:', authUrl);
+                  console.log('🔗 Using redirect_uri:', redirectUri);
                   window.open(authUrl, 'whatsapp_auth', 'width=600,height=600');
                 }
               }}

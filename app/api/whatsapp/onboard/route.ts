@@ -75,10 +75,19 @@ export async function POST(request: Request) {
     
     const apiVersion = process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION || 'v23.0';
     const tokenUrl = `https://graph.facebook.com/${apiVersion}/oauth/access_token`;
+    const redirectUri = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.happysmileclinic.com'}/`;
+    
     const tokenParams = new URLSearchParams({
       client_id: facebookAppId,
       client_secret: facebookAppSecret,
-      code: code
+      code: code,
+      redirect_uri: redirectUri
+    });
+    
+    console.log('🔗 Token exchange params:', {
+      client_id: facebookAppId,
+      redirect_uri: redirectUri,
+      code: code.substring(0, 10) + '...'
     });
 
     const tokenResponse = await fetch(`${tokenUrl}?${tokenParams}`, {
