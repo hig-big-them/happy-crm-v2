@@ -79,12 +79,19 @@ function AuthCallbackContent() {
         
         if (token || tokenHash) {
           setStatus('Email onayı işleniyor...');
-          console.log('📧 [AUTH-CALLBACK] Processing email confirmation...');
+          console.log('📧 [AUTH-CALLBACK] Processing email confirmation...', { token: !!token, tokenHash: !!tokenHash });
           
           try {
             const { data, error } = await supabase.auth.verifyOtp({
               token_hash: tokenHash || token || '',
               type: 'email'
+            });
+            
+            console.log('📧 [AUTH-CALLBACK] Verification result:', { 
+              hasError: !!error, 
+              hasSession: !!data?.session, 
+              hasUser: !!data?.user,
+              error: error?.message 
             });
             
             if (error) {
@@ -97,15 +104,16 @@ function AuthCallbackContent() {
             }
             
             if (data.session) {
-              console.log('✅ [AUTH-CALLBACK] Email verified, session created');
+              console.log('✅ [AUTH-CALLBACK] Email verified, session created - redirecting to welcome');
               setStatus('Email onaylandı! Karşılama sayfasına yönlendiriliyor...');
               
               setTimeout(() => {
+                console.log('🔄 [AUTH-CALLBACK] Navigating to /welcome');
                 router.push('/welcome');
               }, 1000);
               return;
             } else if (data.user) {
-              console.log('✅ [AUTH-CALLBACK] Email verified, but no session');
+              console.log('✅ [AUTH-CALLBACK] Email verified, but no session - redirecting to login');
               setStatus('Email onaylandı! Login sayfasına yönlendiriliyor...');
               
               setTimeout(() => {
