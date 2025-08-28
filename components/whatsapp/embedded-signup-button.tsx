@@ -265,14 +265,20 @@ const EmbeddedSignupButton = ({
       protocol: window.location.protocol
     });
 
-    // Window focus event'ini dinle (popup kapandığında tetiklenir)
+    // Multiple fallback mechanisms
     let popupClosed = false;
+    let fallbackTriggered = false;
+    
+    // Window focus event'ini dinle (popup kapandığında tetiklenir)
     const handleWindowFocus = () => {
-      if (waitingForEvents && !popupClosed) {
+      console.log('🔍 Window focus event triggered');
+      console.log('🔍 Current state:', { waitingForEvents, popupClosed, fallbackTriggered, onboardingInProgress });
+      
+      if (waitingForEvents && !popupClosed && !fallbackTriggered) {
         popupClosed = true;
+        fallbackTriggered = true;
         console.log('🔍 Window focused - popup likely closed, checking for auth code...');
         console.log('🔍 Current auth code:', window.whatsappAuthCode ? window.whatsappAuthCode.substring(0, 10) + '...' : 'None');
-        console.log('🔍 Onboarding in progress:', onboardingInProgress);
         
         // Kısa bir gecikme sonrası auth code kontrol et
         setTimeout(() => {
@@ -281,21 +287,52 @@ const EmbeddedSignupButton = ({
             setWaitingForEvents(false);
             handleOnboarding(window.whatsappAuthCode, {});
           } else {
-            console.log('❌ No auth code found after window focus or onboarding already in progress');
-            if (!window.whatsappAuthCode) {
-              toast({
-                title: "Veri Alınamadı",
-                description: "WhatsApp popup'ından authorization code alınamadı. Lütfen tekrar deneyin.",
-                variant: "destructive"
-              });
-              setWaitingForEvents(false);
-            }
+            console.log('❌ No auth code found after window focus');
+            triggerManualFallback();
           }
         }, 1000);
       }
     };
     
+    // Visibility change event'ini de dinle
+    const handleVisibilityChange = () => {
+      console.log('🔍 Visibility change event triggered, document.hidden:', document.hidden);
+      if (!document.hidden && waitingForEvents && !fallbackTriggered) {
+        console.log('🔍 Document became visible - checking for auth code...');
+        setTimeout(() => {
+          if (window.whatsappAuthCode && !onboardingInProgress) {
+            console.log('🎯 Found auth code after visibility change');
+            fallbackTriggered = true;
+            setWaitingForEvents(false);
+            handleOnboarding(window.whatsappAuthCode, {});
+          }
+        }, 500);
+      }
+    };
+    
+    // Manual fallback function
+    const triggerManualFallback = () => {
+      console.log('🔄 Triggering manual fallback...');
+      console.log('🔍 Auth code check:', window.whatsappAuthCode ? 'Found' : 'Not found');
+      
+      if (window.whatsappAuthCode && !onboardingInProgress) {
+        console.log('🎯 Using auth code from manual fallback');
+        setWaitingForEvents(false);
+        handleOnboarding(window.whatsappAuthCode, {});
+      } else {
+        console.log('❌ No auth code available for manual fallback');
+        setWaitingForEvents(false);
+        toast({
+          title: "Veri Alınamadı",
+          description: "WhatsApp popup'ından authorization code alınamadı. Lütfen tekrar deneyin.",
+          variant: "destructive"
+        });
+      }
+    };
+    
+    // Event listeners ekle
     window.addEventListener('focus', handleWindowFocus, { once: true });
+    document.addEventListener('visibilitychange', handleVisibilityChange, { once: true });
 
     window.FB.login(
       function (response) {
@@ -381,14 +418,17 @@ const EmbeddedSignupButton = ({
             
             // Popup takibi ve hızlı fallback
             const checkPopupStatus = () => {
+              console.log('🔄 Starting popup status check...');
+              
               // Hemen popup durumunu kontrol etmeye başla
               const checkInterval = setInterval(() => {
-                // Popup kapanma durumu window focus event ile handle ediliyor
+                console.log('🔍 Interval check - Auth code:', window.whatsappAuthCode ? 'Found' : 'Not found');
                 
-                if (waitingForEvents && !onboardingInProgress) {
+                if (waitingForEvents && !onboardingInProgress && !fallbackTriggered) {
                   // Authorization code varsa hemen fallback'e geç
                   if (window.whatsappAuthCode) {
-                    console.warn('🔄 Authorization code found, starting fallback (message events not received)');
+                    console.warn('🔄 Authorization code found in interval check, starting fallback');
+                    fallbackTriggered = true;
                     setWaitingForEvents(false);
                     clearInterval(checkInterval);
                     handleOnboarding(window.whatsappAuthCode, {});
@@ -398,12 +438,13 @@ const EmbeddedSignupButton = ({
                   // Waiting durumu değişmişse interval'ı temizle
                   clearInterval(checkInterval);
                 }
-              }, 500); // Her 500ms kontrol et (daha hızlı)
+              }, 1000); // Her 1 saniye kontrol et
               
-              // 30 saniye sonra kesin timeout
+              // 10 saniye sonra kesin timeout (daha kısa)
               setTimeout(() => {
-                if (waitingForEvents && !onboardingInProgress) {
+                if (waitingForEvents && !onboardingInProgress && !fallbackTriggered) {
                   console.warn('⏰ Final timeout waiting for message events');
+                  fallbackTriggered = true;
                   setWaitingForEvents(false);
                   clearInterval(checkInterval);
                   
@@ -411,6 +452,7 @@ const EmbeddedSignupButton = ({
                     console.log('🔄 Final fallback: Using authorization code');
                     handleOnboarding(window.whatsappAuthCode, {});
                   } else {
+                    console.log('❌ No auth code found in final timeout');
                     toast({
                       title: "Zaman Aşımı",
                       description: "WhatsApp bağlantısı zaman aşımına uğradı. Lütfen tekrar deneyin.",
@@ -418,7 +460,7 @@ const EmbeddedSignupButton = ({
                     });
                   }
                 }
-              }, 30000);
+              }, 10000); // 10 saniye timeout
             };
             
             checkPopupStatus();
@@ -678,18 +720,36 @@ const EmbeddedSignupButton = ({
             Onboarding: {onboardingInProgress ? 'YES' : 'NO'} |
             AuthCode: {window.whatsappAuthCode ? 'YES' : 'NO'}
           </div>
-          {waitingForEvents && window.whatsappAuthCode && (
+          <div className="flex gap-2 mt-2">
+            {waitingForEvents && window.whatsappAuthCode && (
+              <button 
+                onClick={() => {
+                  console.log('🔧 Manual fallback triggered');
+                  setWaitingForEvents(false);
+                  handleOnboarding(window.whatsappAuthCode, {});
+                }}
+                className="bg-red-500 text-white px-2 py-1 rounded text-xs"
+              >
+                Force Fallback
+              </button>
+            )}
+            
             <button 
               onClick={() => {
-                console.log('🔧 Manual fallback triggered');
-                setWaitingForEvents(false);
-                handleOnboarding(window.whatsappAuthCode, {});
+                console.log('🔍 === AUTH CODE DEBUG ===');
+                console.log('🔍 window.whatsappAuthCode:', window.whatsappAuthCode || 'undefined');
+                console.log('🔍 Type:', typeof window.whatsappAuthCode);
+                console.log('🔍 Length:', window.whatsappAuthCode?.length || 0);
+                console.log('🔍 waitingForEvents:', waitingForEvents);
+                console.log('🔍 onboardingInProgress:', onboardingInProgress);
+                console.log('🔍 fallbackTriggered:', fallbackTriggered);
+                console.log('🔍 === END DEBUG ===');
               }}
-              className="bg-red-500 text-white px-2 py-1 rounded text-xs"
+              className="bg-blue-500 text-white px-2 py-1 rounded text-xs"
             >
-              Force Fallback
+              Debug Auth Code
             </button>
-          )}
+          </div>
         </div>
       )}
     </>
