@@ -112,30 +112,63 @@ export async function POST(request: Request) {
       console.log('🔍 WABA ID or Phone Number ID missing, fetching from Graph API...');
       
       try {
-        // Kullanıcının sahip olduğu WABA'ları listele
-        const wabaListResponse = await fetch(
-          `https://graph.facebook.com/${apiVersion}/me/businesses?fields=owned_whatsapp_business_accounts{id,name,phone_numbers{id,verified_name,display_phone_number}}&access_token=${accessToken}`
+        // Önce kullanıcının sahip olduğu WhatsApp Business Account'ları direkt çek
+        console.log('📞 Trying direct WABA endpoint...');
+        const directWabaResponse = await fetch(
+          `https://graph.facebook.com/${apiVersion}/me/whatsapp_business_accounts?access_token=${accessToken}`
         );
         
-        if (wabaListResponse.ok) {
-          const businessData = await wabaListResponse.json();
-          console.log('📊 Business data from Graph API:', businessData);
+        if (directWabaResponse.ok) {
+          const wabaData = await directWabaResponse.json();
+          console.log('📊 Direct WABA response:', wabaData);
           
-          // İlk WABA'yı ve phone number'ını al
-          if (businessData.data && businessData.data.length > 0) {
-            const business = businessData.data[0];
-            if (business.owned_whatsapp_business_accounts && business.owned_whatsapp_business_accounts.data.length > 0) {
-              const waba = business.owned_whatsapp_business_accounts.data[0];
-              finalWabaId = waba.id;
+          if (wabaData.data && wabaData.data.length > 0) {
+            const waba = wabaData.data[0];
+            finalWabaId = waba.id;
+            console.log('✅ Found WABA ID from direct endpoint:', finalWabaId);
+            
+            // Phone number'ları bu WABA için çek
+            const phoneResponse = await fetch(
+              `https://graph.facebook.com/${apiVersion}/${finalWabaId}/phone_numbers?access_token=${accessToken}`
+            );
+            
+            if (phoneResponse.ok) {
+              const phoneData = await phoneResponse.json();
+              console.log('📱 Phone numbers response:', phoneData);
               
-              if (waba.phone_numbers && waba.phone_numbers.data.length > 0) {
-                finalPhoneNumberId = waba.phone_numbers.data[0].id;
+              if (phoneData.data && phoneData.data.length > 0) {
+                finalPhoneNumberId = phoneData.data[0].id;
+                console.log('✅ Found Phone Number ID:', finalPhoneNumberId);
               }
-              
-              console.log('✅ Found WABA and Phone Number:', { 
-                waba_id: finalWabaId, 
-                phone_number_id: finalPhoneNumberId 
-              });
+            }
+          }
+        } else {
+          console.warn('⚠️ Direct WABA endpoint failed, trying business endpoint...');
+          
+          // Fallback: Business endpoint'i dene
+          const businessResponse = await fetch(
+            `https://graph.facebook.com/${apiVersion}/me/businesses?fields=owned_whatsapp_business_accounts{id,name,phone_numbers{id,verified_name,display_phone_number}}&access_token=${accessToken}`
+          );
+          
+          if (businessResponse.ok) {
+            const businessData = await businessResponse.json();
+            console.log('📊 Business data from Graph API:', businessData);
+            
+            if (businessData.data && businessData.data.length > 0) {
+              const business = businessData.data[0];
+              if (business.owned_whatsapp_business_accounts && business.owned_whatsapp_business_accounts.data.length > 0) {
+                const waba = business.owned_whatsapp_business_accounts.data[0];
+                finalWabaId = waba.id;
+                
+                if (waba.phone_numbers && waba.phone_numbers.data.length > 0) {
+                  finalPhoneNumberId = waba.phone_numbers.data[0].id;
+                }
+                
+                console.log('✅ Found WABA and Phone Number from business endpoint:', { 
+                  waba_id: finalWabaId, 
+                  phone_number_id: finalPhoneNumberId 
+                });
+              }
             }
           }
         }

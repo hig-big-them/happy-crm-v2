@@ -246,8 +246,40 @@ const EmbeddedSignupButton = ({
             const sessionInfo = response.authResponse.sessionInfo || {};
             console.log('📊 Session info from Facebook:', sessionInfo);
             
+            // Session info'dan WABA bilgilerini çıkarmaya çalış
+            let extractedWabaId = null;
+            let extractedPhoneId = null;
+            
+            // Farklı yollarla WABA bilgilerini çıkarmaya çalış
+            if (sessionInfo.whatsapp_business_account) {
+              extractedWabaId = sessionInfo.whatsapp_business_account.id;
+            }
+            if (sessionInfo.phone_number) {
+              extractedPhoneId = sessionInfo.phone_number.id;
+            }
+            
+            // Alternatif yapılar için kontrol et
+            if (sessionInfo.setup && sessionInfo.setup.whatsapp_business_account) {
+              extractedWabaId = sessionInfo.setup.whatsapp_business_account.id;
+            }
+            if (sessionInfo.setup && sessionInfo.setup.phone_number) {
+              extractedPhoneId = sessionInfo.setup.phone_number.id;
+            }
+            
+            console.log('🔍 Extracted from session info:', {
+              waba_id: extractedWabaId,
+              phone_number_id: extractedPhoneId
+            });
+            
+            // Enhanced session info ile gönder
+            const enhancedSessionInfo = {
+              ...sessionInfo,
+              waba_id: extractedWabaId,
+              phone_number_id: extractedPhoneId
+            };
+            
             // Async işlemi ayrı fonksiyonda yap
-            handleOnboarding(response.authResponse.code, sessionInfo);
+            handleOnboarding(response.authResponse.code, enhancedSessionInfo);
           } else {
             console.log('⚠️ No authorization code in response');
             toast({
@@ -331,12 +363,34 @@ const EmbeddedSignupButton = ({
             const messageSessionInfo = data.data || {};
             console.log('📊 Session info from message event:', messageSessionInfo);
             
+            // Message event'ten WABA bilgilerini çıkarmaya çalış
+            let messageWabaId = messageSessionInfo.waba_id || messageSessionInfo.whatsapp_business_account_id;
+            let messagePhoneId = messageSessionInfo.phone_number_id;
+            
+            // Alternatif field'ları kontrol et
+            if (!messageWabaId && messageSessionInfo.whatsapp_business_account) {
+              messageWabaId = messageSessionInfo.whatsapp_business_account.id;
+            }
+            if (!messagePhoneId && messageSessionInfo.phone_number) {
+              messagePhoneId = messageSessionInfo.phone_number.id;
+            }
+            
+            console.log('🔍 Extracted from message event:', {
+              waba_id: messageWabaId,
+              phone_number_id: messagePhoneId
+            });
+            
             // Eğer FB.login callback'i henüz çalışmadıysa, bu verileri kullan
-            if (messageSessionInfo.phone_number_id && messageSessionInfo.waba_id) {
+            if (messageWabaId && messagePhoneId) {
               console.log('🔄 Using session info from message event as fallback');
               // Bu durumda authorization code'u window'dan al (eğer varsa)
               if (window.whatsappAuthCode) {
-                handleOnboarding(window.whatsappAuthCode, messageSessionInfo);
+                const enhancedMessageInfo = {
+                  ...messageSessionInfo,
+                  waba_id: messageWabaId,
+                  phone_number_id: messagePhoneId
+                };
+                handleOnboarding(window.whatsappAuthCode, enhancedMessageInfo);
               }
             }
           } else if (data.event === 'CANCEL') {
