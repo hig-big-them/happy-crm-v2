@@ -16,9 +16,16 @@ function AuthCallbackContent() {
       try {
         const code = searchParams.get('code');
         const type = searchParams.get('type');
-        const next = searchParams.get('next') || '/dashboard';
         const bypass = searchParams.get('bypass');
         const userId = searchParams.get('user');
+        
+        // Check if this is an email confirmation (has token/token_hash)
+        const token = searchParams.get('token');
+        const tokenHash = searchParams.get('token_hash');
+        const isEmailConfirmation = !!(token || tokenHash);
+        
+        // Set next page - welcome for email confirmation, dashboard for others
+        const next = isEmailConfirmation ? '/welcome' : (searchParams.get('next') || '/dashboard');
         
         // Error handling for URL parameters
         const error = searchParams.get('error');
@@ -74,9 +81,6 @@ function AuthCallbackContent() {
         }
 
         // Handle email confirmation (token-based)
-        const token = searchParams.get('token');
-        const tokenHash = searchParams.get('token_hash');
-        
         if (token || tokenHash) {
           setStatus('Email onayı işleniyor...');
           console.log('📧 [AUTH-CALLBACK] Processing email confirmation...', { token: !!token, tokenHash: !!tokenHash });

@@ -18,7 +18,12 @@ import {
   Target,
   Calendar,
   Mail,
-  Phone
+  Phone,
+  MessageCircle,
+  CheckCircle,
+  AlertCircle,
+  Settings,
+  Link2
 } from 'lucide-react'
 import Link from 'next/link'
 import { isBypassMode, getBypassUser, mockDashboardData } from '../../lib/utils/bypass-helper'
@@ -59,6 +64,12 @@ export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [recentLeads, setRecentLeads] = useState<RecentLead[]>([])
   const [stageStats, setStageStats] = useState<StageStats[]>([])
+  const [whatsappStatus, setWhatsappStatus] = useState<{
+    connected: boolean;
+    phoneNumber?: string;
+    businessName?: string;
+    lastSync?: string;
+  } | null>(null)
   const { t, locale } = useI18n()
 
   useEffect(() => {
@@ -86,6 +97,13 @@ export default function Dashboard() {
           if (bypassUser) {
             console.log('🔓 [DASHBOARD] Bypass mode detected, using mock data');
             await loadMockDashboardData();
+            // Mock WhatsApp status
+            setWhatsappStatus({
+              connected: true,
+              phoneNumber: '+90 555 123 4567',
+              businessName: 'Happy CRM Demo',
+              lastSync: new Date().toISOString()
+            });
             setIsLoading(false);
             return;
           }
@@ -93,6 +111,7 @@ export default function Dashboard() {
         
         // Normal dashboard data yükleme
         await loadDashboardData()
+        await loadWhatsAppStatus()
         setIsLoading(false)
         
       } catch (error) {
@@ -242,6 +261,59 @@ export default function Dashboard() {
     }
   }
 
+  const loadWhatsAppStatus = async () => {
+    try {
+      // WhatsApp Business API connection status kontrolü
+      const { data: whatsappConfig, error } = await supabase
+        .from('whatsapp_configurations')
+        .select('*')
+        .eq('user_id', user?.id)
+        .single()
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('WhatsApp config error:', error)
+        setWhatsappStatus({ connected: false })
+        return
+      }
+
+      if (whatsappConfig && whatsappConfig.access_token) {
+        // Test connection to WhatsApp API
+        try {
+          const testResponse = await fetch('/api/whatsapp/test-connection', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              access_token: whatsappConfig.access_token,
+              phone_number_id: whatsappConfig.phone_number_id 
+            })
+          })
+          
+          const testResult = await testResponse.json()
+          
+          setWhatsappStatus({
+            connected: testResult.success,
+            phoneNumber: whatsappConfig.phone_number,
+            businessName: whatsappConfig.business_name || 'WhatsApp Business',
+            lastSync: whatsappConfig.updated_at
+          })
+        } catch (testError) {
+          console.error('WhatsApp connection test error:', testError)
+          setWhatsappStatus({
+            connected: false,
+            phoneNumber: whatsappConfig.phone_number,
+            businessName: whatsappConfig.business_name || 'WhatsApp Business',
+            lastSync: whatsappConfig.updated_at
+          })
+        }
+      } else {
+        setWhatsappStatus({ connected: false })
+      }
+    } catch (error) {
+      console.error('WhatsApp status loading error:', error)
+      setWhatsappStatus({ connected: false })
+    }
+  }
+
   const formatCurrency = (amount: number) => {
     const currency = locale === 'tr' ? 'TRY' : 'USD'
     const loc = locale === 'tr' ? 'tr-TR' : 'en-US'
@@ -364,6 +436,99 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* WhatsApp Business Status */}
+      <Card className="border-l-4 border-l-green-500">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div className="flex items-center gap-3">
+            <MessageCircle className="h-6 w-6 text-green-600" />
+            <div>
+              <CardTitle className="text-lg">WhatsApp Business API</CardTitle>
+              <CardDescription>Mesajlaşma platformu bağlantı durumu</CardDescription>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {whatsappStatus?.connected ? (
+              <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Bağlı
+              </Badge>
+            ) : (
+              <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-200">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                Bağlı Değil
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {whatsappStatus?.connected ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Telefon Numarası</p>
+                    <p className="text-sm text-muted-foreground">{whatsappStatus.phoneNumber || 'Belirtilmemiş'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Building className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">İşletme Adı</p>
+                    <p className="text-sm text-muted-foreground">{whatsappStatus.businessName || 'Belirtilmemiş'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Son Senkronizasyon</p>
+                    <p className="text-sm text-muted-foreground">
+                      {whatsappStatus.lastSync ? formatDate(whatsappStatus.lastSync) : 'Bilinmiyor'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/admin/whatsapp-settings">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Ayarları Düzenle
+                  </Link>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/messaging">
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Mesajlaşma
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <MessageCircle className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
+              <h4 className="font-semibold mb-2">WhatsApp Business API Bağlı Değil</h4>
+              <p className="text-sm text-muted-foreground mb-4">
+                Müşterilerinizle WhatsApp üzerinden iletişim kurmak için Meta Business hesabınızı bağlayın.
+              </p>
+              <div className="flex gap-2 justify-center">
+                <Button asChild>
+                  <Link href="/welcome">
+                    <Link2 className="h-4 w-4 mr-2" />
+                    Şimdi Bağla
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href="/admin/whatsapp-settings">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Ayarlar
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         {/* Pipeline Overview */}
