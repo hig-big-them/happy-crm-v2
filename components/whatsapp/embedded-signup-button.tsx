@@ -57,6 +57,29 @@ const EmbeddedSignupButton = ({
   const [popupWindow, setPopupWindow] = useState<Window | null>(null);
   const [waitingForEvents, setWaitingForEvents] = useState(false);
   
+  // URL'den auth code'u kontrol et (sayfa yüklendiğinde)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    
+    if (code && !onboardingInProgress) {
+      console.log('🎯 Found auth code in URL on page load:', code.substring(0, 10) + '...');
+      window.whatsappAuthCode = code;
+      
+      // URL'i temizle
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+      
+      // Onboarding'i başlat
+      setTimeout(() => {
+        if (!onboardingInProgress) {
+          console.log('🔄 Starting onboarding with URL auth code');
+          handleOnboarding(code, {});
+        }
+      }, 1000);
+    }
+  }, []);
+
   // Facebook SDK'nın yüklenmesini bekle
   useEffect(() => {
     const checkFbSdk = () => {
@@ -789,11 +812,35 @@ const EmbeddedSignupButton = ({
                 console.log('🔍 waitingForEvents:', waitingForEvents);
                 console.log('🔍 onboardingInProgress:', onboardingInProgress);
                 console.log('🔍 fallbackTriggered:', fallbackTriggered);
+                console.log('🔍 Current URL:', window.location.href);
+                console.log('🔍 URL Params:', new URLSearchParams(window.location.search).toString());
                 console.log('🔍 === END DEBUG ===');
               }}
               className="bg-blue-500 text-white px-2 py-1 rounded text-xs"
             >
               Debug Auth Code
+            </button>
+            
+            <button 
+              onClick={() => {
+                console.log('🔄 Trying manual auth code extraction from URL...');
+                const urlParams = new URLSearchParams(window.location.search);
+                const code = urlParams.get('code');
+                if (code) {
+                  console.log('🎯 Found auth code in URL:', code.substring(0, 10) + '...');
+                  window.whatsappAuthCode = code;
+                  handleOnboarding(code, {});
+                } else {
+                  console.log('❌ No auth code found in URL');
+                  // Popup ile manuel olarak Facebook'a git
+                  const authUrl = `https://www.facebook.com/v23.0/dialog/oauth?client_id=${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/welcome')}&scope=whatsapp_business_management,whatsapp_business_messaging&response_type=code&config_id=${process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID}`;
+                  console.log('🔗 Opening manual auth URL:', authUrl);
+                  window.open(authUrl, 'whatsapp_auth', 'width=600,height=600');
+                }
+              }}
+              className="bg-green-500 text-white px-2 py-1 rounded text-xs"
+            >
+              Manual Auth
             </button>
           </div>
         </div>
