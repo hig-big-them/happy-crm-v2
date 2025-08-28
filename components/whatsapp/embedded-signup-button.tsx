@@ -378,8 +378,24 @@ const EmbeddedSignupButton = ({
     window.addEventListener('focus', handleWindowFocus, { once: true });
     document.addEventListener('visibilitychange', handleVisibilityChange, { once: true });
 
-    window.FB.login(
-      function (response) {
+            // Production'da embedded signup yerine direkt OAuth kullan
+        if (process.env.NODE_ENV === 'production') {
+          console.log('🔄 Production mode: Using direct OAuth instead of embedded signup');
+          const redirectUri = `${window.location.origin}/`;
+          const authUrl = `https://www.facebook.com/v23.0/dialog/oauth?client_id=${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=whatsapp_business_management,whatsapp_business_messaging&response_type=code&config_id=${process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID}`;
+          
+          toast({
+            title: "WhatsApp Business'a Bağlanıyor",
+            description: "Facebook sayfasına yönlendiriliyorsunuz...",
+          });
+          
+          // Aynı pencerede yönlendir (popup değil)
+          window.location.href = authUrl;
+          return;
+        }
+
+        window.FB.login(
+          function (response) {
         
         console.log('📋 FB.login response:', response);
         
@@ -777,6 +793,38 @@ const EmbeddedSignupButton = ({
       )}
       
       {/* Debug: Modal state'ini göster */}
+      {/* Fallback Button - Production için */}
+      {waitingForEvents && (
+        <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-600"></div>
+            <span className="text-amber-800 font-medium">WhatsApp Business bağlantısı kuruluyor...</span>
+          </div>
+          <p className="text-sm text-amber-700 mb-3">
+            Bağlantı kurulması beklenenden uzun sürüyor. Alternatif yöntemi deneyebilirsiniz.
+          </p>
+          <Button
+            onClick={() => {
+              console.log('🔄 User triggered fallback connection');
+              const redirectUri = `${window.location.origin}/`;
+              const authUrl = `https://www.facebook.com/v23.0/dialog/oauth?client_id=${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=whatsapp_business_management,whatsapp_business_messaging&response_type=code&config_id=${process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID}`;
+              
+              toast({
+                title: "Alternatif Bağlantı",
+                description: "Facebook sayfasına yönlendiriliyorsunuz...",
+              });
+              
+              window.location.href = authUrl;
+            }}
+            variant="outline"
+            size="sm"
+            className="bg-white border-amber-300 text-amber-800 hover:bg-amber-50"
+          >
+            Alternatif Yöntemle Bağlan
+          </Button>
+        </div>
+      )}
+
       {process.env.NODE_ENV === 'development' && (
         <div className="fixed bottom-4 right-4 bg-black text-white p-2 text-xs rounded z-50 space-y-1">
           <div>
