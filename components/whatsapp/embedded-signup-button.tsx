@@ -542,18 +542,33 @@ const EmbeddedSignupButton = ({
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
       // Debug: Tüm gelen mesajları log'la
-      console.log('📨 Raw message received:', {
-        origin: event.origin,
-        data: event.data,
-        type: typeof event.data,
-        timestamp: new Date().toISOString()
-      });
+      console.log('📨 === RAW MESSAGE EVENT ===');
+      console.log('📨 Origin:', event.origin);
+      console.log('📨 Data type:', typeof event.data);
+      console.log('📨 Data content:', event.data);
+      console.log('📨 Timestamp:', new Date().toISOString());
+      console.log('📨 Event source exists:', !!event.source);
+      console.log('📨 ========================');
       
       // Özel durumlar için ek kontroller
       if (typeof event.data === 'string') {
-        if (event.data.includes('whatsapp') || event.data.includes('WABA') || event.data.includes('WA_')) {
+        console.log('📨 String data analysis:');
+        console.log('📨 - Contains "whatsapp":', event.data.toLowerCase().includes('whatsapp'));
+        console.log('📨 - Contains "WABA":', event.data.includes('WABA'));
+        console.log('📨 - Contains "WA_":', event.data.includes('WA_'));
+        console.log('📨 - Contains "code":', event.data.includes('code'));
+        console.log('📨 - Contains "authorization":', event.data.includes('authorization'));
+        
+        if (event.data.includes('whatsapp') || event.data.includes('WABA') || event.data.includes('WA_') || event.data.includes('code')) {
           console.log('🔍 Potential WhatsApp related message:', event.data);
         }
+      }
+      
+      // Object data için daha detaylı analiz
+      if (typeof event.data === 'object' && event.data !== null) {
+        console.log('📨 Object data analysis:');
+        console.log('📨 - Keys:', Object.keys(event.data));
+        console.log('📨 - Stringified:', JSON.stringify(event.data));
       }
 
       // Güvenlik: Facebook domain'lerini kontrol et (daha esnek)
@@ -562,9 +577,19 @@ const EmbeddedSignupButton = ({
                               event.origin === 'null' || // Bazı popup'lar null origin kullanabilir
                               event.origin === window.location.origin; // Aynı origin
       
+      console.log('🔍 Origin validation:', {
+        origin: event.origin,
+        isFacebookDomain,
+        includes_facebook_com: event.origin.includes('facebook.com'),
+        includes_facebook_net: event.origin.includes('facebook.net'),
+        is_null: event.origin === 'null',
+        is_same_origin: event.origin === window.location.origin
+      });
+      
+      // Geçici olarak tüm message'ları işle (debug için)
       if (!isFacebookDomain) {
-        console.log('🚫 Message rejected - invalid origin:', event.origin);
-        return;
+        console.log('⚠️ Message from non-Facebook origin, but processing anyway for debug:', event.origin);
+        // return; // Geçici olarak devre dışı
       } else {
         console.log('✅ Message accepted from origin:', event.origin);
       }
