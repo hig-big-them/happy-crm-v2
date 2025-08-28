@@ -166,7 +166,18 @@ export default function LoginPage() {
         }, 2000)
       } else {
         console.error('Signup API error:', result)
-        setSignupError(result.error || 'Kayıt başarısız')
+        
+        // Rate limit özel mesajı
+        if (result.errorType === 'rate_limit') {
+          setSignupError(`⏰ ${result.error}
+          
+💡 Alternatif çözümler:
+• Farklı bir email adresi deneyin
+• 5-10 dakika bekleyip tekrar deneyin
+• Mevcut hesabınız varsa giriş yapmayı deneyin`)
+        } else {
+          setSignupError(result.error || 'Kayıt başarısız')
+        }
       }
     } catch (error) {
       console.error('Signup error:', error)

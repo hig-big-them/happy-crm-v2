@@ -78,6 +78,17 @@ export async function POST(request: Request) {
           )
         }
         
+        // Email rate limit kontrolü
+        if (authError.message.includes('rate limit') || authError.message.includes('too many')) {
+          return NextResponse.json(
+            { 
+              error: 'Email gönderme limiti aşıldı. Lütfen 5-10 dakika bekleyip tekrar deneyin veya farklı bir email adresi kullanın.',
+              errorType: 'rate_limit'
+            },
+            { status: 429 }
+          )
+        }
+        
         return NextResponse.json(
           { error: 'Kullanıcı hesabı oluşturulamadı: ' + authError.message },
           { status: 400 }
