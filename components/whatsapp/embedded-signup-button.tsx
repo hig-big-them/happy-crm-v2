@@ -52,6 +52,8 @@ const EmbeddedSignupButton = ({
   const [isFbSdkLoaded, setIsFbSdkLoaded] = useState(false);
   const [onboardingInProgress, setOnboardingInProgress] = useState(false);
   const [messageEventData, setMessageEventData] = useState<any>(null);
+  const [popupWindow, setPopupWindow] = useState<Window | null>(null);
+  const [waitingForEvents, setWaitingForEvents] = useState(false);
   
   // Facebook SDK'nın yüklenmesini bekle
   useEffect(() => {
@@ -317,12 +319,34 @@ const EmbeddedSignupButton = ({
             console.log('⚠️ Login status unknown - this is normal for embedded signup');
             console.log('👂 Waiting for message events from popup...');
             
+            setWaitingForEvents(true);
+            
             // Unknown status embedded signup için normal
             // Message event'leri bekleyeceğiz, hata gösterme
             toast({
               title: "Bağlantı Kuruluyor",
               description: "WhatsApp Business bağlantısı kuruluyor, lütfen bekleyin...",
             });
+            
+            // 30 saniye timeout - eğer message event gelmezse fallback
+            setTimeout(() => {
+              if (waitingForEvents && !onboardingInProgress) {
+                console.warn('⏰ Timeout waiting for message events, trying fallback...');
+                setWaitingForEvents(false);
+                
+                // Fallback: Graph API ile WABA bilgilerini çekmeye çalış
+                if (window.whatsappAuthCode) {
+                  console.log('🔄 Fallback: Using authorization code without session info');
+                  handleOnboarding(window.whatsappAuthCode, {});
+                } else {
+                  toast({
+                    title: "Zaman Aşımı",
+                    description: "WhatsApp bağlantısı zaman aşımına uğradı. Lütfen tekrar deneyin.",
+                    variant: "destructive"
+                  });
+                }
+              }
+            }, 30000);
           } else if (response.status === 'not_authorized') {
             console.log('❌ User did not authorize the app');
             toast({
@@ -387,9 +411,15 @@ const EmbeddedSignupButton = ({
       });
 
       // Güvenlik: Sadece Facebook domain'lerinden gelen mesajları kabul et
-      if (event.origin !== 'https://www.facebook.com' && 
-          event.origin !== 'https://web.facebook.com' &&
-          event.origin !== 'https://connect.facebook.net') {
+      const allowedOrigins = [
+        'https://www.facebook.com',
+        'https://web.facebook.com',
+        'https://connect.facebook.net',
+        'https://business.facebook.com',
+        'https://developers.facebook.com'
+      ];
+      
+      if (!allowedOrigins.includes(event.origin)) {
         console.log('🚫 Message rejected - invalid origin:', event.origin);
         return;
       }
@@ -411,6 +441,7 @@ const EmbeddedSignupButton = ({
           if (code) {
             console.log('📋 Authorization code from URL params:', code.substring(0, 10) + '...');
             window.whatsappAuthCode = code;
+            setWaitingForEvents(false); // Authorization code geldi, artık bekleme
             
             // Eğer message event verisi varsa onu kullan, yoksa boş obje gönder
             if (messageEventData && !onboardingInProgress) {
@@ -459,6 +490,7 @@ const EmbeddedSignupButton = ({
             phone_number_id: messagePhoneId
           };
           setMessageEventData(enhancedMessageInfo);
+          setWaitingForEvents(false); // Message event geldi, artık bekleme
           
           // Authorization code'u al
           const authCode = window.whatsappAuthCode;
@@ -556,7 +588,9 @@ const EmbeddedSignupButton = ({
         <div className="fixed bottom-4 right-4 bg-black text-white p-2 text-xs rounded z-50">
           Modal: {showSignupModal ? 'OPEN' : 'CLOSED'} | 
           Data: {whatsappData ? 'YES' : 'NO'} |
-          WABA: {whatsappData?.waba_id || 'N/A'}
+          WABA: {whatsappData?.waba_id || 'N/A'} |
+          Waiting: {waitingForEvents ? 'YES' : 'NO'} |
+          Onboarding: {onboardingInProgress ? 'YES' : 'NO'}
         </div>
       )}
     </>
