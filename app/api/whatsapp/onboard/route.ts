@@ -37,19 +37,47 @@ export async function POST(request: Request) {
       );
     }
 
+    // Environment variables kontrolü
+    const facebookAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
+    const facebookAppSecret = process.env.FACEBOOK_APP_SECRET;
+    
+    if (!facebookAppId) {
+      console.error('❌ Missing NEXT_PUBLIC_FACEBOOK_APP_ID');
+      return NextResponse.json(
+        { 
+          error: 'Facebook App ID not configured', 
+          details: 'NEXT_PUBLIC_FACEBOOK_APP_ID environment variable is missing'
+        }, 
+        { status: 500 }
+      );
+    }
+
+    if (!facebookAppSecret) {
+      console.error('❌ Missing FACEBOOK_APP_SECRET');
+      return NextResponse.json(
+        { 
+          error: 'Facebook App Secret not configured', 
+          details: 'FACEBOOK_APP_SECRET environment variable is missing'
+        }, 
+        { status: 500 }
+      );
+    }
+
     console.log('📱 WhatsApp onboarding started:', { 
       code: code.substring(0, 10) + '...', 
       phone_number_id, 
-      waba_id 
+      waba_id,
+      api_version: process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION
     });
 
     // 1. Kodu uzun ömürlü bir access token ile değiştirin
     console.log('🔄 Exchanging code for access token...');
     
-    const tokenUrl = `https://graph.facebook.com/${process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION}/oauth/access_token`;
+    const apiVersion = process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION || 'v23.0';
+    const tokenUrl = `https://graph.facebook.com/${apiVersion}/oauth/access_token`;
     const tokenParams = new URLSearchParams({
-      client_id: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID!,
-      client_secret: process.env.FACEBOOK_APP_SECRET!,
+      client_id: facebookAppId,
+      client_secret: facebookAppSecret,
       code: code
     });
 
@@ -86,7 +114,7 @@ export async function POST(request: Request) {
       try {
         // Kullanıcının sahip olduğu WABA'ları listele
         const wabaListResponse = await fetch(
-          `https://graph.facebook.com/${process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION}/me/businesses?fields=owned_whatsapp_business_accounts{id,name,phone_numbers{id,verified_name,display_phone_number}}&access_token=${accessToken}`
+          `https://graph.facebook.com/${apiVersion}/me/businesses?fields=owned_whatsapp_business_accounts{id,name,phone_numbers{id,verified_name,display_phone_number}}&access_token=${accessToken}`
         );
         
         if (wabaListResponse.ok) {
@@ -122,7 +150,7 @@ export async function POST(request: Request) {
     let wabaData = null;
     if (finalWabaId) {
       const wabaResponse = await fetch(
-        `https://graph.facebook.com/${process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION}/${finalWabaId}?fields=id,name,status,currency,timezone_offset_minutes,business_verification_status&access_token=${accessToken}`
+        `https://graph.facebook.com/${apiVersion}/${finalWabaId}?fields=id,name,status,currency,timezone_offset_minutes,business_verification_status&access_token=${accessToken}`
       );
 
       if (wabaResponse.ok) {
@@ -141,7 +169,7 @@ export async function POST(request: Request) {
     let phoneData = null;
     if (finalPhoneNumberId) {
       const phoneResponse = await fetch(
-        `https://graph.facebook.com/${process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION}/${finalPhoneNumberId}?fields=id,verified_name,display_phone_number,quality_rating,status&access_token=${accessToken}`
+        `https://graph.facebook.com/${apiVersion}/${finalPhoneNumberId}?fields=id,verified_name,display_phone_number,quality_rating,status&access_token=${accessToken}`
       );
 
       if (phoneResponse.ok) {
@@ -159,7 +187,7 @@ export async function POST(request: Request) {
       try {
         console.log('📝 Registering phone number...');
         const registerResponse = await fetch(
-          `https://graph.facebook.com/${process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION}/${finalPhoneNumberId}/register`,
+          `https://graph.facebook.com/${apiVersion}/${finalPhoneNumberId}/register`,
           {
             method: 'POST',
             headers: {
@@ -189,7 +217,7 @@ export async function POST(request: Request) {
       try {
         console.log('🔗 Subscribing to webhooks...');
         const subscribeResponse = await fetch(
-          `https://graph.facebook.com/${process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION}/${finalWabaId}/subscribed_apps`,
+          `https://graph.facebook.com/${apiVersion}/${finalWabaId}/subscribed_apps`,
           {
             method: 'POST',
             headers: {

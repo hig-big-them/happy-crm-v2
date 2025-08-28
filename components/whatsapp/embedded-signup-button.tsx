@@ -161,11 +161,23 @@ const EmbeddedSignupButton = ({
         });
       } else {
         console.error('❌ Backend onboarding failed:', result);
+        
+        // Detaylı hata mesajı göster
+        let errorMessage = result.error || "Backend kurulumu sırasında hata oluştu.";
+        if (result.details) {
+          errorMessage += ` Detay: ${result.details}`;
+        }
+        if (result.missing_vars) {
+          errorMessage += ` Eksik değişkenler: ${result.missing_vars.join(', ')}`;
+        }
+        
         toast({
           title: "Kurulum Hatası",
-          description: result.error || "Backend kurulumu sırasında hata oluştu.",
+          description: errorMessage,
           variant: "destructive"
         });
+        
+        onError?.(errorMessage);
       }
     } catch (error) {
       console.error('❌ Error sending code to backend:', error);
