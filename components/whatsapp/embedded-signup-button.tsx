@@ -630,7 +630,6 @@ const EmbeddedSignupButton = ({
         extras: {
           version: 'v3' // embedded.sign.md'ye göre doğru format
         }
-        },
       }
     );
   };
