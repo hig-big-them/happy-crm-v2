@@ -3,9 +3,25 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n/client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const { t } = useI18n();
+  const router = useRouter();
+
+  // Auth code redirect handler
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    
+    if (code) {
+      console.log('🎯 Auth code found on home page, redirecting to welcome:', code.substring(0, 10) + '...');
+      
+      // Welcome sayfasına auth code ile redirect et
+      router.push(`/welcome?code=${code}`);
+    }
+  }, [router]);
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
