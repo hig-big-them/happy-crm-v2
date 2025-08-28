@@ -250,6 +250,7 @@ const FacebookLoginButton = ({
             data-show-faces="false"
             data-auto-logout-link="false"
             data-onlogin="checkLoginStateWithTerms"
+            data-scope="email,public_profile,whatsapp_business_management,whatsapp_business_messaging"
             style={{
               background: '#1877F2',
               borderRadius: '8px',

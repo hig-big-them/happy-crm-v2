@@ -169,6 +169,7 @@ export function FacebookSDKProvider({
     const defaultOptions = {
       scope: 'email,public_profile,whatsapp_business_management,whatsapp_business_messaging',
       return_scopes: true,
+      response_type: 'code', // Use authorization code flow instead of token
       ...options
     };
 
