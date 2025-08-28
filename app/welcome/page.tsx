@@ -7,12 +7,16 @@ import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
 import { Badge } from '../../components/ui/badge'
 import { Separator } from '../../components/ui/separator'
-import { CheckCircle, AlertTriangle, MessageCircle, Shield, Clock, Users, Zap, ArrowRight, Info } from 'lucide-react'
+import { CheckCircle, AlertTriangle, MessageCircle, Shield, Clock, Users, Zap, ArrowRight, Info, Link2 } from 'lucide-react'
+import { FacebookSDKProvider } from '../../components/auth/facebook-sdk-provider'
+import FacebookLoginButton from '../../components/whatsapp/facebook-login-button'
 
 export default function WelcomePage() {
   const { user, loading } = useMockAuth()
   const router = useRouter()
   const [isReady, setIsReady] = useState(false)
+  const [whatsappConnected, setWhatsappConnected] = useState(false)
+  const [showWhatsappSetup, setShowWhatsappSetup] = useState(false)
 
   // Redirect if not logged in
   useEffect(() => {
@@ -26,6 +30,25 @@ export default function WelcomePage() {
     setTimeout(() => {
       router.push('/dashboard')
     }, 500)
+  }
+
+  const handleWhatsappSetup = () => {
+    setShowWhatsappSetup(true)
+  }
+
+  const handleWhatsappSuccess = (data: { code: string; phone_number_id: string; waba_id: string }) => {
+    console.log('✅ WhatsApp Business connected:', data)
+    setWhatsappConnected(true)
+    setShowWhatsappSetup(false)
+    
+    // Optional: Show success message
+    // toast({ title: "WhatsApp Business bağlandı!", description: "Artık müşterilerinizle WhatsApp üzerinden iletişim kurabilirsiniz." })
+  }
+
+  const handleWhatsappError = (error: string) => {
+    console.error('❌ WhatsApp Business connection error:', error)
+    // Optional: Show error message
+    // toast({ title: "Bağlantı hatası", description: error, variant: "destructive" })
   }
 
   if (loading) {
@@ -176,6 +199,69 @@ export default function WelcomePage() {
           </CardContent>
         </Card>
 
+        {/* WhatsApp Business Setup */}
+        <Card className="border-2 border-green-200">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <Link2 className="h-6 w-6 text-green-600" />
+              <CardTitle className="text-xl text-green-800">
+                WhatsApp Business API Bağlantısı
+              </CardTitle>
+            </div>
+            <CardDescription>
+              Müşterilerinizle WhatsApp üzerinden profesyonel iletişim kurmak için Meta Business hesabınızı bağlayın
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {!whatsappConnected ? (
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-blue-800 mb-2">📱 WhatsApp Business API Nedir?</h4>
+                  <ul className="text-sm text-blue-700 space-y-1">
+                    <li>• Müşterilerinizle WhatsApp üzerinden profesyonel mesajlaşma</li>
+                    <li>• Otomatik yanıtlar ve template mesajları</li>
+                    <li>• Müşteri destek ve pazarlama kampanyaları</li>
+                    <li>• Çoklu kullanıcı desteği ve takım yönetimi</li>
+                  </ul>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Bağlantı Öncesi Gereksinimler</h4>
+                  <ul className="text-sm text-yellow-700 space-y-1">
+                    <li>• Meta Business hesabınız olmalı</li>
+                    <li>• WhatsApp Business hesabınız doğrulanmış olmalı</li>
+                    <li>• Telefon numaranız WhatsApp Business'a kayıtlı olmalı</li>
+                  </ul>
+                </div>
+
+                <div className="text-center">
+                  <FacebookSDKProvider>
+                    <FacebookLoginButton
+                      onSuccess={handleWhatsappSuccess}
+                      onError={handleWhatsappError}
+                      buttonText="Meta Business ile Bağlan"
+                      size="large"
+                      className="w-full"
+                    />
+                  </FacebookSDKProvider>
+                  
+                  <p className="text-sm text-gray-500 mt-2">
+                    Bu adımı şimdi atlayıp daha sonra ayarlar sayfasından yapabilirsiniz.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center p-6 bg-green-50 rounded-lg border border-green-200">
+                <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
+                <h4 className="font-semibold text-green-800 mb-2">✅ WhatsApp Business Bağlandı!</h4>
+                <p className="text-sm text-green-700">
+                  Artık müşterilerinizle WhatsApp üzerinden profesyonel iletişim kurabilirsiniz.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Continue Button */}
         <div className="text-center">
           <Button 
@@ -191,14 +277,17 @@ export default function WelcomePage() {
               </>
             ) : (
               <>
-                Dashboard'a Geç
+                {whatsappConnected ? 'Kurulumu Tamamla' : 'Şimdilik Atla'}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </>
             )}
           </Button>
           
           <p className="text-sm text-gray-500 mt-3">
-            Bu uyarıları okuduğunuzu ve anladığınızı onaylayarak devam ediyorsunuz.
+            {whatsappConnected 
+              ? 'WhatsApp Business bağlantınız aktif. Dashboard\'a geçebilirsiniz.'
+              : 'WhatsApp Business bağlantısını daha sonra ayarlar sayfasından yapabilirsiniz.'
+            }
           </p>
         </div>
       </div>
