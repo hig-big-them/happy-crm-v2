@@ -385,7 +385,7 @@ const EmbeddedSignupButton = ({
           const redirectUri = `${window.location.origin}/`;
           
           // WhatsApp Embedded Signup URL (Facebook Login for Business)
-          const embeddedSignupUrl = `https://www.facebook.com/v23.0/dialog/oauth?client_id=${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=whatsapp_business_management,whatsapp_business_messaging&response_type=code&config_id=${process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID}&extras={"sessionInfoVersion":"3","version":"v3"}`;
+          const embeddedSignupUrl = `https://www.facebook.com/v23.0/dialog/oauth?client_id=${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=whatsapp_business_management,whatsapp_business_messaging&response_type=code&config_id=${process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID}&extras={"sessionInfoVersion":"3"}`;
           
           toast({
             title: "WhatsApp Business'a Bağlanıyor",
@@ -628,8 +628,7 @@ const EmbeddedSignupButton = ({
         response_type: 'code',
         override_default_response_type: true,
         extras: {
-          sessionInfoVersion: 3, // WABA ID ve diğer bilgileri almak için zorunlu
-          version: 'v3' // embedded.sign.md'ye göre doğru format
+          sessionInfoVersion: 3
         }
       }
     );
@@ -864,7 +863,7 @@ const EmbeddedSignupButton = ({
             onClick={() => {
               console.log('🔄 User triggered fallback WhatsApp Embedded Signup');
               const redirectUri = `${window.location.origin}/`;
-              const embeddedSignupUrl = `https://www.facebook.com/v23.0/dialog/oauth?client_id=${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=whatsapp_business_management,whatsapp_business_messaging&response_type=code&config_id=${process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID}&extras={"sessionInfoVersion":"3","version":"v3"}`;
+              const embeddedSignupUrl = `https://www.facebook.com/v23.0/dialog/oauth?client_id=${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=whatsapp_business_management,whatsapp_business_messaging&response_type=code&config_id=${process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID}&extras={"sessionInfoVersion":"3"}`;
               
               toast({
                 title: "WhatsApp Embedded Signup",
@@ -939,7 +938,7 @@ const EmbeddedSignupButton = ({
                   console.log('❌ No auth code found in URL');
                   // WhatsApp Embedded Signup popup'ı aç (backend ile aynı redirect_uri kullan)
                   const redirectUri = `${window.location.origin}/`;
-                  const embeddedSignupUrl = `https://www.facebook.com/v23.0/dialog/oauth?client_id=${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=whatsapp_business_management,whatsapp_business_messaging&response_type=code&config_id=${process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID}&extras={"sessionInfoVersion":"3","version":"v3"}`;
+                  const embeddedSignupUrl = `https://www.facebook.com/v23.0/dialog/oauth?client_id=${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=whatsapp_business_management,whatsapp_business_messaging&response_type=code&config_id=${process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID}&extras={"sessionInfoVersion":"3"}`;
                   console.log('🔗 Opening WhatsApp Embedded Signup URL:', embeddedSignupUrl);
                   console.log('🔗 Using redirect_uri:', redirectUri);
                   window.open(embeddedSignupUrl, 'whatsapp_embedded_signup_manual', 'width=600,height=700');
