@@ -237,7 +237,7 @@ const EmbeddedSignupButton = ({
         }
       },
       {
-        config_id: process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID,
+        config_id: process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID || '1806045803357264',
         response_type: 'code',
         override_default_response_type: true,
         extras: {

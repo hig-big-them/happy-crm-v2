@@ -9,7 +9,7 @@ import { Badge } from '../../components/ui/badge'
 import { Separator } from '../../components/ui/separator'
 import { CheckCircle, AlertTriangle, MessageCircle, Shield, Clock, Users, Zap, ArrowRight, Info, Link2 } from 'lucide-react'
 import { FacebookSDKProvider } from '../../components/auth/facebook-sdk-provider'
-import FacebookLoginButton from '../../components/whatsapp/facebook-login-button'
+import EmbeddedSignupButton from '../../components/whatsapp/embedded-signup-button'
 
 export default function WelcomePage() {
   const { user, loading } = useMockAuth()
@@ -235,18 +235,13 @@ export default function WelcomePage() {
                 </div>
 
                 <div className="text-center space-y-3">
-                  <div className="text-center">
-                    <button
-                      onClick={() => window.open('https://business.facebook.com/whatsapp/embedded-signup/', '_blank')}
-                      className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2"
-                    >
-                      <MessageCircle className="h-5 w-5" />
-                      Meta Business ile Bağlan
-                    </button>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Meta Business Manager'da WhatsApp Business hesabınızı bağlayın
-                    </p>
-                  </div>
+                  <FacebookSDKProvider>
+                    <EmbeddedSignupButton
+                      onSuccess={handleWhatsappSuccess}
+                      onError={handleWhatsappError}
+                      disabled={false}
+                    />
+                  </FacebookSDKProvider>
                   
                   <p className="text-sm text-gray-500">
                     Bu adımı şimdi atlayıp daha sonra ayarlar sayfasından yapabilirsiniz.
