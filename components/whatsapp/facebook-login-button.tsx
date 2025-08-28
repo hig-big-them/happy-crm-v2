@@ -236,20 +236,38 @@ const FacebookLoginButton = ({
 
   return (
     <>
-      <div ref={containerRef} className={className}>
-        <div
-          className="fb-login-button"
-          data-config-id={process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID}
-          data-button-type="login_with"
-          data-layout="default"
-          data-size={getSizeClass()}
-          data-button-text={buttonText}
-          data-use-continue-as="false"
-          data-width=""
-          data-show-faces="false"
-          data-auto-logout-link="false"
-          data-onlogin="checkLoginStateWithTerms"
-        />
+      <div className={className}>
+        <div ref={containerRef} className="w-full">
+          <div
+            className="fb-login-button w-full"
+            data-config-id={process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID}
+            data-button-type="login_with"
+            data-layout="default"
+            data-size={getSizeClass()}
+            data-button-text={buttonText}
+            data-use-continue-as="false"
+            data-width="100%"
+            data-show-faces="false"
+            data-auto-logout-link="false"
+            data-onlogin="checkLoginStateWithTerms"
+            style={{
+              background: '#1877F2',
+              borderRadius: '8px',
+              border: 'none',
+              padding: '12px 24px',
+              fontSize: '16px',
+              fontWeight: '500',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              width: '100%',
+              minHeight: '48px'
+            }}
+          />
+        </div>
       </div>
 
       <TermsOfServiceModal

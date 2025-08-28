@@ -67,18 +67,18 @@ export default function WelcomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <div className="max-w-4xl w-full space-y-6">
         {/* Welcome Header */}
-        <Card className="border-2 border-green-200 bg-gradient-to-r from-green-50 to-blue-50">
+        <Card className="border border-gray-200 bg-white shadow-sm">
           <CardHeader className="text-center pb-4">
             <div className="flex justify-center mb-4">
-              <div className="bg-green-100 p-3 rounded-full">
-                <CheckCircle className="h-8 w-8 text-green-600" />
+              <div className="bg-blue-100 p-3 rounded-full">
+                <CheckCircle className="h-8 w-8 text-blue-600" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-800">
-              🎉 Happy CRM'e Hoş Geldiniz!
+            <CardTitle className="text-2xl font-bold text-gray-900">
+              Happy CRM'e Hoş Geldiniz
             </CardTitle>
             <CardDescription className="text-lg text-gray-600">
               Merhaba <strong>{user.email}</strong>, hesabınız başarıyla oluşturuldu ve aktifleştirildi.
@@ -87,12 +87,12 @@ export default function WelcomePage() {
         </Card>
 
         {/* WhatsApp Cloud API Warnings */}
-        <Card className="border-2 border-orange-200">
+        <Card className="border border-amber-200 bg-amber-50">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <AlertTriangle className="h-6 w-6 text-orange-600" />
-              <CardTitle className="text-xl text-orange-800">
-                WhatsApp Cloud API Kullanım Uyarıları
+              <AlertTriangle className="h-6 w-6 text-amber-600" />
+              <CardTitle className="text-xl text-amber-800">
+                WhatsApp Business API Kullanım Kuralları
               </CardTitle>
             </div>
             <CardDescription>
@@ -142,15 +142,15 @@ export default function WelcomePage() {
               </div>
             </div>
 
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <Info className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Önemli Uyarı</h4>
-                  <p className="text-sm text-yellow-700 mb-2">
+                  <h4 className="font-semibold text-red-800 mb-2">Önemli Uyarı</h4>
+                  <p className="text-sm text-red-700 mb-2">
                     Bu kurallara uymamanız durumunda WhatsApp Business hesabınız <strong>kalıcı olarak kapatılabilir</strong>.
                   </p>
-                  <p className="text-sm text-yellow-700">
+                  <p className="text-sm text-red-700">
                     Detaylı bilgi için <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/overview" target="_blank" className="underline font-medium">WhatsApp Business Policy</a> sayfasını inceleyin.
                   </p>
                 </div>
@@ -160,39 +160,39 @@ export default function WelcomePage() {
         </Card>
 
         {/* Features Overview */}
-        <Card>
+        <Card className="border border-gray-200 bg-white">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-blue-600" />
-              Happy CRM Özellikleri
+              Platform Özellikleri
             </CardTitle>
             <CardDescription>
-              Platformumuzda neler yapabileceğinizi keşfedin
+              Happy CRM ile neler yapabileceğinizi keşfedin
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
+              <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-100">
                 <MessageCircle className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                <h4 className="font-semibold mb-1">WhatsApp Entegrasyonu</h4>
+                <h4 className="font-semibold mb-1 text-gray-900">WhatsApp Business API</h4>
                 <p className="text-sm text-gray-600">
-                  Business API ile profesyonel mesajlaşma
+                  Profesyonel müşteri iletişimi
                 </p>
               </div>
 
-              <div className="text-center p-4 bg-green-50 rounded-lg">
+              <div className="text-center p-4 bg-green-50 rounded-lg border border-green-100">
                 <Users className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                <h4 className="font-semibold mb-1">Müşteri Yönetimi</h4>
+                <h4 className="font-semibold mb-1 text-gray-900">Müşteri Yönetimi</h4>
                 <p className="text-sm text-gray-600">
-                  Lead takibi ve müşteri ilişkileri
+                  Lead takibi ve CRM süreçleri
                 </p>
               </div>
 
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
+              <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-100">
                 <Zap className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                <h4 className="font-semibold mb-1">Otomasyon</h4>
+                <h4 className="font-semibold mb-1 text-gray-900">Otomasyon</h4>
                 <p className="text-sm text-gray-600">
-                  Akıllı iş akışları ve otomatik yanıtlar
+                  İş akışları ve otomatik yanıtlar
                 </p>
               </div>
             </div>
@@ -200,12 +200,12 @@ export default function WelcomePage() {
         </Card>
 
         {/* WhatsApp Business Setup */}
-        <Card className="border-2 border-green-200">
+        <Card className="border border-blue-200 bg-blue-50">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <Link2 className="h-6 w-6 text-green-600" />
-              <CardTitle className="text-xl text-green-800">
-                WhatsApp Business API Bağlantısı
+              <Link2 className="h-6 w-6 text-blue-600" />
+              <CardTitle className="text-xl text-blue-800">
+                WhatsApp Business API Entegrasyonu
               </CardTitle>
             </div>
             <CardDescription>
@@ -215,9 +215,9 @@ export default function WelcomePage() {
           <CardContent className="space-y-4">
             {!whatsappConnected ? (
               <div className="space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-blue-800 mb-2">📱 WhatsApp Business API Nedir?</h4>
-                  <ul className="text-sm text-blue-700 space-y-1">
+                <div className="bg-white border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-gray-900 mb-2">WhatsApp Business API Avantajları</h4>
+                  <ul className="text-sm text-gray-700 space-y-1">
                     <li>• Müşterilerinizle WhatsApp üzerinden profesyonel mesajlaşma</li>
                     <li>• Otomatik yanıtlar ve template mesajları</li>
                     <li>• Müşteri destek ve pazarlama kampanyaları</li>
@@ -225,16 +225,16 @@ export default function WelcomePage() {
                   </ul>
                 </div>
 
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Bağlantı Öncesi Gereksinimler</h4>
-                  <ul className="text-sm text-yellow-700 space-y-1">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-amber-800 mb-2">Bağlantı Öncesi Gereksinimler</h4>
+                  <ul className="text-sm text-amber-700 space-y-1">
                     <li>• Meta Business hesabınız olmalı</li>
                     <li>• WhatsApp Business hesabınız doğrulanmış olmalı</li>
                     <li>• Telefon numaranız WhatsApp Business'a kayıtlı olmalı</li>
                   </ul>
                 </div>
 
-                <div className="text-center">
+                <div className="text-center space-y-3">
                   <FacebookSDKProvider>
                     <FacebookLoginButton
                       onSuccess={handleWhatsappSuccess}
@@ -245,7 +245,7 @@ export default function WelcomePage() {
                     />
                   </FacebookSDKProvider>
                   
-                  <p className="text-sm text-gray-500 mt-2">
+                  <p className="text-sm text-gray-500">
                     Bu adımı şimdi atlayıp daha sonra ayarlar sayfasından yapabilirsiniz.
                   </p>
                 </div>
@@ -267,17 +267,17 @@ export default function WelcomePage() {
           <Button 
             onClick={handleContinue}
             size="lg"
-            className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white px-8 py-3 text-lg"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-semibold"
             disabled={isReady}
           >
             {isReady ? (
               <>
                 <CheckCircle className="mr-2 h-5 w-5" />
-                Dashboard'a Yönlendiriliyor...
+                Dashboard'a yönlendiriliyor...
               </>
             ) : (
               <>
-                {whatsappConnected ? 'Kurulumu Tamamla' : 'Şimdilik Atla'}
+                {whatsappConnected ? 'Kurulumu Tamamla' : 'Dashboard\'a Geç'}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </>
             )}
@@ -286,7 +286,7 @@ export default function WelcomePage() {
           <p className="text-sm text-gray-500 mt-3">
             {whatsappConnected 
               ? 'WhatsApp Business bağlantınız aktif. Dashboard\'a geçebilirsiniz.'
-              : 'WhatsApp Business bağlantısını daha sonra ayarlar sayfasından yapabilirsiniz.'
+              : 'WhatsApp Business entegrasyonunu daha sonra ayarlardan yapabilirsiniz.'
             }
           </p>
         </div>
