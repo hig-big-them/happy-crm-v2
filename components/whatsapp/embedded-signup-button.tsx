@@ -143,21 +143,34 @@ const EmbeddedSignupButton = ({
 
       if (response.ok) {
         console.log('✅ Backend onboarding completed:', result);
+        console.log('📊 Backend response data:', result.data);
+        
+        // WABA bilgilerini kontrol et
+        if (!result.data?.waba_id || !result.data?.phone_number_id) {
+          console.warn('⚠️ Missing WABA or Phone Number ID in backend response:', {
+            waba_id: result.data?.waba_id,
+            phone_number_id: result.data?.phone_number_id,
+            full_data: result.data
+          });
+        }
         
         // WhatsApp verilerini state'e kaydet ve signup modal'ını göster
-        setWhatsappData({
+        const whatsappInfo = {
           waba_id: result.data?.waba_id,
           phone_number_id: result.data?.phone_number_id,
           verified_name: result.data?.verified_name,
           display_phone_number: result.data?.display_phone_number,
           status: result.data?.status,
           quality_rating: result.data?.quality_rating
-        });
+        };
+        
+        console.log('📱 Setting WhatsApp data for modal:', whatsappInfo);
+        setWhatsappData(whatsappInfo);
         setShowSignupModal(true);
         
         toast({
           title: "WhatsApp Bağlandı!",
-          description: "Şimdi hesap bilgilerinizi girin.",
+          description: `WABA: ${result.data?.waba_id || 'N/A'}, Phone: ${result.data?.phone_number_id || 'N/A'}`,
         });
       } else {
         console.error('❌ Backend onboarding failed:', result);
@@ -382,11 +395,13 @@ const EmbeddedSignupButton = ({
         <SignupModal
           isOpen={showSignupModal}
           onClose={() => {
+            console.log('🔒 Closing signup modal');
             setShowSignupModal(false);
             setWhatsappData(null); // WhatsApp verilerini temizle
           }}
           whatsappData={whatsappData}
           onSuccess={(userData) => {
+            console.log('✅ Signup modal success:', userData);
             onSuccess?.({ 
               code: '', 
               phone_number_id: whatsappData.phone_number_id, 
@@ -396,6 +411,15 @@ const EmbeddedSignupButton = ({
             setWhatsappData(null);
           }}
         />
+      )}
+      
+      {/* Debug: Modal state'ini göster */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed bottom-4 right-4 bg-black text-white p-2 text-xs rounded z-50">
+          Modal: {showSignupModal ? 'OPEN' : 'CLOSED'} | 
+          Data: {whatsappData ? 'YES' : 'NO'} |
+          WABA: {whatsappData?.waba_id || 'N/A'}
+        </div>
       )}
     </>
   );

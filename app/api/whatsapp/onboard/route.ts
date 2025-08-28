@@ -267,18 +267,22 @@ export async function POST(request: Request) {
     // await supabase.from('whatsapp_accounts').insert(onboardingData);
 
     console.log('🎉 WhatsApp onboarding completed successfully!');
+    
+    const responseData = {
+      waba_id: finalWabaId,
+      phone_number_id: finalPhoneNumberId,
+      verified_name: phoneData?.verified_name,
+      display_phone_number: phoneData?.display_phone_number,
+      status: phoneData?.status,
+      quality_rating: phoneData?.quality_rating
+    };
+    
+    console.log('📤 Sending response data to frontend:', responseData);
 
     return NextResponse.json({ 
       success: true, 
       message: 'WhatsApp onboarding completed successfully.',
-      data: {
-        waba_id: finalWabaId,
-        phone_number_id: finalPhoneNumberId,
-        verified_name: phoneData?.verified_name,
-        display_phone_number: phoneData?.display_phone_number,
-        status: phoneData?.status,
-        quality_rating: phoneData?.quality_rating
-      }
+      data: responseData
     });
 
   } catch (error) {

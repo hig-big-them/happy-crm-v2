@@ -36,6 +36,14 @@ export function SignupModal({ isOpen, onClose, whatsappData, onSuccess }: Signup
   })
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
+  
+  // Debug: WhatsApp data'yı log'la
+  console.log('🔍 SignupModal rendered with:', {
+    isOpen,
+    whatsappData,
+    hasWabaId: !!whatsappData?.waba_id,
+    hasPhoneId: !!whatsappData?.phone_number_id
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -125,19 +133,34 @@ export function SignupModal({ isOpen, onClose, whatsappData, onSuccess }: Signup
                   </p>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Badge variant="outline">
-                  WABA ID: {whatsappData.waba_id}
+                  WABA ID: {whatsappData.waba_id || 'Belirtilmemiş'}
                 </Badge>
                 <Badge variant="outline">
-                  Phone ID: {whatsappData.phone_number_id}
+                  Phone ID: {whatsappData.phone_number_id || 'Belirtilmemiş'}
                 </Badge>
                 {whatsappData.status && (
                   <Badge variant={whatsappData.status === 'APPROVED' ? 'default' : 'secondary'}>
                     {whatsappData.status}
                   </Badge>
                 )}
+                {whatsappData.quality_rating && (
+                  <Badge variant="secondary">
+                    Kalite: {whatsappData.quality_rating}
+                  </Badge>
+                )}
               </div>
+              
+              {/* Debug: Raw data göster */}
+              {process.env.NODE_ENV === 'development' && (
+                <details className="mt-2">
+                  <summary className="text-xs text-gray-500 cursor-pointer">Debug: Raw WhatsApp Data</summary>
+                  <pre className="text-xs bg-gray-100 p-2 rounded mt-1 overflow-auto">
+                    {JSON.stringify(whatsappData, null, 2)}
+                  </pre>
+                </details>
+              )}
             </CardContent>
           </Card>
 
