@@ -265,6 +265,38 @@ const EmbeddedSignupButton = ({
       protocol: window.location.protocol
     });
 
+    // Window focus event'ini dinle (popup kapandığında tetiklenir)
+    let popupClosed = false;
+    const handleWindowFocus = () => {
+      if (waitingForEvents && !popupClosed) {
+        popupClosed = true;
+        console.log('🔍 Window focused - popup likely closed, checking for auth code...');
+        console.log('🔍 Current auth code:', window.whatsappAuthCode ? window.whatsappAuthCode.substring(0, 10) + '...' : 'None');
+        console.log('🔍 Onboarding in progress:', onboardingInProgress);
+        
+        // Kısa bir gecikme sonrası auth code kontrol et
+        setTimeout(() => {
+          if (window.whatsappAuthCode && !onboardingInProgress) {
+            console.log('🎯 Found auth code after window focus, starting onboarding');
+            setWaitingForEvents(false);
+            handleOnboarding(window.whatsappAuthCode, {});
+          } else {
+            console.log('❌ No auth code found after window focus or onboarding already in progress');
+            if (!window.whatsappAuthCode) {
+              toast({
+                title: "Veri Alınamadı",
+                description: "WhatsApp popup'ından authorization code alınamadı. Lütfen tekrar deneyin.",
+                variant: "destructive"
+              });
+              setWaitingForEvents(false);
+            }
+          }
+        }, 1000);
+      }
+    };
+    
+    window.addEventListener('focus', handleWindowFocus, { once: true });
+
     window.FB.login(
       function (response) {
         
@@ -349,44 +381,44 @@ const EmbeddedSignupButton = ({
             
             // Popup takibi ve hızlı fallback
             const checkPopupStatus = () => {
-              // 2 saniye sonra popup durumunu kontrol etmeye başla
-              setTimeout(() => {
-                const checkInterval = setInterval(() => {
-                  if (waitingForEvents && !onboardingInProgress) {
-                    // Authorization code varsa hemen fallback'e geç
-                    if (window.whatsappAuthCode) {
-                      console.warn('🔄 Authorization code found, starting fallback (message events not received)');
-                      setWaitingForEvents(false);
-                      clearInterval(checkInterval);
-                      handleOnboarding(window.whatsappAuthCode, {});
-                      return;
-                    }
-                  } else {
-                    // Waiting durumu değişmişse interval'ı temizle
-                    clearInterval(checkInterval);
-                  }
-                }, 1000); // Her saniye kontrol et
+              // Hemen popup durumunu kontrol etmeye başla
+              const checkInterval = setInterval(() => {
+                // Popup kapanma durumu window focus event ile handle ediliyor
                 
-                // 30 saniye sonra kesin timeout
-                setTimeout(() => {
-                  if (waitingForEvents && !onboardingInProgress) {
-                    console.warn('⏰ Final timeout waiting for message events');
+                if (waitingForEvents && !onboardingInProgress) {
+                  // Authorization code varsa hemen fallback'e geç
+                  if (window.whatsappAuthCode) {
+                    console.warn('🔄 Authorization code found, starting fallback (message events not received)');
                     setWaitingForEvents(false);
                     clearInterval(checkInterval);
-                    
-                    if (window.whatsappAuthCode) {
-                      console.log('🔄 Final fallback: Using authorization code');
-                      handleOnboarding(window.whatsappAuthCode, {});
-                    } else {
-                      toast({
-                        title: "Zaman Aşımı",
-                        description: "WhatsApp bağlantısı zaman aşımına uğradı. Lütfen tekrar deneyin.",
-                        variant: "destructive"
-                      });
-                    }
+                    handleOnboarding(window.whatsappAuthCode, {});
+                    return;
                   }
-                }, 30000);
-              }, 2000);
+                } else {
+                  // Waiting durumu değişmişse interval'ı temizle
+                  clearInterval(checkInterval);
+                }
+              }, 500); // Her 500ms kontrol et (daha hızlı)
+              
+              // 30 saniye sonra kesin timeout
+              setTimeout(() => {
+                if (waitingForEvents && !onboardingInProgress) {
+                  console.warn('⏰ Final timeout waiting for message events');
+                  setWaitingForEvents(false);
+                  clearInterval(checkInterval);
+                  
+                  if (window.whatsappAuthCode) {
+                    console.log('🔄 Final fallback: Using authorization code');
+                    handleOnboarding(window.whatsappAuthCode, {});
+                  } else {
+                    toast({
+                      title: "Zaman Aşımı",
+                      description: "WhatsApp bağlantısı zaman aşımına uğradı. Lütfen tekrar deneyin.",
+                      variant: "destructive"
+                    });
+                  }
+                }
+              }, 30000);
             };
             
             checkPopupStatus();
