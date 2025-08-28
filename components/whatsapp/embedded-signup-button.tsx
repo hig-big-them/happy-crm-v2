@@ -38,13 +38,15 @@ interface EmbeddedSignupButtonProps {
   onError?: (error: string) => void;
   disabled?: boolean;
   className?: string;
+  skipSignupModal?: boolean; // Welcome sayfası için signup modal'ını atla
 }
 
 const EmbeddedSignupButton = ({
   onSuccess,
   onError,
   disabled = false,
-  className = ""
+  className = "",
+  skipSignupModal = false
 }: EmbeddedSignupButtonProps) => {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
@@ -181,13 +183,30 @@ const EmbeddedSignupButton = ({
         };
         
         console.log('📱 Setting WhatsApp data for modal:', whatsappInfo);
-        setWhatsappData(whatsappInfo);
-        setShowSignupModal(true);
         
-        toast({
-          title: "WhatsApp Bağlandı!",
-          description: `WABA: ${result.data?.waba_id || 'N/A'}, Phone: ${result.data?.phone_number_id || 'N/A'}`,
-        });
+        if (skipSignupModal) {
+          // Welcome sayfasında signup modal'ını atla, direkt success callback'ini çağır
+          console.log('🔄 Skipping signup modal, calling success callback directly');
+          onSuccess?.({
+            code: '',
+            phone_number_id: result.data?.phone_number_id || '',
+            waba_id: result.data?.waba_id || ''
+          });
+          
+          toast({
+            title: "WhatsApp Business Bağlandı!",
+            description: `WABA ID: ${result.data?.waba_id || 'N/A'}, Phone ID: ${result.data?.phone_number_id || 'N/A'}`,
+          });
+        } else {
+          // Normal akış: signup modal'ını göster
+          setWhatsappData(whatsappInfo);
+          setShowSignupModal(true);
+          
+          toast({
+            title: "WhatsApp Bağlandı!",
+            description: `WABA: ${result.data?.waba_id || 'N/A'}, Phone: ${result.data?.phone_number_id || 'N/A'}`,
+          });
+        }
       } else {
         console.error('❌ Backend onboarding failed:', result);
         

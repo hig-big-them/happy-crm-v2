@@ -17,6 +17,7 @@ export default function WelcomePage() {
   const [isReady, setIsReady] = useState(false)
   const [whatsappConnected, setWhatsappConnected] = useState(false)
   const [showWhatsappSetup, setShowWhatsappSetup] = useState(false)
+  const [whatsappData, setWhatsappData] = useState<{ waba_id: string; phone_number_id: string } | null>(null)
 
   // Redirect if not logged in
   useEffect(() => {
@@ -40,6 +41,10 @@ export default function WelcomePage() {
     console.log('✅ WhatsApp Business connected:', data)
     setWhatsappConnected(true)
     setShowWhatsappSetup(false)
+    setWhatsappData({
+      waba_id: data.waba_id,
+      phone_number_id: data.phone_number_id
+    })
     
     // Optional: Show success message
     // toast({ title: "WhatsApp Business bağlandı!", description: "Artık müşterilerinizle WhatsApp üzerinden iletişim kurabilirsiniz." })
@@ -240,6 +245,7 @@ export default function WelcomePage() {
                       onSuccess={handleWhatsappSuccess}
                       onError={handleWhatsappError}
                       disabled={false}
+                      skipSignupModal={true}
                     />
                   </FacebookSDKProvider>
                   
@@ -249,12 +255,33 @@ export default function WelcomePage() {
                 </div>
               </div>
             ) : (
-              <div className="text-center p-6 bg-green-50 rounded-lg border border-green-200">
-                <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
-                <h4 className="font-semibold text-green-800 mb-2">✅ WhatsApp Business Bağlandı!</h4>
-                <p className="text-sm text-green-700">
-                  Artık müşterilerinizle WhatsApp üzerinden profesyonel iletişim kurabilirsiniz.
-                </p>
+              <div className="space-y-4">
+                <div className="text-center p-6 bg-green-50 rounded-lg border border-green-200">
+                  <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
+                  <h4 className="font-semibold text-green-800 mb-2">✅ WhatsApp Business Bağlandı!</h4>
+                  <p className="text-sm text-green-700 mb-4">
+                    Artık müşterilerinizle WhatsApp üzerinden profesyonel iletişim kurabilirsiniz.
+                  </p>
+                  
+                  {whatsappData && (
+                    <div className="bg-white border border-green-200 rounded-lg p-4 space-y-2">
+                      <h5 className="font-medium text-gray-900 mb-2">Bağlantı Bilgileri</h5>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div className="bg-gray-50 p-3 rounded">
+                          <label className="font-medium text-gray-700">WABA ID</label>
+                          <p className="font-mono text-gray-900 break-all">{whatsappData.waba_id}</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded">
+                          <label className="font-medium text-gray-700">Phone Number ID</label>
+                          <p className="font-mono text-gray-900 break-all">{whatsappData.phone_number_id}</p>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-2">
+                        Bu bilgiler WhatsApp Business API entegrasyonunuz için kullanılacaktır.
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </CardContent>
