@@ -98,10 +98,10 @@ function AuthCallbackContent() {
             
             if (data.session) {
               console.log('✅ [AUTH-CALLBACK] Email verified, session created');
-              setStatus('Email onaylandı! Giriş yapılıyor...');
+              setStatus('Email onaylandı! Karşılama sayfasına yönlendiriliyor...');
               
               setTimeout(() => {
-                router.push(next);
+                router.push('/welcome');
               }, 1000);
               return;
             } else if (data.user) {
