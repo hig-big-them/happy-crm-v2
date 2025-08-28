@@ -176,7 +176,8 @@ const EmbeddedSignupButton = ({
         body: JSON.stringify({ 
           code,
           phone_number_id: finalSessionInfo?.phone_number_id || null,
-          waba_id: finalSessionInfo?.waba_id || null
+          waba_id: finalSessionInfo?.waba_id || null,
+          redirect_uri: `${window.location.origin}/`
         }),
       });
 
