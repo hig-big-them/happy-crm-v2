@@ -294,9 +294,24 @@ const EmbeddedSignupButton = ({
           
           // Status'u kontrol et ama daha esnek ol
           if (response.status === 'unknown') {
-            console.log('⚠️ Login status unknown - this might be normal for embedded signup');
-            // Unknown status normal olabilir, sadece log'la
+            console.log('⚠️ Login status unknown - this is normal for embedded signup');
+            console.log('👂 Waiting for message events from popup...');
+            
+            // Unknown status embedded signup için normal
+            // Message event'leri bekleyeceğiz, hata gösterme
+            toast({
+              title: "Bağlantı Kuruluyor",
+              description: "WhatsApp Business bağlantısı kuruluyor, lütfen bekleyin...",
+            });
+          } else if (response.status === 'not_authorized') {
+            console.log('❌ User did not authorize the app');
+            toast({
+              title: "Yetkilendirme Reddedildi",
+              description: "WhatsApp Business bağlantısı için yetkilendirme gerekli.",
+              variant: "destructive"
+            });
           } else {
+            console.log('❌ Login failed with status:', response.status);
             toast({
               title: "İptal Edildi",
               description: "Kullanıcı giriş işlemini iptal etti.",
@@ -344,72 +359,112 @@ const EmbeddedSignupButton = ({
 
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
+      // Debug: Tüm gelen mesajları log'la
+      console.log('📨 Raw message received:', {
+        origin: event.origin,
+        data: event.data,
+        type: typeof event.data
+      });
+
       // Güvenlik: Sadece Facebook domain'lerinden gelen mesajları kabul et
-      if (event.origin !== 'https://www.facebook.com' && event.origin !== 'https://web.facebook.com') {
+      if (event.origin !== 'https://www.facebook.com' && 
+          event.origin !== 'https://web.facebook.com' &&
+          event.origin !== 'https://connect.facebook.net') {
+        console.log('🚫 Message rejected - invalid origin:', event.origin);
         return;
       }
 
+      // JSON parse etmeye çalış
+      let data;
       try {
-        const data = JSON.parse(event.data);
-        console.log('📨 Received message from Facebook:', data);
-        
-        if (data.type === 'WA_EMBEDDED_SIGNUP') {
-          console.log('📱 WhatsApp Embedded Signup event:', data);
+        data = JSON.parse(event.data);
+        console.log('📨 Parsed message from Facebook:', data);
+      } catch (error) {
+        // URL encoded data olabilir (authorization code için)
+        if (typeof event.data === 'string' && event.data.includes('code=')) {
+          console.log('📄 URL encoded response from popup:', event.data);
           
-          if (data.event === 'FINISH' || data.event === 'FINISH_ONLY_WABA') {
-            console.log('🎉 WhatsApp Embedded Signup completed via message event');
+          // Authorization code'u çıkar
+          const urlParams = new URLSearchParams(event.data);
+          const code = urlParams.get('code');
+          
+          if (code) {
+            console.log('📋 Authorization code from URL params:', code.substring(0, 10) + '...');
+            window.whatsappAuthCode = code;
             
-            // Message event'ten gelen verileri de kontrol et
-            const messageSessionInfo = data.data || {};
-            console.log('📊 Session info from message event:', messageSessionInfo);
-            
-            // Message event'ten WABA bilgilerini çıkarmaya çalış
-            let messageWabaId = messageSessionInfo.waba_id || messageSessionInfo.whatsapp_business_account_id;
-            let messagePhoneId = messageSessionInfo.phone_number_id;
-            
-            // Alternatif field'ları kontrol et
-            if (!messageWabaId && messageSessionInfo.whatsapp_business_account) {
-              messageWabaId = messageSessionInfo.whatsapp_business_account.id;
-            }
-            if (!messagePhoneId && messageSessionInfo.phone_number) {
-              messagePhoneId = messageSessionInfo.phone_number.id;
-            }
-            
-            console.log('🔍 Extracted from message event:', {
-              waba_id: messageWabaId,
-              phone_number_id: messagePhoneId
-            });
-            
-            // Eğer FB.login callback'i henüz çalışmadıysa, bu verileri kullan
-            if (messageWabaId && messagePhoneId) {
-              console.log('🔄 Using session info from message event as fallback');
-              // Bu durumda authorization code'u window'dan al (eğer varsa)
-              if (window.whatsappAuthCode) {
-                const enhancedMessageInfo = {
-                  ...messageSessionInfo,
-                  waba_id: messageWabaId,
-                  phone_number_id: messagePhoneId
-                };
-                handleOnboarding(window.whatsappAuthCode, enhancedMessageInfo);
-              }
-            }
-          } else if (data.event === 'CANCEL') {
-            console.warn('⚠️ User cancelled at step:', data.data?.current_step);
-          } else if (data.event === 'ERROR') {
-            console.error('💥 An error occurred:', data.data?.error_message);
+            // Eğer henüz onboarding başlatılmadıysa, başlat
+            handleOnboarding(code, {});
           }
         }
-      } catch (error) {
-        console.log('📄 Received non-JSON response from popup:', event.data);
+        return;
+      }
+        
+      if (data.type === 'WA_EMBEDDED_SIGNUP') {
+        console.log('📱 WhatsApp Embedded Signup event:', data);
+        
+        if (data.event === 'FINISH' || data.event === 'FINISH_ONLY_WABA') {
+          console.log('🎉 WhatsApp Embedded Signup completed via message event');
+          
+          // Message event'ten gelen verileri de kontrol et
+          const messageSessionInfo = data.data || {};
+          console.log('📊 Session info from message event:', messageSessionInfo);
+          
+          // Message event'ten WABA bilgilerini çıkarmaya çalış
+          let messageWabaId = messageSessionInfo.waba_id || messageSessionInfo.whatsapp_business_account_id;
+          let messagePhoneId = messageSessionInfo.phone_number_id;
+          
+          // Alternatif field'ları kontrol et
+          if (!messageWabaId && messageSessionInfo.whatsapp_business_account) {
+            messageWabaId = messageSessionInfo.whatsapp_business_account.id;
+          }
+          if (!messagePhoneId && messageSessionInfo.phone_number) {
+            messagePhoneId = messageSessionInfo.phone_number.id;
+          }
+          
+          console.log('🔍 Extracted from message event:', {
+            waba_id: messageWabaId,
+            phone_number_id: messagePhoneId
+          });
+          
+          // Authorization code'u al
+          const authCode = window.whatsappAuthCode;
+          if (authCode) {
+            console.log('🔄 Using message event data for onboarding');
+            const enhancedMessageInfo = {
+              ...messageSessionInfo,
+              waba_id: messageWabaId,
+              phone_number_id: messagePhoneId
+            };
+            handleOnboarding(authCode, enhancedMessageInfo);
+          } else {
+            console.warn('⚠️ No authorization code available for message event');
+          }
+        } else if (data.event === 'CANCEL') {
+          console.warn('⚠️ User cancelled at step:', data.data?.current_step);
+          toast({
+            title: "İptal Edildi",
+            description: "WhatsApp entegrasyonu iptal edildi.",
+            variant: "destructive"
+          });
+        } else if (data.event === 'ERROR') {
+          console.error('💥 An error occurred:', data.data?.error_message);
+          toast({
+            title: "Hata Oluştu",
+            description: data.data?.error_message || "WhatsApp entegrasyonunda hata oluştu.",
+            variant: "destructive"
+          });
+        }
       }
     };
 
     // Event listener'ı ekle
     window.addEventListener('message', handleMessage);
+    console.log('👂 Message event listener added');
 
     // Cleanup: Component unmount olduğunda event listener'ı kaldır
     return () => {
       window.removeEventListener('message', handleMessage);
+      console.log('🔇 Message event listener removed');
     };
   }, []);
 
