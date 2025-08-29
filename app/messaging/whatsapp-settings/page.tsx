@@ -353,7 +353,19 @@ export default function WhatsAppSettingsPage() {
       let localConfigs: WhatsAppConfig[] = [];
       
       if (savedConfigs) {
-        localConfigs = JSON.parse(savedConfigs);
+        const parsedConfigs = JSON.parse(savedConfigs);
+        
+        // Clean up any mock data with WABA_ID_123456789
+        localConfigs = parsedConfigs.filter((config: WhatsAppConfig) => 
+          !config.business_account_id.includes('WABA_ID_123456789')
+        );
+        
+        // If we cleaned up any mock data, save the cleaned version
+        if (localConfigs.length !== parsedConfigs.length) {
+          console.log('🧹 [WhatsApp Settings] Cleaned up mock data from localStorage');
+          localStorage.setItem('whatsapp_configs', JSON.stringify(localConfigs));
+        }
+        
         console.log('📱 [WhatsApp Settings] Local configs loaded:', localConfigs.length);
       }
       
@@ -377,70 +389,10 @@ export default function WhatsAppSettingsPage() {
         }
       });
       
-      // If no configs at all, add default mock configurations
-      if (allConfigs.length === 0) {
-        console.log('📱 [WhatsApp Settings] No configs found, adding defaults');
-        const defaultConfigs: WhatsAppConfig[] = [
-          {
-            id: '1',
-            phone_number_id: '793146130539824',
-            display_phone_number: '+447782610222',
-            verified_name: 'Happy Smile Clinics',
-            business_account_id: 'WABA_ID_123456789',
-            access_token: 'EAAxxxxx...', // Masked for security
-            api_version: 'v21.0',
-            webhook_url: `${window.location.origin}/api/webhooks/whatsapp`,
-            webhook_verify_token: generateVerifyToken(),
-            is_active: true,
-            is_primary: true,
-            quality_rating: 'GREEN',
-            status: 'CONNECTED',
-            messaging_limit_tier: '1000',
-            max_phone_numbers: 2,
-            namespace: 'happy_smile_clinics',
-            certificate: '',
-          },
-          {
-            id: '2',
-            phone_number_id: '456789123456789',
-            display_phone_number: '+90 532 799 42 23',
-            verified_name: 'Happy CRM Destek Hattı',
-            business_account_id: 'WABA_ID_123456789',
-            access_token: 'EAAxxxxx...', // Masked for security
-            api_version: 'v21.0',
-            webhook_url: `${window.location.origin}/api/webhooks/whatsapp`,
-            webhook_verify_token: generateVerifyToken(),
-            is_active: true,
-            is_primary: false,
-            quality_rating: 'GREEN',
-            status: 'CONNECTED',
-            messaging_limit_tier: '1000',
-            max_phone_numbers: 2,
-            namespace: 'happy_crm_support',
-            certificate: '',
-          },
-          {
-            id: '3',
-            phone_number_id: '660093600519552',
-            display_phone_number: '+1 555 999 0001',
-            verified_name: 'Happy CRM Test Line',
-            business_account_id: 'WABA_ID_123456789',
-            access_token: 'EAAxxxxx...', // Masked for security
-            api_version: 'v21.0',
-            webhook_url: `${window.location.origin}/api/webhooks/whatsapp`,
-            webhook_verify_token: generateVerifyToken(),
-            is_active: true,
-            is_primary: false,
-            quality_rating: 'YELLOW',
-            status: 'CONNECTED',
-            messaging_limit_tier: '250',
-            max_phone_numbers: 2,
-            namespace: 'happy_crm_test',
-            certificate: '',
-          }
-        ];
-        allConfigs.push(...defaultConfigs);
-      }
+      // No fallback mock data - only show real authenticated WABAs
+      console.log('📱 [WhatsApp Settings] Total configurations loaded:', allConfigs.length);
+      console.log('📊 [WhatsApp Settings] Local configs:', localConfigs.length);
+      console.log('🔐 [WhatsApp Settings] Authenticated WABAs:', authenticatedWABAs.length);
       
       // Set all configurations (local + authenticated WABAs)
       setConfigs(allConfigs);

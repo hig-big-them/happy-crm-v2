@@ -1,390 +1,207 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useMockAuth } from '../../components/mock-auth-provider'
-import { Button } from '../../components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
-import { Badge } from '../../components/ui/badge'
-import { Separator } from '../../components/ui/separator'
-import { CheckCircle, AlertTriangle, MessageCircle, Shield, Clock, Users, Zap, ArrowRight, Info, Link2 } from 'lucide-react'
-import { FacebookSDKProvider } from '../../components/auth/facebook-sdk-provider'
-import EmbeddedSignupButton from '../../components/whatsapp/embedded-signup-button'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { CheckCircle, Loader2, MessageSquare, ArrowRight } from 'lucide-react'
+import { toast } from '@/components/ui/use-toast'
 
 export default function WelcomePage() {
-  const { user, loading } = useMockAuth()
   const router = useRouter()
-  const [isReady, setIsReady] = useState(false)
-  const [whatsappConnected, setWhatsappConnected] = useState(false)
-  const [showWhatsappSetup, setShowWhatsappSetup] = useState(false)
-  const [whatsappData, setWhatsappData] = useState<{ waba_id: string; phone_number_id: string } | null>(null)
+  const searchParams = useSearchParams()
+  const [processing, setProcessing] = useState(true)
+  const [success, setSuccess] = useState(false)
+  const [wabaData, setWabaData] = useState<any>(null)
 
-  // Redirect if not logged in
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace('/login')
-    }
-  }, [user, loading, router])
-
-  const handleContinue = () => {
-    setIsReady(true)
-    setTimeout(() => {
-      router.push('/dashboard')
-    }, 500)
-  }
-
-  const handleWhatsappSetup = () => {
-    setShowWhatsappSetup(true)
-  }
-
-  // Add WABA configuration to WhatsApp Settings
-  const addWABAConfiguration = async (wabaData: { code: string; phone_number_id: string; waba_id: string }) => {
-    console.log('🔗 [Welcome] Adding new WABA configuration:', wabaData);
-    
-    try {
-      // Fetch phone number details from Facebook Graph API
-      const phoneDetailsResponse = await fetch(`/api/whatsapp/phone-details?phone_number_id=${wabaData.phone_number_id}`);
-      let phoneDetails = null;
+    const processWhatsAppAuth = async () => {
+      const code = searchParams.get('code')
+      const state = searchParams.get('state')
       
-      if (phoneDetailsResponse.ok) {
-        phoneDetails = await phoneDetailsResponse.json();
-        console.log('📱 [Welcome] Phone details fetched:', phoneDetails);
+      console.log('🎉 [WhatsApp Success] Processing WhatsApp authentication')
+      console.log('📋 [WhatsApp Success] Auth code:', code ? code.substring(0, 10) + '...' : 'none')
+      console.log('🔗 [WhatsApp Success] State:', state)
+
+      if (!code) {
+        console.log('❌ [WhatsApp Success] No authorization code found')
+        toast({
+          title: 'Hata',
+          description: 'WhatsApp yetkilendirme kodu bulunamadı.',
+          variant: 'destructive'
+        })
+        setProcessing(false)
+        return
       }
-      
-      // Get existing configs from localStorage
-      const savedConfigs = localStorage.getItem('whatsapp_configs');
-      const existingConfigs = savedConfigs ? JSON.parse(savedConfigs) : [];
-      
-      // Check if this WABA already exists
-      const existingConfig = existingConfigs.find((config: any) => 
-        config.phone_number_id === wabaData.phone_number_id || 
-        config.business_account_id === wabaData.waba_id
-      );
-      
-      if (existingConfig) {
-        console.log('⚠️ [Welcome] WABA configuration already exists:', existingConfig);
-        return;
+
+      try {
+        console.log('🔄 [WhatsApp Success] Calling onboard API...')
+        
+        // WhatsApp onboard API'yi çağır
+        const response = await fetch('/api/whatsapp/onboard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            code,
+            phone_number_id: null,
+            waba_id: null,
+            redirect_uri: `${window.location.origin}/welcome`
+          }),
+        })
+
+        const result = await response.json()
+        console.log('📋 [WhatsApp Success] Onboard API response:', result)
+
+        if (result.success && result.data) {
+          console.log('✅ [WhatsApp Success] WABA setup successful')
+          setWabaData(result.data)
+          setSuccess(true)
+          
+          // WhatsApp Settings sayfasına veri aktarımı için localStorage'a kaydet
+          const wabaConfig = {
+            id: `waba_${result.data.waba_id}_${Date.now()}`,
+            phone_number_id: result.data.phone_number_id,
+            display_phone_number: result.data.display_phone_number || result.data.phone_number,
+            verified_name: result.data.verified_name || 'WhatsApp Business',
+            business_account_id: result.data.waba_id,
+            access_token: 'EAAxxxxx...', // Masked for security
+            api_version: 'v23.0',
+            webhook_url: `${window.location.origin}/api/webhooks/whatsapp`,
+            webhook_verify_token: 'whatsapp_verify_token_' + Math.random().toString(36).substr(2, 9),
+            is_active: true,
+            is_primary: false,
+            quality_rating: result.data.quality_rating || 'GREEN',
+            status: 'PENDING' as const, // Yeni bağlanan numaralar PENDING başlar
+            messaging_limit_tier: result.data.messaging_limit_tier || '1000',
+            max_phone_numbers: 1,
+            namespace: result.data.namespace || 'whatsapp_business',
+            certificate: '',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }
+
+          // Mevcut konfigürasyonları al ve yenisini ekle
+          const existingConfigs = JSON.parse(localStorage.getItem('whatsapp_configs') || '[]')
+          const updatedConfigs = [...existingConfigs, wabaConfig]
+          localStorage.setItem('whatsapp_configs', JSON.stringify(updatedConfigs))
+          
+          console.log('💾 [WhatsApp Success] WABA config saved to localStorage:', wabaConfig)
+
+          toast({
+            title: 'WhatsApp Business Bağlandı!',
+            description: `WABA ID: ${result.data.waba_id}, Phone ID: ${result.data.phone_number_id}`,
+          })
+        } else {
+          console.log('❌ [WhatsApp Success] WABA setup failed:', result.error)
+          toast({
+            title: 'Bağlantı Hatası',
+            description: result.error || 'WhatsApp Business bağlantısı kurulamadı.',
+            variant: 'destructive'
+          })
+        }
+      } catch (error) {
+        console.error('❌ [WhatsApp Success] Error processing auth:', error)
+        toast({
+          title: 'İşlem Hatası',
+          description: 'WhatsApp Business bağlantısı işlenirken hata oluştu.',
+          variant: 'destructive'
+        })
+      } finally {
+        setProcessing(false)
       }
-      
-      // Create new configuration
-      const newConfig = {
-        id: `waba_${Date.now()}`,
-        phone_number_id: wabaData.phone_number_id,
-        display_phone_number: phoneDetails?.display_phone_number || `+${wabaData.phone_number_id}`,
-        verified_name: phoneDetails?.verified_name || 'New WhatsApp Business',
-        business_account_id: wabaData.waba_id,
-        access_token: 'EAAxxxxx...', // Will be updated with real token
-        api_version: 'v23.0',
-        webhook_url: `${window.location.origin}/api/webhooks/whatsapp`,
-        webhook_verify_token: `verify_${Date.now()}`,
-        is_active: true,
-        is_primary: existingConfigs.length === 0, // First one is primary
-        quality_rating: phoneDetails?.quality_rating || 'GREEN',
-        status: 'CONNECTED',
-        messaging_limit_tier: phoneDetails?.messaging_limit_tier || '1000',
-        max_phone_numbers: phoneDetails?.max_phone_numbers || 1,
-        namespace: phoneDetails?.namespace || 'whatsapp_business',
-        certificate: '',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      
-      console.log('✅ [Welcome] New WABA configuration created:', newConfig);
-      
-      // Add to existing configs
-      const updatedConfigs = [...existingConfigs, newConfig];
-      
-      // Save to localStorage
-      localStorage.setItem('whatsapp_configs', JSON.stringify(updatedConfigs));
-      
-      console.log('💾 [Welcome] WABA configuration saved to localStorage');
-      
-    } catch (error) {
-      console.error('❌ [Welcome] Failed to add WABA configuration:', error);
     }
-  };
 
-  const handleWhatsappSuccess = (data: { code: string; phone_number_id: string; waba_id: string }) => {
-    console.log('✅ WhatsApp Business connected:', data)
-    setWhatsappConnected(true)
-    setShowWhatsappSetup(false)
-    setWhatsappData({
-      waba_id: data.waba_id,
-      phone_number_id: data.phone_number_id
-    })
-    
-    // Add WABA configuration to WhatsApp Settings
-    addWABAConfiguration(data);
-    
-    // Optional: Show success message
-    // toast({ title: "WhatsApp Business bağlandı!", description: "Artık müşterilerinizle WhatsApp üzerinden iletişim kurabilirsiniz." })
-  }
+    processWhatsAppAuth()
+  }, [searchParams])
 
-  const handleWhatsappError = (error: string) => {
-    console.error('❌ WhatsApp Business connection error:', error)
-    // Optional: Show error message
-    // toast({ title: "Bağlantı hatası", description: error, variant: "destructive" })
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Yükleniyor...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!user) {
-    return null
+  const handleComplete = () => {
+    console.log('🔄 [WhatsApp Success] Redirecting to WhatsApp Settings')
+    router.push('/messaging/whatsapp-settings')
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-      <div className="max-w-4xl w-full space-y-6">
-        {/* Welcome Header */}
-        <Card className="border border-gray-200 bg-white shadow-sm">
-          <CardHeader className="text-center pb-4">
-            <div className="flex justify-center mb-4">
-              <div className="bg-blue-100 p-3 rounded-full">
-                <CheckCircle className="h-8 w-8 text-blue-600" />
-              </div>
-            </div>
-            <CardTitle className="text-2xl font-bold text-gray-900">
-              Happy CRM'e Hoş Geldiniz
-            </CardTitle>
-            <CardDescription className="text-lg text-gray-600">
-              Merhaba <strong>{user.email}</strong>, hesabınız başarıyla oluşturuldu ve aktifleştirildi.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-
-        {/* WhatsApp Cloud API Warnings */}
-        <Card className="border border-amber-200 bg-amber-50">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="h-6 w-6 text-amber-600" />
-              <CardTitle className="text-xl text-amber-800">
-                WhatsApp Business API Kullanım Kuralları
-              </CardTitle>
-            </div>
-            <CardDescription>
-              WhatsApp Business API kullanırken dikkat etmeniz gereken önemli kurallar
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="flex items-start gap-3 p-3 bg-red-50 rounded-lg border border-red-200">
-                <Shield className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="font-semibold text-red-800">Spam Yasağı</h4>
-                  <p className="text-sm text-red-700">
-                    İstenmeyen mesaj gönderimi kesinlikle yasaktır. Sadece izin verilen kişilere mesaj gönderin.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
-                <Clock className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="font-semibold text-orange-800">24 Saat Kuralı</h4>
-                  <p className="text-sm text-orange-700">
-                    Müşteri son mesajından 24 saat sonra sadece onaylı template mesajları gönderebilirsiniz.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <Users className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="font-semibold text-blue-800">Opt-in Zorunluluğu</h4>
-                  <p className="text-sm text-blue-700">
-                    Müşteriler WhatsApp üzerinden iletişim kurmaya açık rıza vermiş olmalıdır.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                <MessageCircle className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="font-semibold text-purple-800">Template Onayı</h4>
-                  <p className="text-sm text-purple-700">
-                    Pazarlama mesajları için WhatsApp onaylı template kullanılması zorunludur.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="font-semibold text-red-800 mb-2">Önemli Uyarı</h4>
-                  <p className="text-sm text-red-700 mb-2">
-                    Bu kurallara uymamanız durumunda WhatsApp Business hesabınız <strong>kalıcı olarak kapatılabilir</strong>.
-                  </p>
-                  <p className="text-sm text-red-700">
-                    Detaylı bilgi için <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/overview" target="_blank" className="underline font-medium">WhatsApp Business Policy</a> sayfasını inceleyin.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Features Overview */}
-        <Card className="border border-gray-200 bg-white">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-blue-600" />
-              Platform Özellikleri
-            </CardTitle>
-            <CardDescription>
-              Happy CRM ile neler yapabileceğinizi keşfedin
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-100">
-                <MessageCircle className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                <h4 className="font-semibold mb-1 text-gray-900">WhatsApp Business API</h4>
-                <p className="text-sm text-gray-600">
-                  Profesyonel müşteri iletişimi
-                </p>
-              </div>
-
-              <div className="text-center p-4 bg-green-50 rounded-lg border border-green-100">
-                <Users className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                <h4 className="font-semibold mb-1 text-gray-900">Müşteri Yönetimi</h4>
-                <p className="text-sm text-gray-600">
-                  Lead takibi ve CRM süreçleri
-                </p>
-              </div>
-
-              <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-100">
-                <Zap className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                <h4 className="font-semibold mb-1 text-gray-900">Otomasyon</h4>
-                <p className="text-sm text-gray-600">
-                  İş akışları ve otomatik yanıtlar
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* WhatsApp Business Setup */}
-        <Card className="border border-blue-200 bg-blue-50">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Link2 className="h-6 w-6 text-blue-600" />
-              <CardTitle className="text-xl text-blue-800">
-                WhatsApp Business API Entegrasyonu
-              </CardTitle>
-            </div>
-            <CardDescription>
-              Müşterilerinizle WhatsApp üzerinden profesyonel iletişim kurmak için Meta Business hesabınızı bağlayın
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {!whatsappConnected ? (
-              <div className="space-y-4">
-                <div className="bg-white border border-blue-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">WhatsApp Business API Avantajları</h4>
-                  <ul className="text-sm text-gray-700 space-y-1">
-                    <li>• Müşterilerinizle WhatsApp üzerinden profesyonel mesajlaşma</li>
-                    <li>• Otomatik yanıtlar ve template mesajları</li>
-                    <li>• Müşteri destek ve pazarlama kampanyaları</li>
-                    <li>• Çoklu kullanıcı desteği ve takım yönetimi</li>
-                  </ul>
-                </div>
-
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-amber-800 mb-2">Bağlantı Öncesi Gereksinimler</h4>
-                  <ul className="text-sm text-amber-700 space-y-1">
-                    <li>• Meta Business hesabınız olmalı</li>
-                    <li>• WhatsApp Business hesabınız doğrulanmış olmalı</li>
-                    <li>• Telefon numaranız WhatsApp Business'a kayıtlı olmalı</li>
-                  </ul>
-                </div>
-
-                <div className="text-center space-y-3">
-                  <Button
-                    onClick={() => router.push('/messaging/whatsapp-settings')}
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    WhatsApp Business'ı Ayarla
-                  </Button>
-                  
-                  <p className="text-sm text-gray-500">
-                    WhatsApp Business entegrasyonunu ayarlar sayfasından yapabilirsiniz.
-                  </p>
-                </div>
-              </div>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4">
+            {processing ? (
+              <Loader2 className="h-12 w-12 text-blue-600 animate-spin" />
+            ) : success ? (
+              <CheckCircle className="h-12 w-12 text-green-600" />
             ) : (
-              <div className="space-y-4">
-                <div className="text-center p-6 bg-green-50 rounded-lg border border-green-200">
-                  <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
-                  <h4 className="font-semibold text-green-800 mb-2">✅ WhatsApp Business Bağlandı!</h4>
-                  <p className="text-sm text-green-700 mb-4">
-                    Artık müşterilerinizle WhatsApp üzerinden profesyonel iletişim kurabilirsiniz.
-                  </p>
-                  
-                  {whatsappData && (
-                    <div className="bg-white border border-green-200 rounded-lg p-4 space-y-2">
-                      <h5 className="font-medium text-gray-900 mb-2">Bağlantı Bilgileri</h5>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                        <div className="bg-gray-50 p-3 rounded">
-                          <label className="font-medium text-gray-700">WABA ID</label>
-                          <p className="font-mono text-gray-900 break-all">{whatsappData.waba_id}</p>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded">
-                          <label className="font-medium text-gray-700">Phone Number ID</label>
-                          <p className="font-mono text-gray-900 break-all">{whatsappData.phone_number_id}</p>
-                        </div>
-                      </div>
-                      <div className="text-xs text-gray-500 mt-2">
-                        Bu bilgiler WhatsApp Business API entegrasyonunuz için kullanılacaktır.
-                      </div>
-                    </div>
-                  )}
+              <MessageSquare className="h-12 w-12 text-red-600" />
+            )}
+          </div>
+          <CardTitle className="text-xl">
+            {processing ? 'WhatsApp Business Bağlanıyor...' : 
+             success ? 'Bağlantı Başarılı!' : 'Bağlantı Hatası'}
+          </CardTitle>
+        </CardHeader>
+        
+        <CardContent className="space-y-4">
+          {processing && (
+            <div className="text-center text-gray-600">
+              <p>WhatsApp Business hesabınız yapılandırılıyor...</p>
+              <p className="text-sm mt-2">Bu işlem birkaç saniye sürebilir.</p>
+            </div>
+          )}
+
+          {success && wabaData && (
+            <div className="space-y-3">
+              <div className="text-center text-green-800 bg-green-50 p-3 rounded-lg">
+                <p className="font-medium">WhatsApp Business hesabınız başarıyla bağlandı!</p>
+              </div>
+              
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">WABA ID:</span>
+                  <span className="font-mono">{wabaData.waba_id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Phone ID:</span>
+                  <span className="font-mono">{wabaData.phone_number_id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Telefon:</span>
+                  <span>{wabaData.display_phone_number || wabaData.phone_number}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Doğrulanmış Ad:</span>
+                  <span>{wabaData.verified_name || 'WhatsApp Business'}</span>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* Continue Button */}
-        <div className="text-center">
-          <Button 
-            onClick={handleContinue}
-            size="lg"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-semibold"
-            disabled={isReady}
-          >
-            {isReady ? (
-              <>
-                <CheckCircle className="mr-2 h-5 w-5" />
-                Dashboard'a yönlendiriliyor...
-              </>
-            ) : (
-              <>
-                {whatsappConnected ? 'Kurulumu Tamamla' : 'Dashboard\'a Geç'}
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </>
+              <div className="bg-blue-50 p-3 rounded-lg text-sm text-blue-800">
+                <p><strong>Sonraki Adım:</strong> Numaranızı kaydetmek için WhatsApp Settings sayfasına gidin ve PIN kodunuzu girin.</p>
+              </div>
+            </div>
+          )}
+
+          {!processing && !success && (
+            <div className="text-center text-red-600">
+              <p>WhatsApp Business bağlantısı kurulamadı.</p>
+              <p className="text-sm mt-2">Lütfen tekrar deneyin veya destek ekibiyle iletişime geçin.</p>
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            {success ? (
+              <Button onClick={handleComplete} className="w-full">
+                <ArrowRight className="h-4 w-4 mr-2" />
+                WhatsApp Ayarlarına Git
+              </Button>
+            ) : !processing && (
+              <Button 
+                onClick={() => router.push('/messaging/whatsapp-settings')} 
+                variant="outline" 
+                className="w-full"
+              >
+                Ayarlara Dön
+              </Button>
             )}
-          </Button>
-          
-          <p className="text-sm text-gray-500 mt-3">
-            {whatsappConnected 
-              ? 'WhatsApp Business bağlantınız aktif. Dashboard\'a geçebilirsiniz.'
-              : 'WhatsApp Business entegrasyonunu daha sonra ayarlardan yapabilirsiniz.'
-            }
-          </p>
-        </div>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
