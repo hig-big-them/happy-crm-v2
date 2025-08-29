@@ -141,5 +141,11 @@ export const mockLeads = [
     lead_name: 'Demo Customer D',
     contact_phone: '+90 535 100 0004',
     contact_email: 'demo.customer.d@example.com'
+  },
+  {
+    id: '5',
+    lead_name: 'Test Line Customer',
+    contact_phone: '+1 555 999 0001',
+    contact_email: 'test.customer@happycrm.com'
   }
 ]; 

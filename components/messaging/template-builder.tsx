@@ -563,17 +563,36 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
 
   // 🎨 Template Categories
   const TEMPLATE_CATEGORIES = [
-    { value: 'utility', label: t.admin?.whatsappTemplates?.templateBuilder.categories.utility, description: t.admin?.whatsappTemplates?.templateBuilder.categories.utilityDesc },
-    { value: 'marketing', label: t.admin?.whatsappTemplates?.templateBuilder.categories.marketing, description: t.admin?.whatsappTemplates?.templateBuilder.categories.marketingDesc },
-    { value: 'authentication', label: t.admin?.whatsappTemplates?.templateBuilder.categories.authentication, description: t.admin?.whatsappTemplates?.templateBuilder.categories.authenticationDesc }
+    { 
+      value: 'utility', 
+      label: t.admin?.whatsappTemplates?.templateBuilder.categories.utility || 'Utility (İş)', 
+      description: t.admin?.whatsappTemplates?.templateBuilder.categories.utilityDesc || 'Fatura, sipariş, rezervasyon bildirimleri' 
+    },
+    { 
+      value: 'marketing', 
+      label: t.admin?.whatsappTemplates?.templateBuilder.categories.marketing || 'Marketing', 
+      description: t.admin?.whatsappTemplates?.templateBuilder.categories.marketingDesc || 'Promosyon ve pazarlama mesajları' 
+    },
+    { 
+      value: 'authentication', 
+      label: t.admin?.whatsappTemplates?.templateBuilder.categories.authentication || 'Authentication', 
+      description: t.admin?.whatsappTemplates?.templateBuilder.categories.authenticationDesc || 'OTP ve doğrulama mesajları' 
+    }
   ];
+
+  // Debug log for troubleshooting
+  console.log('🔍 Template Builder Debug:', {
+    currentTemplate,
+    categories: TEMPLATE_CATEGORIES,
+    translations: t.admin?.whatsappTemplates?.templateBuilder
+  });
 
   // 🎨 Status Colors
   const STATUS_CONFIG = {
-    draft: { color: 'bg-gray-100 text-gray-800', icon: <Edit className="h-3 w-3" />, label: t.admin?.whatsappTemplates?.templateBuilder.status.draft },
-    pending: { color: 'bg-yellow-100 text-yellow-800', icon: <Clock className="h-3 w-3" />, label: t.admin?.whatsappTemplates?.templateBuilder.status.pending },
-    approved: { color: 'bg-green-100 text-green-800', icon: <CheckCircle className="h-3 w-3" />, label: t.admin?.whatsappTemplates?.templateBuilder.status.approved },
-    rejected: { color: 'bg-red-100 text-red-800', icon: <X className="h-3 w-3" />, label: t.admin?.whatsappTemplates?.templateBuilder.status.rejected }
+    draft: { color: 'bg-gray-100 text-gray-800', icon: <Edit className="h-3 w-3" />, label: t.admin?.whatsappTemplates?.templateBuilder.status.draft || 'Taslak' },
+    pending: { color: 'bg-yellow-100 text-yellow-800', icon: <Clock className="h-3 w-3" />, label: t.admin?.whatsappTemplates?.templateBuilder.status.pending || 'Onay Bekliyor' },
+    approved: { color: 'bg-green-100 text-green-800', icon: <CheckCircle className="h-3 w-3" />, label: t.admin?.whatsappTemplates?.templateBuilder.status.approved || 'Onaylandı' },
+    rejected: { color: 'bg-red-100 text-red-800', icon: <X className="h-3 w-3" />, label: t.admin?.whatsappTemplates?.templateBuilder.status.rejected || 'Reddedildi' }
   };
 
   // 🔄 Auto-generate preview variables
@@ -834,10 +853,10 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Zap className="h-5 w-5 text-primary" />
-                {t.admin?.whatsappTemplates?.templateBuilder.title}
+                {t.admin?.whatsappTemplates?.templateBuilder.title || 'WhatsApp Template Builder'}
               </CardTitle>
               <CardDescription>
-                {t.admin?.whatsappTemplates?.templateBuilder.description}
+                {t.admin?.whatsappTemplates?.templateBuilder.description || 'Enterprise-grade template editörü ve onay sistemi'}
               </CardDescription>
             </div>
             
@@ -854,7 +873,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
           {/* Basic Info */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div>
-              <Label htmlFor="template-name">{t.admin?.whatsappTemplates?.templateBuilder.templateName}</Label>
+              <Label htmlFor="template-name">{t.admin?.whatsappTemplates?.templateBuilder.templateName || 'Template Adı *'}</Label>
               <Input
                 id="template-name"
                 value={currentTemplate.name}
@@ -863,18 +882,25 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
                   const sanitizedName = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_');
                   setCurrentTemplate(prev => ({ ...prev, name: sanitizedName }));
                 }}
-                placeholder={t.admin?.whatsappTemplates?.templateBuilder.templateNamePlaceholder}
+                placeholder={t.admin?.whatsappTemplates?.templateBuilder.templateNamePlaceholder || 'Örn: welcome_message'}
                 className="mt-1"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                {t.admin?.whatsappTemplates?.templateBuilder.templateNameHelper}
+                {t.admin?.whatsappTemplates?.templateBuilder.templateNameHelper || 'Sadece küçük harfler, rakamlar ve alt çizgi (_) kullanabilirsiniz'}
               </p>
               
                              {/* Variable Helper */}
                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                 <p className="text-xs font-medium text-blue-800 mb-2">{t.admin?.whatsappTemplates?.templateBuilder.variableUsage}</p>
+                 <p className="text-xs font-medium text-blue-800 mb-2">{t.admin?.whatsappTemplates?.templateBuilder.variableUsage || '📝 Variable Kullanımı:'}</p>
                  <ul className="text-xs text-blue-700 space-y-1">
-                   {t.admin?.whatsappTemplates?.templateBuilder.variableUsageDesc.map((desc, index) => (
+                   {(t.admin?.whatsappTemplates?.templateBuilder.variableUsageDesc || [
+                     '• {{1}} - İlk değişken',
+                     '• {{2}} - İkinci değişken',
+                     '• {{3}} - Üçüncü değişken',
+                     '• Variable\'lar sıralı olmalı (1, 2, 3...)',
+                     '• Template variable ile başlayamaz veya bitemez',
+                     '• #, $, % gibi özel karakterler kullanılamaz'
+                   ]).map((desc, index) => (
                      <li key={index}>{desc}</li>
                    ))}
                  </ul>
@@ -882,13 +908,17 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
             </div>
             
             <div>
-              <Label htmlFor="template-category">{t.admin?.whatsappTemplates?.templateBuilder.category}</Label>
+              <Label htmlFor="template-category">{t.admin?.whatsappTemplates?.templateBuilder.category || 'Kategori *'}</Label>
               <Select 
+                key={`category-${currentTemplate.category}`}
                 value={currentTemplate.category} 
-                onValueChange={(value) => setCurrentTemplate(prev => ({ ...prev, category: value as any }))}
+                onValueChange={(value) => {
+                  console.log('🔄 Category changed:', value);
+                  setCurrentTemplate(prev => ({ ...prev, category: value as any }));
+                }}
               >
                 <SelectTrigger className="mt-1">
-                  <SelectValue />
+                  <SelectValue placeholder="Kategori seçin" />
                 </SelectTrigger>
                 <SelectContent>
                   {TEMPLATE_CATEGORIES.map(cat => (
@@ -904,29 +934,33 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
             </div>
             
             <div>
-              <Label htmlFor="template-language">{t.admin?.whatsappTemplates?.templateBuilder.language}</Label>
+              <Label htmlFor="template-language">{t.admin?.whatsappTemplates?.templateBuilder.language || 'Dil'}</Label>
               <Select 
+                key={`language-${currentTemplate.language}`}
                 value={currentTemplate.language} 
-                onValueChange={(value) => setCurrentTemplate(prev => ({ ...prev, language: value }))}
+                onValueChange={(value) => {
+                  console.log('🔄 Language changed:', value);
+                  setCurrentTemplate(prev => ({ ...prev, language: value }));
+                }}
               >
                 <SelectTrigger className="mt-1">
-                  <SelectValue />
+                  <SelectValue placeholder="Dil seçin" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="tr">{t.admin?.whatsappTemplates?.templateBuilder.languages.turkish}</SelectItem>
-                  <SelectItem value="en">{t.admin?.whatsappTemplates?.templateBuilder.languages.english}</SelectItem>
+                  <SelectItem value="tr">{t.admin?.whatsappTemplates?.templateBuilder.languages.turkish || 'Türkçe'}</SelectItem>
+                  <SelectItem value="en">{t.admin?.whatsappTemplates?.templateBuilder.languages.english || 'English'}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <div>
-            <Label htmlFor="template-description">{t.admin?.whatsappTemplates?.templateBuilder.descriptionOptional}</Label>
+            <Label htmlFor="template-description">{t.admin?.whatsappTemplates?.templateBuilder.descriptionOptional || 'Açıklama (Opsiyonel)'}</Label>
             <Textarea
               id="template-description"
               value={currentTemplate.description || ''}
               onChange={(e) => setCurrentTemplate(prev => ({ ...prev, description: e.target.value }))}
-              placeholder={t.admin?.whatsappTemplates?.templateBuilder.descriptionPlaceholder}
+              placeholder={t.admin?.whatsappTemplates?.templateBuilder.descriptionPlaceholder || 'Template\'in ne için kullanılacağını açıklayın'}
               rows={2}
               className="mt-1"
             />

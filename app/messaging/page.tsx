@@ -313,6 +313,20 @@ export default function MessagingPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Mock CRM Phone Numbers for search
+  const mockCrmPhoneNumbers = [
+    { id: '1', phone: '+90 532 799 42 23', name: 'Ahmet Yılmaz', company: 'ABC Şirketi', email: 'ahmet@abc.com' },
+    { id: '2', phone: '+90 532 123 45 67', name: 'Ayşe Demir', company: 'XYZ Ltd.', email: 'ayse@xyz.com' },
+    { id: '3', phone: '+90 533 987 65 43', name: 'Mehmet Kaya', company: 'DEF A.Ş.', email: 'mehmet@def.com' },
+    { id: '4', phone: '+90 534 456 78 90', name: 'Fatma Özkan', company: 'GHI Holding', email: 'fatma@ghi.com' },
+    { id: '5', phone: '+90 535 321 09 87', name: 'Ali Çelik', company: 'JKL Group', email: 'ali@jkl.com' },
+    { id: '6', phone: '+90 536 654 32 10', name: 'Zeynep Arslan', company: 'MNO Corp.', email: 'zeynep@mno.com' },
+    { id: '7', phone: '+90 537 789 01 23', name: 'Hasan Polat', company: 'PQR İnşaat', email: 'hasan@pqr.com' },
+    { id: '8', phone: '+90 538 012 34 56', name: 'Elif Şahin', company: 'STU Teknoloji', email: 'elif@stu.com' },
+    { id: '9', phone: '+90 539 345 67 89', name: 'Murat Doğan', company: 'VWX Danışmanlık', email: 'murat@vwx.com' },
+    { id: '10', phone: '+90 540 678 90 12', name: 'Selin Yıldız', company: 'YZ Medya', email: 'selin@yz.com' }
+  ];
+
   // WhatsApp Business Numbers - Gerçek API ile entegre
   const whatsappNumbers: WhatsAppNumber[] = [
     {
@@ -324,6 +338,16 @@ export default function MessagingPage() {
       status: 'CONNECTED',
       messaging_limit: 1000,
       current_limit: 850
+    },
+    {
+      id: '2',
+      phone_number_id: '660093600519552', // Test Phone Number ID from WhatsApp Test Console
+      display_phone_number: '+1 555 136 5631', // Test number
+      verified_name: 'Happy CRM Test Line',
+      quality_rating: 'GREEN',
+      status: 'CONNECTED',
+      messaging_limit: 250,
+      current_limit: 200
     }
   ];
 
@@ -419,7 +443,10 @@ export default function MessagingPage() {
   const generateMockMessages = (leadId: string): Message[] => {
     const messages: Message[] = [];
     const messageCount = Math.floor(Math.random() * 15) + 5;
-    const phoneNumberId = whatsappNumbers[Math.floor(Math.random() * whatsappNumbers.length)].phone_number_id;
+    // Test Line Customer (id: '5') için test line'ını kullan, diğerleri için rastgele
+    const phoneNumberId = leadId === '5' 
+      ? '660093600519552' // Test Line Phone Number ID
+      : whatsappNumbers[Math.floor(Math.random() * whatsappNumbers.length)].phone_number_id;
     
     for (let i = 0; i < messageCount; i++) {
       const isOutbound = Math.random() > 0.5;
@@ -525,7 +552,10 @@ export default function MessagingPage() {
       const unreadCount = index === 0 ? 3 : index === 1 ? 2 : index === 2 ? 1 : 0;
       const priority = priorities[Math.floor(Math.random() * priorities.length)];
       const isOnline = Math.random() > 0.6;
-      const phoneNumberId = whatsappNumbers[Math.floor(Math.random() * whatsappNumbers.length)].phone_number_id;
+      // Test Line Customer (id: '5') için test line'ını kullan, diğerleri için rastgele
+      const phoneNumberId = lead.id === '5' 
+        ? '660093600519552' // Test Line Phone Number ID
+        : whatsappNumbers[Math.floor(Math.random() * whatsappNumbers.length)].phone_number_id;
       
       const enrichedLead: Lead = {
         ...lead,
@@ -2587,6 +2617,7 @@ export default function MessagingPage() {
         onMessageTypeChange={setNewMessageType}
         templates={whatsappTemplates}
         onSend={sendNewMessage}
+        mockCrmPhoneNumbers={mockCrmPhoneNumbers}
       />
     </div>
   );
@@ -2840,7 +2871,8 @@ function NewMessageModal({
   messageType,
   onMessageTypeChange,
   templates,
-  onSend
+  onSend,
+  mockCrmPhoneNumbers
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -2848,14 +2880,52 @@ function NewMessageModal({
   onPhoneChange: (phone: string) => void;
   text: string;
   onTextChange: (text: string) => void;
-  template: WhatsAppTemplate | null;
+  template: WhatsApp Template | null;
   onTemplateChange: (template: WhatsAppTemplate | null) => void;
   messageType: 'text' | 'template';
   onMessageTypeChange: (type: 'text' | 'template') => void;
   templates: WhatsAppTemplate[];
   onSend: () => void;
+  mockCrmPhoneNumbers: Array<{id: string; phone: string; name: string; company: string; email: string}>;
 }) {
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [showPhoneDropdown, setShowPhoneDropdown] = useState(false);
+  const [phoneSearchTerm, setPhoneSearchTerm] = useState('');
+  const [selectedContact, setSelectedContact] = useState<{id: string; phone: string; name: string; company: string; email: string} | null>(null);
+  
+  // Filter phone numbers based on search term
+  const filteredPhoneNumbers = mockCrmPhoneNumbers.filter(contact => 
+    contact.phone.toLowerCase().includes(phoneSearchTerm.toLowerCase()) ||
+    contact.name.toLowerCase().includes(phoneSearchTerm.toLowerCase()) ||
+    contact.company.toLowerCase().includes(phoneSearchTerm.toLowerCase())
+  );
+
+  // Highlight search term in text
+  const highlightSearchTerm = (text: string, searchTerm: string) => {
+    if (!searchTerm) return text;
+    const regex = new RegExp(`(${searchTerm})`, 'gi');
+    const parts = text.split(regex);
+    return parts.map((part, index) => 
+      regex.test(part) ? 
+        <span key={index} className="bg-yellow-200 font-medium">{part}</span> : 
+        part
+    );
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.phone-dropdown-container')) {
+        setShowPhoneDropdown(false);
+      }
+    };
+
+    if (showPhoneDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showPhoneDropdown]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -2871,18 +2941,139 @@ function NewMessageModal({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Telefon Numarası */}
-          <div className="space-y-2">
+          {/* Telefon Numarası - Dinamik Dropdown */}
+          <div className="space-y-2 relative phone-dropdown-container">
             <label className="text-sm font-medium">Telefon Numarası *</label>
-            <Input
-              placeholder="905327994223 (başında 90 ile)"
-              value={phone}
-              onChange={(e) => onPhoneChange(e.target.value)}
-              className="font-mono"
-            />
+            <div className="relative">
+              <Input
+                placeholder="Telefon numarası yazın veya CRM'den seçin..."
+                value={phone}
+                onChange={(e) => {
+                  onPhoneChange(e.target.value);
+                  setPhoneSearchTerm(e.target.value);
+                  setShowPhoneDropdown(true);
+                  // Manuel girişte seçili contact'ı temizle
+                  if (selectedContact && e.target.value !== selectedContact.phone) {
+                    setSelectedContact(null);
+                  }
+                }}
+                onFocus={() => setShowPhoneDropdown(true)}
+                className="font-mono pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPhoneDropdown(!showPhoneDropdown)}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </button>
+              
+              {/* Dropdown Menu */}
+              {showPhoneDropdown && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  {filteredPhoneNumbers.length > 0 ? (
+                    <>
+                      <div className="px-3 py-2 text-xs font-medium text-gray-500 bg-gray-50 border-b">
+                        CRM'de Kayıtlı Numaralar ({filteredPhoneNumbers.length})
+                      </div>
+                      {filteredPhoneNumbers.map((contact) => (
+                        <button
+                          key={contact.id}
+                          type="button"
+                          onClick={() => {
+                            onPhoneChange(contact.phone);
+                            setSelectedContact(contact);
+                            setShowPhoneDropdown(false);
+                            setPhoneSearchTerm('');
+                          }}
+                          className="w-full px-3 py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium text-sm">
+                                {highlightSearchTerm(contact.name, phoneSearchTerm)}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {highlightSearchTerm(contact.company, phoneSearchTerm)}
+                              </div>
+                            </div>
+                            <div className="text-sm font-mono text-gray-600">
+                              {highlightSearchTerm(contact.phone, phoneSearchTerm)}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </>
+                  ) : phoneSearchTerm ? (
+                    <div className="px-3 py-4 text-center text-sm text-gray-500">
+                      "{phoneSearchTerm}" için sonuç bulunamadı
+                    </div>
+                  ) : (
+                    <>
+                      <div className="px-3 py-2 text-xs font-medium text-gray-500 bg-gray-50 border-b">
+                        CRM'de Kayıtlı Numaralar ({mockCrmPhoneNumbers.length})
+                      </div>
+                      {mockCrmPhoneNumbers.slice(0, 5).map((contact) => (
+                        <button
+                          key={contact.id}
+                          type="button"
+                          onClick={() => {
+                            onPhoneChange(contact.phone);
+                            setSelectedContact(contact);
+                            setShowPhoneDropdown(false);
+                          }}
+                          className="w-full px-3 py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium text-sm">{contact.name}</div>
+                              <div className="text-xs text-gray-500">{contact.company}</div>
+                            </div>
+                            <div className="text-sm font-mono text-gray-600">
+                              {contact.phone}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                      <div className="px-3 py-2 text-xs text-gray-500 text-center border-t">
+                        Daha fazla görmek için yazmaya başlayın...
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
             <p className="text-xs text-gray-500">
-              Türkiye numaraları için 90 ile başlayın, uluslararası format kullanın
+              CRM'de kayıtlı numaralardan seçin veya manuel olarak girin
             </p>
+            
+            {/* Seçilen Kişi Bilgileri */}
+            {selectedContact && (
+              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <User className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-sm text-green-900">{selectedContact.name}</div>
+                      <div className="text-xs text-green-700">{selectedContact.company}</div>
+                      <div className="text-xs text-green-600">{selectedContact.email}</div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedContact(null);
+                      onPhoneChange('');
+                    }}
+                    className="text-green-600 hover:text-green-800"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Mesaj Tipi Seçimi */}

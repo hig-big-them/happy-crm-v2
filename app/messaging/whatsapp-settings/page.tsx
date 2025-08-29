@@ -58,6 +58,7 @@ import { toast } from '@/components/ui/use-toast';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n/client';
+import { EmbeddedSignupButton } from '@/components/whatsapp/embedded-signup-button';
 
 // WhatsApp Cloud API Configuration Types
 interface WhatsAppConfig {
@@ -136,25 +137,63 @@ export default function WhatsAppSettingsPage() {
       if (savedConfigs) {
         setConfigs(JSON.parse(savedConfigs));
       } else {
-        // Default empty configuration
+        // Mock configurations from messaging page
         setConfigs([
           {
             id: '1',
-            phone_number_id: '',
-            display_phone_number: '+90 532 799 42 23',
-            verified_name: 'Happy CRM Ana Hat',
-            business_account_id: '',
-            access_token: '',
+            phone_number_id: '793146130539824',
+            display_phone_number: '+447782610222',
+            verified_name: 'Happy Smile Clinics',
+            business_account_id: 'WABA_ID_123456789',
+            access_token: 'EAAxxxxx...', // Masked for security
             api_version: 'v21.0',
             webhook_url: `${window.location.origin}/api/webhooks/whatsapp`,
             webhook_verify_token: generateVerifyToken(),
-            is_active: false,
+            is_active: true,
             is_primary: true,
-            quality_rating: 'UNKNOWN',
-            status: 'PENDING',
-            messaging_limit_tier: '1',
+            quality_rating: 'GREEN',
+            status: 'CONNECTED',
+            messaging_limit_tier: '1000',
             max_phone_numbers: 2,
-            namespace: '',
+            namespace: 'happy_smile_clinics',
+            certificate: '',
+          },
+          {
+            id: '2',
+            phone_number_id: '456789123456789',
+            display_phone_number: '+90 532 799 42 23',
+            verified_name: 'Happy CRM Destek Hattı',
+            business_account_id: 'WABA_ID_123456789',
+            access_token: 'EAAxxxxx...', // Masked for security
+            api_version: 'v21.0',
+            webhook_url: `${window.location.origin}/api/webhooks/whatsapp`,
+            webhook_verify_token: generateVerifyToken(),
+            is_active: true,
+            is_primary: false,
+            quality_rating: 'GREEN',
+            status: 'CONNECTED',
+            messaging_limit_tier: '1000',
+            max_phone_numbers: 2,
+            namespace: 'happy_crm_support',
+            certificate: '',
+          },
+          {
+            id: '3',
+            phone_number_id: '660093600519552',
+            display_phone_number: '+1 555 999 0001',
+            verified_name: 'Happy CRM Test Line',
+            business_account_id: 'WABA_ID_123456789',
+            access_token: 'EAAxxxxx...', // Masked for security
+            api_version: 'v21.0',
+            webhook_url: `${window.location.origin}/api/webhooks/whatsapp`,
+            webhook_verify_token: generateVerifyToken(),
+            is_active: true,
+            is_primary: false,
+            quality_rating: 'YELLOW',
+            status: 'CONNECTED',
+            messaging_limit_tier: '250',
+            max_phone_numbers: 2,
+            namespace: 'happy_crm_test',
             certificate: '',
           }
         ]);
@@ -355,7 +394,7 @@ export default function WhatsAppSettingsPage() {
             {locale === 'tr' ? 'WhatsApp Cloud API Ayarları' : 'WhatsApp Cloud API Settings'}
           </h1>
           <p className="text-muted-foreground">
-            {locale === 'tr' ? 'WhatsApp Business API yapılandırmasını yönetin' : 'Manage your WhatsApp Business API configuration'}
+            {locale === 'tr' ? 'WhatsApp Business numaralarınızı yönetin ve yeni numara bağlayın' : 'Manage your WhatsApp Business numbers and connect new ones'}
           </p>
         </div>
         
@@ -368,12 +407,60 @@ export default function WhatsAppSettingsPage() {
             <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
             {locale === 'tr' ? 'Yenile' : 'Refresh'}
           </Button>
-          <Button onClick={addNewNumber}>
+          
+          {/* WABA Connect Button */}
+          <EmbeddedSignupButton
+            onSuccess={(data) => {
+              console.log('WABA Connected:', data);
+              toast({
+                title: locale === 'tr' ? 'Başarılı!' : 'Success!',
+                description: locale === 'tr' ? 'WhatsApp Business hesabı başarıyla bağlandı' : 'WhatsApp Business account connected successfully',
+              });
+              // Reload configurations to show new number
+              loadConfigurations();
+            }}
+            onError={(error) => {
+              console.error('WABA Connection Error:', error);
+              toast({
+                title: locale === 'tr' ? 'Bağlantı Hatası' : 'Connection Error',
+                description: locale === 'tr' ? 'WhatsApp Business hesabı bağlanırken hata oluştu' : 'Failed to connect WhatsApp Business account',
+                variant: 'destructive'
+              });
+            }}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            <MessageSquare className="h-4 w-4 mr-2" />
+            {locale === 'tr' ? 'WABA Numara Bağla' : 'Connect WABA Number'}
+          </EmbeddedSignupButton>
+          
+          <Button onClick={addNewNumber} variant="outline">
             <Plus className="h-4 w-4 mr-2" />
-            {locale === 'tr' ? 'Yeni Numara Ekle' : 'Add Number'}
+            {locale === 'tr' ? 'Manuel Ekle' : 'Add Manually'}
           </Button>
         </div>
       </div>
+
+      {/* WABA Connection Info */}
+      <Alert className="border-green-200 bg-green-50">
+        <MessageSquare className="h-4 w-4 text-green-600" />
+        <AlertDescription className="text-green-800">
+          <div className="flex items-center justify-between">
+            <div>
+              <strong>{locale === 'tr' ? 'WhatsApp Business API Bağlantısı:' : 'WhatsApp Business API Connection:'}</strong>
+              <span className="ml-2">
+                {locale === 'tr' 
+                  ? '"WABA Numara Bağla" butonuna tıklayarak Meta\'nın resmi onboarding sürecini başlatabilirsiniz.' 
+                  : 'Click "Connect WABA Number" to start Meta\'s official onboarding process.'
+                }
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+              <span>{locale === 'tr' ? 'Hazır' : 'Ready'}</span>
+            </div>
+          </div>
+        </AlertDescription>
+      </Alert>
 
       {/* Main Content */}
       <div className="grid grid-cols-12 gap-6">
@@ -392,15 +479,43 @@ export default function WhatsAppSettingsPage() {
                   {configs.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <Phone className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                      <p className="text-sm">{locale === 'tr' ? 'Henüz numara eklenmedi' : 'No numbers yet'}</p>
-                      <Button
-                        variant="link"
-                        size="sm"
-                        onClick={addNewNumber}
-                        className="mt-2"
-                      >
-                        {locale === 'tr' ? 'İlk numarayı ekle' : 'Add first number'}
-                      </Button>
+                      <p className="text-sm mb-4">{locale === 'tr' ? 'Henüz numara eklenmedi' : 'No numbers yet'}</p>
+                      
+                      <div className="space-y-2">
+                        <EmbeddedSignupButton
+                          onSuccess={(data) => {
+                            console.log('WABA Connected:', data);
+                            toast({
+                              title: locale === 'tr' ? 'Başarılı!' : 'Success!',
+                              description: locale === 'tr' ? 'WhatsApp Business hesabı başarıyla bağlandı' : 'WhatsApp Business account connected successfully',
+                            });
+                            loadConfigurations();
+                          }}
+                          onError={(error) => {
+                            console.error('WABA Connection Error:', error);
+                            toast({
+                              title: locale === 'tr' ? 'Bağlantı Hatası' : 'Connection Error',
+                              description: locale === 'tr' ? 'WhatsApp Business hesabı bağlanırken hata oluştu' : 'Failed to connect WhatsApp Business account',
+                              variant: 'destructive'
+                            });
+                          }}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white"
+                          size="sm"
+                        >
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          {locale === 'tr' ? 'WABA ile Bağlan' : 'Connect with WABA'}
+                        </EmbeddedSignupButton>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={addNewNumber}
+                          className="w-full"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          {locale === 'tr' ? 'Manuel Ekle' : 'Add Manually'}
+                        </Button>
+                      </div>
                     </div>
                   ) : (
                     configs.map(config => (
@@ -485,6 +600,12 @@ export default function WhatsAppSettingsPage() {
                 <span className="text-muted-foreground">{locale === 'tr' ? 'Bağlı' : 'Connected'}</span>
                 <span className="font-medium">
                   {configs.filter(c => c.status === 'CONNECTED').length}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">{locale === 'tr' ? 'Toplam Limit' : 'Total Limit'}</span>
+                <span className="font-medium text-blue-600">
+                  {configs.reduce((sum, c) => sum + parseInt(c.messaging_limit_tier || '0'), 0)}/gün
                 </span>
               </div>
             </CardContent>
@@ -1032,14 +1153,39 @@ export default function WhatsAppSettingsPage() {
                 <p className="text-sm text-muted-foreground text-center max-w-md">
                   {locale === 'tr' ? 'Sol taraftan bir telefon numarası seçin veya yeni bir numara ekleyin' : 'Select a phone number from the left or add a new one'}
                 </p>
-                <Button
-                  variant="outline"
-                  className="mt-4"
-                  onClick={addNewNumber}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {locale === 'tr' ? 'Yeni Numara Ekle' : 'Add Number'}
-                </Button>
+                
+                <div className="flex flex-col gap-2 mt-4">
+                  <EmbeddedSignupButton
+                    onSuccess={(data) => {
+                      console.log('WABA Connected:', data);
+                      toast({
+                        title: locale === 'tr' ? 'Başarılı!' : 'Success!',
+                        description: locale === 'tr' ? 'WhatsApp Business hesabı başarıyla bağlandı' : 'WhatsApp Business account connected successfully',
+                      });
+                      loadConfigurations();
+                    }}
+                    onError={(error) => {
+                      console.error('WABA Connection Error:', error);
+                      toast({
+                        title: locale === 'tr' ? 'Bağlantı Hatası' : 'Connection Error',
+                        description: locale === 'tr' ? 'WhatsApp Business hesabı bağlanırken hata oluştu' : 'Failed to connect WhatsApp Business account',
+                        variant: 'destructive'
+                      });
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    {locale === 'tr' ? 'WABA Numara Bağla' : 'Connect WABA Number'}
+                  </EmbeddedSignupButton>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={addNewNumber}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    {locale === 'tr' ? 'Manuel Ekle' : 'Add Manually'}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}
