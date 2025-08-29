@@ -20,6 +20,23 @@ export interface Dictionaries {
       searchPlaceholder: string
       rowsSelected: (selected: number, total: number) => string
     }
+    notifications?: {
+      title: string
+      empty: string
+      markAllRead: string
+      clearAll: string
+      templateApproved: string
+      templateRejected: string
+      templateSubmitted: string
+      templateApprovedDesc: (name: string) => string
+      templateRejectedDesc: (name: string) => string
+      templateSubmittedDesc: (name: string) => string
+      templateSubmittedInfo: string
+      templateSubmittedInfoDesc: string
+      templateSubmittedModalTitle: string
+      templateSubmittedModalDesc: (name: string) => string
+      templateSubmittedModalButton: string
+    }
   }
   nav: {
     dashboard: string
@@ -245,6 +262,119 @@ export interface Dictionaries {
         editTitle: string
         createDescription: string
         editDescription: string
+        title: string
+        description: string
+        templateName: string
+        templateNamePlaceholder: string
+        templateNameHelper: string
+        category: string
+        language: string
+        descriptionOptional: string
+        descriptionPlaceholder: string
+        templateComponents: string
+        templateComponentsDesc: string
+        livePreview: string
+        livePreviewDesc: string
+        previewVariables: string
+        variableUsage: string
+        variableUsageDesc: string[]
+        componentTypes: {
+          header: string
+          body: string
+          footer: string
+          buttons: string
+        }
+        componentLabels: {
+          header: string
+          body: string
+          footer: string
+          buttons: string
+        }
+        textContent: string
+        textPlaceholder: (type: string) => string
+        addVariable: string
+        variableManagement: string
+        addVariableBtn: string
+        sortVariables: string
+        noVariables: string
+        foundVariables: (count: number) => string
+        variableErrors: string
+        variablesValid: string
+        addButton: string
+        buttonText: string
+        buttonTypes: {
+          quickReply: string
+          url: string
+          phone: string
+        }
+        characterLimits: {
+          header: string
+          body: string
+          footer: string
+        }
+        noComponents: string
+        noComponentsDesc: string
+        componentPreview: string
+        previewEmpty: string
+        previewEmptyDesc: string
+        validationTitle: string
+        ready: string
+        hasErrors: string
+        componentCount: (count: number) => string
+        actions: {
+          cancel: string
+          apiTest: string
+          testTemplate: string
+          saveDraft: string
+          submitForApproval: string
+        }
+        categories: {
+          utility: string
+          utilityDesc: string
+          marketing: string
+          marketingDesc: string
+          authentication: string
+          authenticationDesc: string
+        }
+        languages: {
+          turkish: string
+          english: string
+        }
+        status: {
+          draft: string
+          pending: string
+          approved: string
+          rejected: string
+        }
+        toasts: {
+          nameRequired: string
+          nameRequiredDesc: string
+          componentRequired: string
+          componentRequiredDesc: string
+          validationError: string
+          templateSubmitted: string
+          templateSubmittedDesc: (name: string) => string
+          draftSaved: string
+          draftSavedDesc: string
+          apiTestSuccess: string
+          apiTestSuccessDesc: string
+          apiTestError: string
+          testTemplateSuccess: string
+          testTemplateSuccessDesc: (id: string) => string
+          testTemplateError: string
+          saveError: string
+        }
+        validation: {
+          nameRequired: string
+          componentRequired: string
+          bodyRequired: string
+          headerMaxLength: (index: number) => string
+          bodyMaxLength: (index: number) => string
+          footerMaxLength: (index: number) => string
+          variableSequential: string
+          variableStartEnd: string
+          tooManyVariables: string
+        }
       }
       templateView: {
         title: string
@@ -360,6 +490,23 @@ const tr: Dictionaries = {
       noResults: "Sonuç bulunamadı.",
       searchPlaceholder: "Ara...",
       rowsSelected: (s, t) => `${s} / ${t} satır seçildi.`
+    },
+    notifications: {
+      title: "Bildirimler",
+      empty: "Henüz bildirim yok",
+      markAllRead: "Tümünü Okundu İşaretle",
+      clearAll: "Temizle",
+      templateApproved: "Template Onaylandı! 🎉",
+      templateRejected: "Template Reddedildi ❌",
+      templateSubmitted: "Template Onaya Gönderildi 📤",
+      templateApprovedDesc: (name) => `"${name}" template'iniz Meta tarafından onaylandı ve kullanıma hazır.`,
+      templateRejectedDesc: (name) => `"${name}" template'iniz Meta tarafından reddedildi. Lütfen kontrol edin.`,
+      templateSubmittedDesc: (name) => `"${name}" template'iniz Meta'ya onay için gönderildi. Sonuç bildirim olarak gelecektir.`,
+      templateSubmittedInfo: "Template Onaya Gönderildi",
+      templateSubmittedInfoDesc: "Template'iniz onaya gönderildi, onay durumu bildirim olarak gönderilecektir",
+      templateSubmittedModalTitle: "Template Başarıyla Gönderildi! 🎉",
+      templateSubmittedModalDesc: (name) => `"${name}" template'iniz Meta WhatsApp Business API'ye onay için gönderildi. Onay süreci genellikle 24-48 saat sürer. Sonuç bildirim olarak size ulaşacaktır.`,
+      templateSubmittedModalButton: "Tamam"
     }
   },
   leads: {
@@ -585,7 +732,127 @@ const tr: Dictionaries = {
         createTitle: "Yeni Template Oluştur",
         editTitle: "Template Düzenle",
         createDescription: "WhatsApp template'inizi tasarlayın ve önizleme yapın",
-        editDescription: "WhatsApp template'inizi tasarlayın ve önizleme yapın"
+        editDescription: "WhatsApp template'inizi tasarlayın ve önizleme yapın",
+        title: "WhatsApp Template Builder",
+        description: "Enterprise-grade template editörü ve onay sistemi",
+        templateName: "Template Adı *",
+        templateNamePlaceholder: "Örn: welcome_message",
+        templateNameHelper: "Sadece küçük harfler, rakamlar ve alt çizgi (_) kullanabilirsiniz",
+        category: "Kategori *",
+        language: "Dil",
+        descriptionOptional: "Açıklama (Opsiyonel)",
+        descriptionPlaceholder: "Template'in ne için kullanılacağını açıklayın",
+        templateComponents: "Template Components",
+        templateComponentsDesc: "WhatsApp mesaj bileşenlerini oluşturun ve düzenleyin",
+        livePreview: "Canlı Önizleme",
+        livePreviewDesc: "Template'in WhatsApp'ta nasıl görüneceği",
+        previewVariables: "Önizleme Değişkenleri",
+        variableUsage: "📝 Variable Kullanımı:",
+        variableUsageDesc: [
+          "• {{1}} - İlk değişken",
+          "• {{2}} - İkinci değişken", 
+          "• {{3}} - Üçüncü değişken",
+          "• Variable'lar sıralı olmalı (1, 2, 3...)",
+          "• Template variable ile başlayamaz veya bitemez",
+          "• #, $, % gibi özel karakterler kullanılamaz"
+        ],
+        componentTypes: {
+          header: "Header",
+          body: "Body *",
+          footer: "Footer",
+          buttons: "Buttons"
+        },
+        componentLabels: {
+          header: "Başlık",
+          body: "Ana Metin",
+          footer: "Alt Bilgi",
+          buttons: "Butonlar"
+        },
+        textContent: "Metin İçeriği",
+        textPlaceholder: (type) => `${type} metni girin... Değişkenler için {{variable_name}} kullanın`,
+        addVariable: "+ Variable",
+        variableManagement: "Variable Yönetimi",
+        addVariableBtn: "Variable Ekle",
+        sortVariables: "🔄 Sırala",
+        noVariables: "Henüz variable eklenmedi. Metin içinde istediğiniz yere tıklayıp \"Variable Ekle\" butonuna basın.",
+        foundVariables: (count) => `Bulunan Variable'lar (${count}):`,
+        variableErrors: "⚠️ Variable Hataları:",
+        variablesValid: "✅ Variable'lar doğru formatta",
+        addButton: "Buton Ekle",
+        buttonText: "Buton metni",
+        buttonTypes: {
+          quickReply: "Hızlı Yanıt",
+          url: "Web Sitesi",
+          phone: "Telefon"
+        },
+        characterLimits: {
+          header: "Maksimum 60 karakter",
+          body: "Maksimum 1024 karakter - Variable eklemek için butona tıklayın",
+          footer: "Maksimum 60 karakter"
+        },
+        noComponents: "Henüz component eklenmedi",
+        noComponentsDesc: "Başlamak için yukarıdaki butonları kullanın",
+        componentPreview: "Template Önizlemesi",
+        previewEmpty: "Component ekleyince önizleme görünecek",
+        previewEmptyDesc: "",
+        validationTitle: "Düzeltilmesi Gerekenler",
+        ready: "Hazır",
+        hasErrors: "Eksikler var",
+        componentCount: (count) => `${count} component`,
+        actions: {
+          cancel: "İptal",
+          apiTest: "API Test",
+          testTemplate: "Test Template",
+          saveDraft: "Taslak Kaydet",
+          submitForApproval: "Onaya Gönder"
+        },
+        categories: {
+          utility: "Utility (İş)",
+          utilityDesc: "Fatura, sipariş, rezervasyon bildirimleri",
+          marketing: "Marketing",
+          marketingDesc: "Promosyon ve pazarlama mesajları",
+          authentication: "Authentication",
+          authenticationDesc: "OTP ve doğrulama mesajları"
+        },
+        languages: {
+          turkish: "Türkçe",
+          english: "English"
+        },
+        status: {
+          draft: "Taslak",
+          pending: "Onay Bekliyor",
+          approved: "Onaylandı",
+          rejected: "Reddedildi"
+        },
+        toasts: {
+          nameRequired: "Hata",
+          nameRequiredDesc: "Template adı gerekli",
+          componentRequired: "Hata",
+          componentRequiredDesc: "En az bir component gerekli",
+          validationError: "Validation Error",
+          templateSubmitted: "🎉 Template Onaya Gönderildi!",
+          templateSubmittedDesc: (name) => `Template "${name}" Meta'ya gönderildi. Status: onay bekliyor`,
+          draftSaved: "Taslak Kaydedildi",
+          draftSavedDesc: "Template taslak olarak kaydedildi. Onaya göndermek için \"Onaya Gönder\" butonunu kullanın.",
+          apiTestSuccess: "✅ API Bağlantısı Başarılı",
+          apiTestSuccessDesc: "Meta WhatsApp API bağlantısı çalışıyor",
+          apiTestError: "❌ API Bağlantı Hatası",
+          testTemplateSuccess: "✅ Test Template Başarılı",
+          testTemplateSuccessDesc: (id) => `Test template oluşturuldu: ${id}`,
+          testTemplateError: "❌ Test Template Hatası",
+          saveError: "Hata"
+        },
+        validation: {
+          nameRequired: "Template adı gerekli",
+          componentRequired: "En az bir component gerekli",
+          bodyRequired: "Body component zorunludur",
+          headerMaxLength: (index) => `Header ${index + 1}: Maksimum 60 karakter`,
+          bodyMaxLength: (index) => `Body ${index + 1}: Maksimum 1024 karakter`,
+          footerMaxLength: (index) => `Footer ${index + 1}: Maksimum 60 karakter`,
+          variableSequential: "Variable'lar sıralı olmalı (1'den başlayarak). Bulunan:",
+          variableStartEnd: "Template variable ile başlayamaz veya bitemez",
+          tooManyVariables: "Çok fazla variable var. Variable sayısını azaltın veya metni uzatın"
+        }
       },
       templateView: {
         title: "Template Görüntüle",
@@ -701,6 +968,23 @@ const en: Dictionaries = {
       noResults: "No results.",
       searchPlaceholder: "Search...",
       rowsSelected: (s, t) => `${s} / ${t} rows selected.`
+    },
+    notifications: {
+      title: "Notifications",
+      empty: "No notifications yet",
+      markAllRead: "Mark All as Read",
+      clearAll: "Clear All",
+      templateApproved: "Template Approved! 🎉",
+      templateRejected: "Template Rejected ❌",
+      templateSubmitted: "Template Submitted 📤",
+      templateApprovedDesc: (name) => `Your template "${name}" has been approved by Meta and is ready to use.`,
+      templateRejectedDesc: (name) => `Your template "${name}" has been rejected by Meta. Please check and revise.`,
+      templateSubmittedDesc: (name) => `Your template "${name}" has been submitted to Meta for approval. You'll receive a notification with the result.`,
+      templateSubmittedInfo: "Template Submitted for Approval",
+      templateSubmittedInfoDesc: "Your template has been submitted for approval, approval status will be sent as notification",
+      templateSubmittedModalTitle: "Template Successfully Submitted! 🎉",
+      templateSubmittedModalDesc: (name) => `Your template "${name}" has been submitted to Meta WhatsApp Business API for approval. The approval process typically takes 24-48 hours. You'll receive a notification with the result.`,
+      templateSubmittedModalButton: "OK"
     }
   },
   nav: {
@@ -926,7 +1210,127 @@ const en: Dictionaries = {
         createTitle: "Create New Template",
         editTitle: "Edit Template",
         createDescription: "Design your WhatsApp template and preview",
-        editDescription: "Design your WhatsApp template and preview"
+        editDescription: "Design your WhatsApp template and preview",
+        title: "WhatsApp Template Builder",
+        description: "Enterprise-grade template editor and approval system",
+        templateName: "Template Name *",
+        templateNamePlaceholder: "e.g: welcome_message",
+        templateNameHelper: "Only lowercase letters, numbers and underscores (_) allowed",
+        category: "Category *",
+        language: "Language",
+        descriptionOptional: "Description (Optional)",
+        descriptionPlaceholder: "Describe what this template will be used for",
+        templateComponents: "Template Components",
+        templateComponentsDesc: "Create and edit WhatsApp message components",
+        livePreview: "Live Preview",
+        livePreviewDesc: "How the template will look in WhatsApp",
+        previewVariables: "Preview Variables",
+        variableUsage: "📝 Variable Usage:",
+        variableUsageDesc: [
+          "• {{1}} - First variable",
+          "• {{2}} - Second variable", 
+          "• {{3}} - Third variable",
+          "• Variables must be sequential (1, 2, 3...)",
+          "• Template cannot start or end with variable",
+          "• Special characters like #, $, % cannot be used"
+        ],
+        componentTypes: {
+          header: "Header",
+          body: "Body *",
+          footer: "Footer",
+          buttons: "Buttons"
+        },
+        componentLabels: {
+          header: "Header",
+          body: "Main Text",
+          footer: "Footer",
+          buttons: "Buttons"
+        },
+        textContent: "Text Content",
+        textPlaceholder: (type) => `Enter ${type} text... Use {{variable_name}} for variables`,
+        addVariable: "+ Variable",
+        variableManagement: "Variable Management",
+        addVariableBtn: "Add Variable",
+        sortVariables: "🔄 Sort",
+        noVariables: "No variables added yet. Click anywhere in the text and press \"Add Variable\" button.",
+        foundVariables: (count) => `Found Variables (${count}):`,
+        variableErrors: "⚠️ Variable Errors:",
+        variablesValid: "✅ Variables are in correct format",
+        addButton: "Add Button",
+        buttonText: "Button text",
+        buttonTypes: {
+          quickReply: "Quick Reply",
+          url: "Website",
+          phone: "Phone"
+        },
+        characterLimits: {
+          header: "Maximum 60 characters",
+          body: "Maximum 1024 characters - Click button to add variables",
+          footer: "Maximum 60 characters"
+        },
+        noComponents: "No components added yet",
+        noComponentsDesc: "Use the buttons above to get started",
+        componentPreview: "Template Preview",
+        previewEmpty: "Preview will appear when you add components",
+        previewEmptyDesc: "",
+        validationTitle: "Issues to Fix",
+        ready: "Ready",
+        hasErrors: "Has Issues",
+        componentCount: (count) => `${count} components`,
+        actions: {
+          cancel: "Cancel",
+          apiTest: "API Test",
+          testTemplate: "Test Template",
+          saveDraft: "Save Draft",
+          submitForApproval: "Submit for Approval"
+        },
+        categories: {
+          utility: "Utility (Business)",
+          utilityDesc: "Invoices, orders, reservation notifications",
+          marketing: "Marketing",
+          marketingDesc: "Promotional and marketing messages",
+          authentication: "Authentication",
+          authenticationDesc: "OTP and verification messages"
+        },
+        languages: {
+          turkish: "Turkish",
+          english: "English"
+        },
+        status: {
+          draft: "Draft",
+          pending: "Pending Approval",
+          approved: "Approved",
+          rejected: "Rejected"
+        },
+        toasts: {
+          nameRequired: "Error",
+          nameRequiredDesc: "Template name is required",
+          componentRequired: "Error",
+          componentRequiredDesc: "At least one component is required",
+          validationError: "Validation Error",
+          templateSubmitted: "🎉 Template Submitted for Approval!",
+          templateSubmittedDesc: (name) => `Template "${name}" has been sent to Meta. Status: pending approval`,
+          draftSaved: "Draft Saved",
+          draftSavedDesc: "Template saved as draft. Use \"Submit for Approval\" button to send for review.",
+          apiTestSuccess: "✅ API Connection Successful",
+          apiTestSuccessDesc: "Meta WhatsApp API connection is working",
+          apiTestError: "❌ API Connection Error",
+          testTemplateSuccess: "✅ Test Template Successful",
+          testTemplateSuccessDesc: (id) => `Test template created: ${id}`,
+          testTemplateError: "❌ Test Template Error",
+          saveError: "Error"
+        },
+        validation: {
+          nameRequired: "Template name is required",
+          componentRequired: "At least one component is required",
+          bodyRequired: "Body component is required",
+          headerMaxLength: (index) => `Header ${index + 1}: Maximum 60 characters`,
+          bodyMaxLength: (index) => `Body ${index + 1}: Maximum 1024 characters`,
+          footerMaxLength: (index) => `Footer ${index + 1}: Maximum 60 characters`,
+          variableSequential: "Variables must be sequential (starting from 1). Found:",
+          variableStartEnd: "Template cannot start or end with variable",
+          tooManyVariables: "Too many variables. Reduce variable count or extend text"
+        }
       },
       templateView: {
         title: "View Template",

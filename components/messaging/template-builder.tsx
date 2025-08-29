@@ -18,6 +18,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { toast } from '@/hooks/use-toast';
+import { useI18n } from '@/lib/i18n/client';
+import { useNotificationStore } from '@/lib/stores/notification-store';
+import { TemplateSubmittedModal } from '../ui/template-submitted-modal';
 import { 
   Plus, 
   Trash2, 
@@ -73,30 +76,21 @@ interface Template {
   updated_at?: string;
 }
 
-// 🎨 Template Categories
-const TEMPLATE_CATEGORIES = [
-  { value: 'utility', label: 'Utility (İş)', description: 'Fatura, sipariş, rezervasyon bildirimleri' },
-  { value: 'marketing', label: 'Marketing', description: 'Promosyon ve pazarlama mesajları' },
-  { value: 'authentication', label: 'Authentication', description: 'OTP ve doğrulama mesajları' }
-];
+// 🎨 Template Categories - moved inside component to access t
 
-// 🎨 Status Colors
-const STATUS_CONFIG = {
-  draft: { color: 'bg-gray-100 text-gray-800', icon: <Edit className="h-3 w-3" />, label: 'Taslak' },
-  pending: { color: 'bg-yellow-100 text-yellow-800', icon: <Clock className="h-3 w-3" />, label: 'Onay Bekliyor' },
-  approved: { color: 'bg-green-100 text-green-800', icon: <CheckCircle className="h-3 w-3" />, label: 'Onaylandı' },
-  rejected: { color: 'bg-red-100 text-red-800', icon: <X className="h-3 w-3" />, label: 'Reddedildi' }
-};
+// 🎨 Status Colors - moved inside component to access t
 
 // 🔧 Template Component Editor
 function ComponentEditor({ 
   component, 
   onUpdate, 
-  onDelete 
+  onDelete,
+  t
 }: { 
   component: TemplateComponent; 
   onUpdate: (component: TemplateComponent) => void;
   onDelete: () => void;
+  t: any;
 }) {
   const [localComponent, setLocalComponent] = useState<TemplateComponent>(component);
 
@@ -163,10 +157,10 @@ function ComponentEditor({
           <div className="flex items-center gap-2">
             <Badge variant="outline">{component.type.toUpperCase()}</Badge>
             <span className="text-sm text-gray-600">
-              {component.type === 'header' && 'Başlık'}
-              {component.type === 'body' && 'Ana Metin'}
-              {component.type === 'footer' && 'Alt Bilgi'}
-              {component.type === 'buttons' && 'Butonlar'}
+              {component.type === 'header' && t.admin?.whatsappTemplates?.templateBuilder.componentLabels.header}
+              {component.type === 'body' && t.admin?.whatsappTemplates?.templateBuilder.componentLabels.body}
+              {component.type === 'footer' && t.admin?.whatsappTemplates?.templateBuilder.componentLabels.footer}
+              {component.type === 'buttons' && t.admin?.whatsappTemplates?.templateBuilder.componentLabels.buttons}
             </span>
           </div>
           <Button
@@ -184,12 +178,12 @@ function ComponentEditor({
                  {/* Text Content */}
          {(component.type === 'header' || component.type === 'body' || component.type === 'footer') && (
            <div>
-             <Label>Metin İçeriği</Label>
+             <Label>{t.admin?.whatsappTemplates?.templateBuilder.textContent}</Label>
              <div className="relative">
                <Textarea
                  value={localComponent.text || ''}
                  onChange={(e) => setLocalComponent(prev => ({ ...prev, text: e.target.value }))}
-                 placeholder={`${component.type} metni girin... Değişkenler için {{variable_name}} kullanın`}
+                 placeholder={t.admin?.whatsappTemplates?.templateBuilder.textPlaceholder(component.type)}
                  rows={component.type === 'body' ? 4 : 2}
                  className="mt-1 pr-20"
                  ref={(textarea) => {
@@ -235,15 +229,15 @@ function ComponentEditor({
                        }, 0);
                      }
                    }}
-                                   >
-                    + Variable
+                                                                     >
+                   {t.admin?.whatsappTemplates?.templateBuilder.addVariable}
                   </Button>
                )}
              </div>
              <p className="text-xs text-gray-500 mt-1">
-               {component.type === 'header' && 'Maksimum 60 karakter'}
-               {component.type === 'body' && 'Maksimum 1024 karakter - Variable eklemek için butona tıklayın'}
-               {component.type === 'footer' && 'Maksimum 60 karakter'}
+               {component.type === 'header' && t.admin?.whatsappTemplates?.templateBuilder.characterLimits.header}
+               {component.type === 'body' && t.admin?.whatsappTemplates?.templateBuilder.characterLimits.body}
+               {component.type === 'footer' && t.admin?.whatsappTemplates?.templateBuilder.characterLimits.footer}
              </p>
            </div>
          )}
@@ -252,7 +246,7 @@ function ComponentEditor({
          {component.type === 'body' && (
            <div>
              <div className="flex items-center justify-between mb-2">
-               <Label>Variable Yönetimi</Label>
+               <Label>{t.admin?.whatsappTemplates?.templateBuilder.variableManagement}</Label>
                <div className="flex gap-2">
                  <Button
                    variant="outline"
@@ -287,7 +281,7 @@ function ComponentEditor({
                    }}
                  >
                    <Plus className="h-4 w-4 mr-1" />
-                   Variable Ekle
+                   {t.admin?.whatsappTemplates?.templateBuilder.addVariableBtn}
                  </Button>
                  
                  <Button
@@ -312,7 +306,7 @@ function ComponentEditor({
                      }
                    }}
                  >
-                   🔄 Sırala
+                   {t.admin?.whatsappTemplates?.templateBuilder.sortVariables}
                  </Button>
                </div>
              </div>
@@ -327,7 +321,7 @@ function ComponentEditor({
                if (variables.length === 0) {
                  return (
                    <div className="text-sm text-gray-500 italic">
-                     Henüz variable eklenmedi. Metin içinde istediğiniz yere tıklayıp "Variable Ekle" butonuna basın.
+                     {t.admin?.whatsappTemplates?.templateBuilder.noVariables}
                    </div>
                  );
                }
@@ -335,7 +329,7 @@ function ComponentEditor({
                return (
                  <div className="space-y-2">
                    <div className="text-sm font-medium text-gray-700">
-                     Bulunan Variable'lar ({variables.length}):
+                     {t.admin?.whatsappTemplates?.templateBuilder.foundVariables(variables.length)}
                    </div>
                    <div className="flex flex-wrap gap-2">
                      {variables.map((num, index) => (
@@ -363,24 +357,24 @@ function ComponentEditor({
                        errors.push('Template variable ile başlayamaz veya bitemez');
                      }
                      
-                     if (errors.length > 0) {
+                                            if (errors.length > 0) {
+                         return (
+                           <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                             <div className="font-medium mb-1">{t.admin?.whatsappTemplates?.templateBuilder.variableErrors}</div>
+                             <ul className="space-y-1">
+                               {errors.map((error, index) => (
+                                 <li key={index}>• {error}</li>
+                               ))}
+                             </ul>
+                           </div>
+                         );
+                       }
+                       
                        return (
-                         <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
-                           <div className="font-medium mb-1">⚠️ Variable Hataları:</div>
-                           <ul className="space-y-1">
-                             {errors.map((error, index) => (
-                               <li key={index}>• {error}</li>
-                             ))}
-                           </ul>
+                         <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
+                           {t.admin?.whatsappTemplates?.templateBuilder.variablesValid}
                          </div>
                        );
-                     }
-                     
-                     return (
-                       <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
-                         ✅ Variable'lar doğru formatta
-                       </div>
-                     );
                    })()}
                  </div>
                );
@@ -392,10 +386,10 @@ function ComponentEditor({
         {component.type === 'buttons' && (
           <div>
             <div className="flex items-center justify-between mb-2">
-              <Label>Butonlar</Label>
+              <Label>{t.admin?.whatsappTemplates?.templateBuilder.componentLabels.buttons}</Label>
               <Button variant="outline" size="sm" onClick={addButton}>
                 <Plus className="h-4 w-4 mr-1" />
-                Buton Ekle
+                {t.admin?.whatsappTemplates?.templateBuilder.addButton}
               </Button>
             </div>
             
@@ -410,15 +404,15 @@ function ComponentEditor({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="quick_reply">Hızlı Yanıt</SelectItem>
-                      <SelectItem value="url">Web Sitesi</SelectItem>
-                      <SelectItem value="phone">Telefon</SelectItem>
+                      <SelectItem value="quick_reply">{t.admin?.whatsappTemplates?.templateBuilder.buttonTypes.quickReply}</SelectItem>
+                      <SelectItem value="url">{t.admin?.whatsappTemplates?.templateBuilder.buttonTypes.url}</SelectItem>
+                      <SelectItem value="phone">{t.admin?.whatsappTemplates?.templateBuilder.buttonTypes.phone}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="col-span-4">
                   <Input
-                    placeholder="Buton metni"
+                    placeholder={t.admin?.whatsappTemplates?.templateBuilder.buttonText}
                     value={button.text}
                     onChange={(e) => updateButton(index, 'text', e.target.value)}
                     className="text-sm"
@@ -464,7 +458,7 @@ function ComponentEditor({
 }
 
 // 📱 Template Preview
-function TemplatePreview({ template, variables }: { template: Template; variables: Record<string, string> }) {
+function TemplatePreview({ template, variables, t }: { template: Template; variables: Record<string, string>; t: any }) {
   const renderComponent = (component: TemplateComponent) => {
     let text = component.text || '';
     
@@ -535,7 +529,7 @@ function TemplatePreview({ template, variables }: { template: Template; variable
         </div>
         
         <div className="text-xs text-gray-500 mt-2 text-center">
-          Template Önizlemesi
+          {t.admin?.whatsappTemplates?.templateBuilder.componentPreview}
         </div>
       </div>
     </div>
@@ -550,6 +544,9 @@ interface TemplateBuilderProps {
 }
 
 export default function TemplateBuilder({ template, onSave, onCancel }: TemplateBuilderProps) {
+  const { t } = useI18n();
+  const { addTemplateSubmittedNotification } = useNotificationStore();
+  
   // 🔄 State Management
   const [currentTemplate, setCurrentTemplate] = useState<Template>(template || {
     name: '',
@@ -562,6 +559,22 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [activeTab, setActiveTab] = useState('builder');
+  const [showSubmittedModal, setShowSubmittedModal] = useState(false);
+
+  // 🎨 Template Categories
+  const TEMPLATE_CATEGORIES = [
+    { value: 'utility', label: t.admin?.whatsappTemplates?.templateBuilder.categories.utility, description: t.admin?.whatsappTemplates?.templateBuilder.categories.utilityDesc },
+    { value: 'marketing', label: t.admin?.whatsappTemplates?.templateBuilder.categories.marketing, description: t.admin?.whatsappTemplates?.templateBuilder.categories.marketingDesc },
+    { value: 'authentication', label: t.admin?.whatsappTemplates?.templateBuilder.categories.authentication, description: t.admin?.whatsappTemplates?.templateBuilder.categories.authenticationDesc }
+  ];
+
+  // 🎨 Status Colors
+  const STATUS_CONFIG = {
+    draft: { color: 'bg-gray-100 text-gray-800', icon: <Edit className="h-3 w-3" />, label: t.admin?.whatsappTemplates?.templateBuilder.status.draft },
+    pending: { color: 'bg-yellow-100 text-yellow-800', icon: <Clock className="h-3 w-3" />, label: t.admin?.whatsappTemplates?.templateBuilder.status.pending },
+    approved: { color: 'bg-green-100 text-green-800', icon: <CheckCircle className="h-3 w-3" />, label: t.admin?.whatsappTemplates?.templateBuilder.status.approved },
+    rejected: { color: 'bg-red-100 text-red-800', icon: <X className="h-3 w-3" />, label: t.admin?.whatsappTemplates?.templateBuilder.status.rejected }
+  };
 
   // 🔄 Auto-generate preview variables
   useEffect(() => {
@@ -577,7 +590,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
           const variableNumber = match[1];
           if (!variables[variableNumber]) {
             // Sample değerler ata
-            variables[variableNumber] = `Örnek ${variableNumber}`;
+            variables[variableNumber] = `Sample ${variableNumber}`;
           }
         });
       }
@@ -630,8 +643,8 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
   const handleSave = async (submitForReview = false) => {
     if (!currentTemplate.name.trim()) {
       toast({
-        title: 'Hata',
-        description: 'Template adı gerekli',
+        title: t.admin?.whatsappTemplates?.templateBuilder.toasts.nameRequired,
+        description: t.admin?.whatsappTemplates?.templateBuilder.toasts.nameRequiredDesc,
         variant: 'destructive'
       });
       return;
@@ -639,8 +652,8 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
 
     if (currentTemplate.components.length === 0) {
       toast({
-        title: 'Hata',
-        description: 'En az bir component gerekli',
+        title: t.admin?.whatsappTemplates?.templateBuilder.toasts.componentRequired,
+        description: t.admin?.whatsappTemplates?.templateBuilder.toasts.componentRequiredDesc,
         variant: 'destructive'
       });
       return;
@@ -677,7 +690,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
         const validation = metaService.validateTemplateComponents(metaTemplateData.components);
         if (!validation.valid) {
           toast({
-            title: 'Validation Error',
+            title: t.admin?.whatsappTemplates?.templateBuilder.toasts.validationError,
             description: validation.errors.join(', '),
             variant: 'destructive'
           });
@@ -692,10 +705,11 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
         const result = await metaService.createTemplate(metaTemplateData);
 
         if (result.success && result.data) {
-          toast({
-            title: '🎉 Template Onaya Gönderildi!',
-            description: `Template "${currentTemplate.name}" Meta'ya gönderildi. Status: ${result.data.status}`,
-          });
+          // Bildirim ekle
+          addTemplateSubmittedNotification(currentTemplate.name);
+          
+          // Modal'ı göster
+          setShowSubmittedModal(true);
 
           // Parent component'e notify et
           onSave?.({
@@ -712,8 +726,8 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
       } else {
         // Sadece local draft olarak kaydet
         toast({
-          title: 'Taslak Kaydedildi',
-          description: 'Template taslak olarak kaydedildi. Onaya göndermek için "Onaya Gönder" butonunu kullanın.'
+          title: t.admin?.whatsappTemplates?.templateBuilder.toasts.draftSaved,
+          description: t.admin?.whatsappTemplates?.templateBuilder.toasts.draftSavedDesc
         });
 
         onSave?.({
@@ -724,7 +738,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
 
     } catch (error) {
       toast({
-        title: 'Hata',
+        title: t.admin?.whatsappTemplates?.templateBuilder.toasts.saveError,
         description: error instanceof Error ? error.message : 'Template kaydedilirken hata oluştu',
         variant: 'destructive'
       });
@@ -737,23 +751,23 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
   const validateTemplate = () => {
     const errors: string[] = [];
     
-    if (!currentTemplate.name.trim()) errors.push('Template adı gerekli');
-    if (currentTemplate.components.length === 0) errors.push('En az bir component gerekli');
+    if (!currentTemplate.name.trim()) errors.push(t.admin?.whatsappTemplates?.templateBuilder.validation.nameRequired);
+    if (currentTemplate.components.length === 0) errors.push(t.admin?.whatsappTemplates?.templateBuilder.validation.componentRequired);
     
     // Body component required
     const hasBody = currentTemplate.components.some(c => c.type === 'body');
-    if (!hasBody) errors.push('Body component zorunludur');
+    if (!hasBody) errors.push(t.admin?.whatsappTemplates?.templateBuilder.validation.bodyRequired);
     
     // Check text limits and variables
     currentTemplate.components.forEach((component, index) => {
       if (component.type === 'header' && (component.text?.length || 0) > 60) {
-        errors.push(`Header ${index + 1}: Maksimum 60 karakter`);
+        errors.push(t.admin?.whatsappTemplates?.templateBuilder.validation.headerMaxLength(index));
       }
       if (component.type === 'body' && (component.text?.length || 0) > 1024) {
-        errors.push(`Body ${index + 1}: Maksimum 1024 karakter`);
+        errors.push(t.admin?.whatsappTemplates?.templateBuilder.validation.bodyMaxLength(index));
       }
       if (component.type === 'footer' && (component.text?.length || 0) > 60) {
-        errors.push(`Footer ${index + 1}: Maksimum 60 karakter`);
+        errors.push(t.admin?.whatsappTemplates?.templateBuilder.validation.footerMaxLength(index));
       }
       
       // Variable validation for body component
@@ -781,7 +795,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
     const sortedVariables = [...variables].sort((a, b) => a - b);
     for (let i = 0; i < sortedVariables.length; i++) {
       if (sortedVariables[i] !== i + 1) {
-        errors.push(`Variable'lar sıralı olmalı (1'den başlayarak). Bulunan: ${variables.join(', ')}`);
+        errors.push(`${t.admin?.whatsappTemplates?.templateBuilder.validation.variableSequential} ${variables.join(', ')}`);
         break;
       }
     }
@@ -789,7 +803,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
     // 2. Dangling parameters kontrolü
     const trimmedText = text.trim();
     if (trimmedText.startsWith('{{') || trimmedText.endsWith('}}')) {
-      errors.push('Template variable ile başlayamaz veya bitemez');
+      errors.push(t.admin?.whatsappTemplates?.templateBuilder.validation.variableStartEnd);
     }
 
     // 3. Variable count vs text length kontrolü
@@ -797,7 +811,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
     const variableCount = variables.length;
     
     if (variableCount > 5 && textLength < 100) {
-      errors.push('Çok fazla variable var. Variable sayısını azaltın veya metni uzatın');
+      errors.push(t.admin?.whatsappTemplates?.templateBuilder.validation.tooManyVariables);
     }
 
          // 4. Special characters kontrolü - Sadece variable içindeki karakterleri kontrol et
@@ -820,10 +834,10 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Zap className="h-5 w-5 text-primary" />
-                WhatsApp Template Builder
+                {t.admin?.whatsappTemplates?.templateBuilder.title}
               </CardTitle>
               <CardDescription>
-                Enterprise-grade template editörü ve onay sistemi
+                {t.admin?.whatsappTemplates?.templateBuilder.description}
               </CardDescription>
             </div>
             
@@ -840,7 +854,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
           {/* Basic Info */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div>
-              <Label htmlFor="template-name">Template Adı *</Label>
+              <Label htmlFor="template-name">{t.admin?.whatsappTemplates?.templateBuilder.templateName}</Label>
               <Input
                 id="template-name"
                 value={currentTemplate.name}
@@ -849,29 +863,26 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
                   const sanitizedName = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_');
                   setCurrentTemplate(prev => ({ ...prev, name: sanitizedName }));
                 }}
-                placeholder="Örn: welcome_message"
+                placeholder={t.admin?.whatsappTemplates?.templateBuilder.templateNamePlaceholder}
                 className="mt-1"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Sadece küçük harfler, rakamlar ve alt çizgi (_) kullanabilirsiniz
+                {t.admin?.whatsappTemplates?.templateBuilder.templateNameHelper}
               </p>
               
                              {/* Variable Helper */}
                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                 <p className="text-xs font-medium text-blue-800 mb-2">📝 Variable Kullanımı:</p>
+                 <p className="text-xs font-medium text-blue-800 mb-2">{t.admin?.whatsappTemplates?.templateBuilder.variableUsage}</p>
                  <ul className="text-xs text-blue-700 space-y-1">
-                   <li>• <code className="bg-blue-100 px-1 rounded">{`{{1}}`}</code> - İlk değişken</li>
-                   <li>• <code className="bg-blue-100 px-1 rounded">{`{{2}}`}</code> - İkinci değişken</li>
-                   <li>• <code className="bg-blue-100 px-1 rounded">{`{{3}}`}</code> - Üçüncü değişken</li>
-                   <li>• Variable'lar sıralı olmalı (1, 2, 3...)</li>
-                   <li>• Template variable ile başlayamaz veya bitemez</li>
-                   <li>• #, $, % gibi özel karakterler kullanılamaz</li>
+                   {t.admin?.whatsappTemplates?.templateBuilder.variableUsageDesc.map((desc, index) => (
+                     <li key={index}>{desc}</li>
+                   ))}
                  </ul>
                </div>
             </div>
             
             <div>
-              <Label htmlFor="template-category">Kategori *</Label>
+              <Label htmlFor="template-category">{t.admin?.whatsappTemplates?.templateBuilder.category}</Label>
               <Select 
                 value={currentTemplate.category} 
                 onValueChange={(value) => setCurrentTemplate(prev => ({ ...prev, category: value as any }))}
@@ -893,7 +904,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
             </div>
             
             <div>
-              <Label htmlFor="template-language">Dil</Label>
+              <Label htmlFor="template-language">{t.admin?.whatsappTemplates?.templateBuilder.language}</Label>
               <Select 
                 value={currentTemplate.language} 
                 onValueChange={(value) => setCurrentTemplate(prev => ({ ...prev, language: value }))}
@@ -902,20 +913,20 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="tr">Türkçe</SelectItem>
-                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="tr">{t.admin?.whatsappTemplates?.templateBuilder.languages.turkish}</SelectItem>
+                  <SelectItem value="en">{t.admin?.whatsappTemplates?.templateBuilder.languages.english}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <div>
-            <Label htmlFor="template-description">Açıklama (Opsiyonel)</Label>
+            <Label htmlFor="template-description">{t.admin?.whatsappTemplates?.templateBuilder.descriptionOptional}</Label>
             <Textarea
               id="template-description"
               value={currentTemplate.description || ''}
               onChange={(e) => setCurrentTemplate(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Template'in ne için kullanılacağını açıklayın"
+              placeholder={t.admin?.whatsappTemplates?.templateBuilder.descriptionPlaceholder}
               rows={2}
               className="mt-1"
             />
@@ -929,9 +940,9 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Template Components</CardTitle>
+              <CardTitle className="text-lg">{t.admin?.whatsappTemplates?.templateBuilder.templateComponents}</CardTitle>
               <CardDescription>
-                WhatsApp mesaj bileşenlerini oluşturun ve düzenleyin
+                {t.admin?.whatsappTemplates?.templateBuilder.templateComponentsDesc}
               </CardDescription>
             </CardHeader>
             
@@ -944,7 +955,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
                   disabled={currentTemplate.components.some(c => c.type === 'header')}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Header
+                  {t.admin?.whatsappTemplates?.templateBuilder.componentTypes.header}
                 </Button>
                 <Button
                   variant="outline"
@@ -952,7 +963,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
                   disabled={currentTemplate.components.some(c => c.type === 'body')}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Body *
+                  {t.admin?.whatsappTemplates?.templateBuilder.componentTypes.body}
                 </Button>
                 <Button
                   variant="outline"
@@ -960,7 +971,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
                   disabled={currentTemplate.components.some(c => c.type === 'footer')}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Footer
+                  {t.admin?.whatsappTemplates?.templateBuilder.componentTypes.footer}
                 </Button>
                 <Button
                   variant="outline"
@@ -968,7 +979,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
                   disabled={currentTemplate.components.some(c => c.type === 'buttons')}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Buttons
+                  {t.admin?.whatsappTemplates?.templateBuilder.componentTypes.buttons}
                 </Button>
               </div>
 
@@ -980,14 +991,15 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
                     component={component}
                     onUpdate={(comp) => updateComponent(index, comp)}
                     onDelete={() => removeComponent(index)}
+                    t={t}
                   />
                 ))}
                 
                 {currentTemplate.components.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
                     <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Henüz component eklenmedi</p>
-                    <p className="text-sm">Başlamak için yukarıdaki butonları kullanın</p>
+                    <p>{t.admin?.whatsappTemplates?.templateBuilder.noComponents}</p>
+                    <p className="text-sm">{t.admin?.whatsappTemplates?.templateBuilder.noComponentsDesc}</p>
                   </div>
                 )}
               </div>
@@ -1000,7 +1012,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
               <CardHeader className="pb-3">
                 <CardTitle className="text-red-800 flex items-center gap-2">
                   <AlertCircle className="h-5 w-5" />
-                  Düzeltilmesi Gerekenler
+                  {t.admin?.whatsappTemplates?.templateBuilder.validationTitle}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -1021,9 +1033,9 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Canlı Önizleme</CardTitle>
+              <CardTitle className="text-lg">{t.admin?.whatsappTemplates?.templateBuilder.livePreview}</CardTitle>
               <CardDescription>
-                Template'in WhatsApp'ta nasıl görüneceği
+                {t.admin?.whatsappTemplates?.templateBuilder.livePreviewDesc}
               </CardDescription>
             </CardHeader>
             
@@ -1032,11 +1044,12 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
                 <TemplatePreview 
                   template={currentTemplate} 
                   variables={previewVariables}
+                  t={t}
                 />
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <Smartphone className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Component ekleyince önizleme görünecek</p>
+                  <p>{t.admin?.whatsappTemplates?.templateBuilder.previewEmpty}</p>
                 </div>
               )}
             </CardContent>
@@ -1046,7 +1059,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
           {Object.keys(previewVariables).length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Önizleme Değişkenleri</CardTitle>
+                <CardTitle className="text-sm">{t.admin?.whatsappTemplates?.templateBuilder.previewVariables}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -1082,23 +1095,23 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
               {isValid ? (
                 <Badge className="bg-green-100 text-green-800">
                   <CheckCircle className="h-3 w-3 mr-1" />
-                  Hazır
+                  {t.admin?.whatsappTemplates?.templateBuilder.ready}
                 </Badge>
               ) : (
                 <Badge className="bg-red-100 text-red-800">
                   <AlertCircle className="h-3 w-3 mr-1" />
-                  Eksikler var
+                  {t.admin?.whatsappTemplates?.templateBuilder.hasErrors}
                 </Badge>
               )}
               <span className="text-sm text-gray-600">
-                {currentTemplate.components.length} component
+                {t.admin?.whatsappTemplates?.templateBuilder.componentCount(currentTemplate.components.length)}
               </span>
             </div>
 
             <div className="flex gap-2">
               {onCancel && (
                 <Button variant="outline" onClick={onCancel}>
-                  İptal
+                  {t.admin?.whatsappTemplates?.templateBuilder.actions.cancel}
                 </Button>
               )}
               
@@ -1109,12 +1122,12 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
                   const testResult = await metaService.testConnection();
                   if (testResult.success) {
                     toast({
-                      title: '✅ API Bağlantısı Başarılı',
-                      description: 'Meta WhatsApp API bağlantısı çalışıyor',
+                      title: t.admin?.whatsappTemplates?.templateBuilder.toasts.apiTestSuccess,
+                      description: t.admin?.whatsappTemplates?.templateBuilder.toasts.apiTestSuccessDesc,
                     });
                   } else {
                     toast({
-                      title: '❌ API Bağlantı Hatası',
+                      title: t.admin?.whatsappTemplates?.templateBuilder.toasts.apiTestError,
                       description: testResult.error || 'Bilinmeyen hata',
                       variant: 'destructive'
                     });
@@ -1123,7 +1136,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
                 disabled={isSubmitting}
               >
                 <Settings className="h-4 w-4 mr-2" />
-                API Test
+                {t.admin?.whatsappTemplates?.templateBuilder.actions.apiTest}
               </Button>
               
               <Button
@@ -1136,12 +1149,12 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
                   const result = await metaService.createTemplate(testTemplate);
                   if (result.success) {
                     toast({
-                      title: '✅ Test Template Başarılı',
-                      description: `Test template oluşturuldu: ${result.data?.id}`,
+                      title: t.admin?.whatsappTemplates?.templateBuilder.toasts.testTemplateSuccess,
+                      description: t.admin?.whatsappTemplates?.templateBuilder.toasts.testTemplateSuccessDesc(result.data?.id || ''),
                     });
                   } else {
                     toast({
-                      title: '❌ Test Template Hatası',
+                      title: t.admin?.whatsappTemplates?.templateBuilder.toasts.testTemplateError,
                       description: result.error || 'Bilinmeyen hata',
                       variant: 'destructive'
                     });
@@ -1150,7 +1163,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
                 disabled={isSubmitting}
               >
                 <Play className="h-4 w-4 mr-2" />
-                Test Template
+                {t.admin?.whatsappTemplates?.templateBuilder.actions.testTemplate}
               </Button>
               
               <Button
@@ -1163,7 +1176,7 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
                 ) : (
                   <Save className="h-4 w-4 mr-2" />
                 )}
-                Taslak Kaydet
+                {t.admin?.whatsappTemplates?.templateBuilder.actions.saveDraft}
               </Button>
               
               <Button
@@ -1175,12 +1188,19 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
                 ) : (
                   <Send className="h-4 w-4 mr-2" />
                 )}
-                Onaya Gönder
+                {t.admin?.whatsappTemplates?.templateBuilder.actions.submitForApproval}
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Template Submitted Modal */}
+      <TemplateSubmittedModal
+        isOpen={showSubmittedModal}
+        onClose={() => setShowSubmittedModal(false)}
+        templateName={currentTemplate.name}
+      />
     </div>
   );
 }

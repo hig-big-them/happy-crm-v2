@@ -48,7 +48,8 @@ import {
   Settings,
   Globe,
   Filter,
-  RefreshCw
+  RefreshCw,
+  Trash2
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/mock-auth-client';
 import { useRouter } from 'next/navigation';
@@ -59,6 +60,7 @@ import { createMetaTemplateService } from '@/lib/services/meta-whatsapp-template
 import { formatDistanceToNow } from 'date-fns';
 import { tr, enUS } from 'date-fns/locale';
 import { useI18n } from '@/lib/i18n/client';
+import { useTemplateStatusListener, useTemplateStatusSimulator } from '@/hooks/use-template-status-listener';
 
 interface WhatsAppTemplate {
   id: string;
@@ -87,6 +89,7 @@ export default function WhatsAppTemplatesPage() {
   const supabase = createClient();
   const whatsappService = createWhatsAppService();
   const { t, locale } = useI18n();
+  const { simulateApproval, simulateRejection } = useTemplateStatusSimulator();
   
   const [templates, setTemplates] = useState<WhatsAppTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,6 +106,22 @@ export default function WhatsAppTemplatesPage() {
     total_sent: 0,
     avg_delivery_rate: 0,
     avg_read_rate: 0
+  });
+
+  // Template status değişikliklerini dinle
+  useTemplateStatusListener({
+    templates,
+    onStatusChange: (templateId, newStatus) => {
+      // Template listesini güncelle
+      setTemplates(prev => prev.map(template => 
+        template.id === templateId 
+          ? { ...template, status: newStatus }
+          : template
+      ));
+      
+      // Stats'ı yeniden hesapla
+      loadTemplates();
+    }
   });
 
   useEffect(() => {
@@ -421,6 +440,28 @@ export default function WhatsAppTemplatesPage() {
                 {t.admin?.whatsappTemplates?.actions.submitForApproval}
               </DropdownMenuItem>
             )}
+            
+            {/* Demo: Onay simülasyonu */}
+            {row.original.status === 'PENDING' && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => simulateApproval(row.original.id, row.original.name)}
+                  className="text-green-600"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  🎯 Demo: Onayla
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => simulateRejection(row.original.id, row.original.name)}
+                  className="text-red-600"
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  🎯 Demo: Reddet
+                </DropdownMenuItem>
+              </>
+            )}
+            
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               onClick={() => handleDeleteTemplate(row.original)}

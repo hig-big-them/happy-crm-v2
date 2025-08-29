@@ -24,6 +24,7 @@ import {
 } from "./ui/sheet";
 import { Menu, MessageSquare, Settings, LogOut, User, Languages } from "lucide-react";
 import { useI18n } from "@/lib/i18n/client";
+import { NotificationDropdown } from "./ui/notification-dropdown";
 
 interface NavbarProps {
   // İsteğe bağlı özellikler ekleyebilirsiniz
@@ -149,6 +150,9 @@ export function Navbar({}: NavbarProps) {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Notification Dropdown - sadece giriş yapmış kullanıcılar için */}
+          {!isLoading && user && <NotificationDropdown />}
+          
           <ThemeToggle />
           {/* Language Switcher */}
           <DropdownMenu>
