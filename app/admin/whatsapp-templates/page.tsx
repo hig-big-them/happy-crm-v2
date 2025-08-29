@@ -57,7 +57,8 @@ import TemplateBuilder from '@/components/messaging/template-builder';
 import { createWhatsAppService } from '@/lib/services/whatsapp-cloud-service';
 import { createMetaTemplateService } from '@/lib/services/meta-whatsapp-template-service';
 import { formatDistanceToNow } from 'date-fns';
-import { tr } from 'date-fns/locale';
+import { tr, enUS } from 'date-fns/locale';
+import { useI18n } from '@/lib/i18n/client';
 
 interface WhatsAppTemplate {
   id: string;
@@ -85,6 +86,7 @@ export default function WhatsAppTemplatesPage() {
   const router = useRouter();
   const supabase = createClient();
   const whatsappService = createWhatsAppService();
+  const { t, locale } = useI18n();
   
   const [templates, setTemplates] = useState<WhatsAppTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -149,8 +151,8 @@ export default function WhatsAppTemplatesPage() {
     } catch (error) {
       console.error('Error loading templates:', error);
       toast({
-        title: "Hata",
-        description: "Template'ler yüklenirken hata oluştu",
+        title: t.admin?.whatsappTemplates?.toasts.loadError,
+        description: t.admin?.whatsappTemplates?.toasts.loadErrorDesc,
         variant: "destructive"
       });
     } finally {
@@ -237,7 +239,7 @@ export default function WhatsAppTemplatesPage() {
   };
 
   const handleDeleteTemplate = async (template: WhatsAppTemplate) => {
-    if (!confirm(`"${template.name}" template'ini silmek istediğinize emin misiniz?`)) return;
+    if (!confirm(t.admin?.whatsappTemplates?.confirmDelete(template.name) || `Are you sure you want to delete "${template.name}" template?`)) return;
 
     try {
              const { error } = await supabase
@@ -248,16 +250,16 @@ export default function WhatsAppTemplatesPage() {
       if (error) throw error;
 
       toast({
-        title: "Başarılı",
-        description: "Template silindi",
+        title: t.admin?.whatsappTemplates?.toasts.templateDeleted,
+        description: t.admin?.whatsappTemplates?.toasts.templateDeletedDesc,
       });
 
       loadTemplates();
     } catch (error) {
       console.error('Error deleting template:', error);
       toast({
-        title: "Hata",
-        description: "Template silinirken hata oluştu",
+        title: t.admin?.whatsappTemplates?.toasts.deleteError,
+        description: t.admin?.whatsappTemplates?.toasts.deleteErrorDesc,
         variant: "destructive"
       });
     }
@@ -285,16 +287,16 @@ export default function WhatsAppTemplatesPage() {
       if (error) throw error;
 
       toast({
-        title: "Başarılı",
-        description: "Template onay için gönderildi",
+        title: t.admin?.whatsappTemplates?.toasts.templateSubmitted,
+        description: t.admin?.whatsappTemplates?.toasts.templateSubmittedDesc,
       });
 
       loadTemplates();
     } catch (error) {
       console.error('Error submitting template:', error);
       toast({
-        title: "Hata",
-        description: "Template gönderilirken hata oluştu",
+        title: t.admin?.whatsappTemplates?.toasts.submitError,
+        description: t.admin?.whatsappTemplates?.toasts.submitErrorDesc,
         variant: "destructive"
       });
     }
@@ -302,11 +304,11 @@ export default function WhatsAppTemplatesPage() {
 
   const getStatusBadge = (status: string) => {
     const config = {
-      DRAFT: { variant: 'secondary' as const, label: 'Taslak', icon: Edit },
-      PENDING: { variant: 'default' as const, label: 'Beklemede', icon: Clock },
-      APPROVED: { variant: 'success' as const, label: 'Onaylı', icon: CheckCircle },
-      REJECTED: { variant: 'destructive' as const, label: 'Reddedildi', icon: XCircle },
-      DISABLED: { variant: 'outline' as const, label: 'Devre Dışı', icon: AlertCircle }
+      DRAFT: { variant: 'secondary' as const, label: t.admin?.whatsappTemplates?.status.draft || 'Draft', icon: Edit },
+      PENDING: { variant: 'default' as const, label: t.admin?.whatsappTemplates?.status.pending || 'Pending', icon: Clock },
+      APPROVED: { variant: 'success' as const, label: t.admin?.whatsappTemplates?.status.approved || 'Approved', icon: CheckCircle },
+      REJECTED: { variant: 'destructive' as const, label: t.admin?.whatsappTemplates?.status.rejected || 'Rejected', icon: XCircle },
+      DISABLED: { variant: 'outline' as const, label: t.admin?.whatsappTemplates?.status.disabled || 'Disabled', icon: AlertCircle }
     };
 
     const { variant, label, icon: Icon } = config[status as keyof typeof config] || config.DRAFT;
@@ -320,15 +322,17 @@ export default function WhatsAppTemplatesPage() {
   };
 
   const getCategoryBadge = (category: string) => {
-    const colors = {
-      MARKETING: 'bg-blue-500',
-      UTILITY: 'bg-green-500',
-      AUTHENTICATION: 'bg-purple-500'
+    const config = {
+      MARKETING: { color: 'bg-blue-500', label: t.admin?.whatsappTemplates?.categories.marketing || 'Marketing' },
+      UTILITY: { color: 'bg-green-500', label: t.admin?.whatsappTemplates?.categories.utility || 'Utility' },
+      AUTHENTICATION: { color: 'bg-purple-500', label: t.admin?.whatsappTemplates?.categories.authentication || 'Authentication' }
     };
 
+    const { color, label } = config[category as keyof typeof config] || { color: 'bg-gray-500', label: category };
+
     return (
-      <Badge variant="outline" className={`${colors[category as keyof typeof colors]} text-white`}>
-        {category}
+      <Badge variant="outline" className={`${color} text-white`}>
+        {label}
       </Badge>
     );
   };
@@ -337,7 +341,7 @@ export default function WhatsAppTemplatesPage() {
   const columns: ColumnDef<WhatsAppTemplate>[] = [
     {
       accessorKey: 'name',
-      header: 'Template Adı',
+      header: t.admin?.whatsappTemplates?.table.templateName || 'Template Name',
       cell: ({ row }) => (
         <div>
           <div className="font-medium">{row.original.name}</div>
@@ -347,27 +351,27 @@ export default function WhatsAppTemplatesPage() {
     },
     {
       accessorKey: 'category',
-      header: 'Kategori',
+      header: t.admin?.whatsappTemplates?.table.category || 'Category',
       cell: ({ row }) => getCategoryBadge(row.original.category)
     },
     {
       accessorKey: 'status',
-      header: 'Durum',
+      header: t.admin?.whatsappTemplates?.table.status || 'Status',
       cell: ({ row }) => getStatusBadge(row.original.status)
     },
          {
        accessorKey: 'usage_count',
-       header: 'Kullanım',
+       header: t.admin?.whatsappTemplates?.table.usage || 'Usage',
        cell: ({ row }) => (
          <div className="text-center">
            <div className="font-medium">{(row.original.usage_count || 0).toLocaleString()}</div>
-           <div className="text-xs text-muted-foreground">mesaj</div>
+           <div className="text-xs text-muted-foreground">{t.admin?.whatsappTemplates?.table.messages}</div>
          </div>
        )
      },
          {
        accessorKey: 'delivery_rate',
-       header: 'Teslimat Oranı',
+       header: t.admin?.whatsappTemplates?.table.deliveryRate || 'Delivery Rate',
        cell: ({ row }) => (
          <div className="text-center">
            <div className="font-medium">{((row.original.delivery_rate || 0) * 100).toFixed(1)}%</div>
@@ -376,19 +380,19 @@ export default function WhatsAppTemplatesPage() {
      },
     {
       accessorKey: 'created_at',
-      header: 'Oluşturulma',
+      header: t.admin?.whatsappTemplates?.table.createdAt || 'Created',
       cell: ({ row }) => (
         <div className="text-sm">
           {formatDistanceToNow(new Date(row.original.created_at), {
             addSuffix: true,
-            locale: tr
+            locale: locale === 'tr' ? tr : enUS
           })}
         </div>
       )
     },
     {
       id: 'actions',
-      header: 'İşlemler',
+      header: t.admin?.whatsappTemplates?.table.actions || 'Actions',
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -402,19 +406,19 @@ export default function WhatsAppTemplatesPage() {
               setIsViewDialogOpen(true);
             }}>
               <Eye className="h-4 w-4 mr-2" />
-              Görüntüle
+              {t.admin?.whatsappTemplates?.actions.view}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => {
               setSelectedTemplate(row.original);
               setIsBuilderOpen(true);
             }}>
               <Edit className="h-4 w-4 mr-2" />
-              Düzenle
+              {t.admin?.whatsappTemplates?.actions.edit}
             </DropdownMenuItem>
             {row.original.status === 'DRAFT' && (
               <DropdownMenuItem onClick={() => handleSubmitForApproval(row.original)}>
                 <Send className="h-4 w-4 mr-2" />
-                Onaya Gönder
+                {t.admin?.whatsappTemplates?.actions.submitForApproval}
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
@@ -423,7 +427,7 @@ export default function WhatsAppTemplatesPage() {
               className="text-destructive"
             >
               <Trash className="h-4 w-4 mr-2" />
-              Sil
+              {t.admin?.whatsappTemplates?.actions.delete}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -436,15 +440,15 @@ export default function WhatsAppTemplatesPage() {
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">WhatsApp Template Yönetimi</h1>
+            <h1 className="text-3xl font-bold mb-2">{t.admin?.whatsappTemplates?.pageTitle}</h1>
             <p className="text-muted-foreground">
-              WhatsApp Business Cloud API template'lerini oluştur ve yönet
+              {t.admin?.whatsappTemplates?.pageDescription}
             </p>
           </div>
                      <div className="flex gap-3">
              <Button variant="outline" onClick={loadTemplates}>
                <RefreshCw className="h-4 w-4 mr-2" />
-               Yenile
+               {t.admin?.whatsappTemplates?.refresh}
              </Button>
                            <Button 
                 variant="outline" 
@@ -553,44 +557,44 @@ export default function WhatsAppTemplatesPage() {
                       await loadStats();
                       
                       toast({
-                        title: "Senkronizasyon Tamamlandı",
-                        description: `Meta API'den ${metaResult.data.length} template bulundu ve güncellendi`
+                        title: t.admin?.whatsappTemplates?.toasts.syncCompleted,
+                        description: t.admin?.whatsappTemplates?.toasts.syncCompletedDesc(metaResult.data.length)
                       });
                     } else {
                       console.error('❌ Meta API sync failed:', metaResult.error);
                       toast({
-                        title: "Senkronizasyon Hatası",
-                        description: metaResult.error || "Meta API'den template'ler alınamadı",
+                        title: t.admin?.whatsappTemplates?.toasts.syncError,
+                        description: metaResult.error || t.admin?.whatsappTemplates?.toasts.syncErrorDesc,
                         variant: "destructive"
                       });
                     }
                   } catch (error) {
                     console.error('❌ Manual sync error:', error);
                     toast({
-                      title: "Senkronizasyon Hatası",
-                      description: "Meta API senkronizasyonu sırasında hata oluştu",
+                      title: t.admin?.whatsappTemplates?.toasts.syncError,
+                      description: t.admin?.whatsappTemplates?.toasts.syncErrorDesc,
                       variant: "destructive"
                     });
                   }
                 }}
               >
                 <Globe className="h-4 w-4 mr-2" />
-                Meta API Senkronize Et
+                {t.admin?.whatsappTemplates?.metaApiSync}
               </Button>
             <Dialog open={isBuilderOpen} onOpenChange={setIsBuilderOpen}>
               <DialogTrigger asChild>
                 <Button onClick={() => setSelectedTemplate(null)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Yeni Template
+                  {t.admin?.whatsappTemplates?.newTemplate}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
-                    {selectedTemplate ? 'Template Düzenle' : 'Yeni Template Oluştur'}
+                    {selectedTemplate ? t.admin?.whatsappTemplates?.templateBuilder.editTitle : t.admin?.whatsappTemplates?.templateBuilder.createTitle}
                   </DialogTitle>
                   <DialogDescription>
-                    WhatsApp template'inizi tasarlayın ve önizleme yapın
+                    {selectedTemplate ? t.admin?.whatsappTemplates?.templateBuilder.editDescription : t.admin?.whatsappTemplates?.templateBuilder.createDescription}
                   </DialogDescription>
                 </DialogHeader>
                 <TemplateBuilder
@@ -646,13 +650,13 @@ export default function WhatsAppTemplatesPage() {
                       const isUpdate = !!selectedTemplate?.id;
                       toast({
                         title: isUpdate 
-                          ? (template.status === 'DRAFT' ? "Template Güncellendi" : "Template Onaya Gönderildi")
-                          : (template.status === 'DRAFT' ? "Taslak Kaydedildi" : "Template Onaya Gönderildi"),
+                          ? (template.status === 'DRAFT' ? t.admin?.whatsappTemplates?.toasts.templateUpdated : t.admin?.whatsappTemplates?.toasts.templateSentForApproval)
+                          : (template.status === 'DRAFT' ? t.admin?.whatsappTemplates?.toasts.draftSaved : t.admin?.whatsappTemplates?.toasts.templateSentForApproval),
                         description: isUpdate
-                          ? "Template başarıyla güncellendi"
+                          ? t.admin?.whatsappTemplates?.toasts.templateUpdatedDesc
                           : (template.status === 'DRAFT' 
-                              ? "Template taslak olarak kaydedildi" 
-                              : "Template Meta'ya gönderildi ve onay bekliyor")
+                              ? t.admin?.whatsappTemplates?.toasts.draftSavedDesc 
+                              : t.admin?.whatsappTemplates?.toasts.templateSentForApprovalDesc)
                       });
                       
                       setIsBuilderOpen(false);
@@ -661,8 +665,8 @@ export default function WhatsAppTemplatesPage() {
                     } catch (error) {
                       console.error('Error saving template:', error);
                       toast({
-                        title: "Hata",
-                        description: "Template kaydedilirken hata oluştu",
+                        title: t.admin?.whatsappTemplates?.toasts.saveError,
+                        description: t.admin?.whatsappTemplates?.toasts.saveErrorDesc,
                         variant: "destructive"
                       });
                     }
@@ -679,9 +683,9 @@ export default function WhatsAppTemplatesPage() {
             <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
               <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Template Görüntüle</DialogTitle>
+                  <DialogTitle>{t.admin?.whatsappTemplates?.templateView.title}</DialogTitle>
                   <DialogDescription>
-                    {selectedTemplate?.name} template'inin detaylarını görüntüleyin
+                    {selectedTemplate?.name && t.admin?.whatsappTemplates?.templateView.description(selectedTemplate.name)}
                   </DialogDescription>
                 </DialogHeader>
                 
@@ -690,19 +694,19 @@ export default function WhatsAppTemplatesPage() {
                     {/* Template Bilgileri */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium text-gray-700">Template Adı</label>
+                        <label className="text-sm font-medium text-gray-700">{t.admin?.whatsappTemplates?.templateView.templateName}</label>
                         <p className="mt-1 text-sm text-gray-900">{selectedTemplate.name}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700">Kategori</label>
+                        <label className="text-sm font-medium text-gray-700">{t.admin?.whatsappTemplates?.templateView.category}</label>
                         <p className="mt-1">{selectedTemplate.category}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700">Dil</label>
+                        <label className="text-sm font-medium text-gray-700">{t.admin?.whatsappTemplates?.templateView.language}</label>
                         <p className="mt-1 text-sm text-gray-900">{selectedTemplate.language}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700">Durum</label>
+                        <label className="text-sm font-medium text-gray-700">{t.admin?.whatsappTemplates?.templateView.status}</label>
                         <p className="mt-1">{getStatusBadge(selectedTemplate.status)}</p>
                       </div>
                     </div>
@@ -711,7 +715,7 @@ export default function WhatsAppTemplatesPage() {
                     <div className="space-y-4">
                       {selectedTemplate.header_text && (
                         <div>
-                          <label className="text-sm font-medium text-gray-700">Başlık</label>
+                          <label className="text-sm font-medium text-gray-700">{t.admin?.whatsappTemplates?.templateView.header}</label>
                           <div className="mt-1 p-3 bg-blue-50 rounded-md">
                             <p className="text-sm font-medium text-blue-900">{selectedTemplate.header_text}</p>
                           </div>
@@ -719,7 +723,7 @@ export default function WhatsAppTemplatesPage() {
                       )}
 
                       <div>
-                        <label className="text-sm font-medium text-gray-700">İçerik</label>
+                        <label className="text-sm font-medium text-gray-700">{t.admin?.whatsappTemplates?.templateView.content}</label>
                         <div className="mt-1 p-3 bg-gray-50 rounded-md">
                           <p className="text-sm text-gray-900 whitespace-pre-wrap">{selectedTemplate.body_text}</p>
                         </div>
@@ -727,7 +731,7 @@ export default function WhatsAppTemplatesPage() {
 
                       {selectedTemplate.footer_text && (
                         <div>
-                          <label className="text-sm font-medium text-gray-700">Alt Bilgi</label>
+                          <label className="text-sm font-medium text-gray-700">{t.admin?.whatsappTemplates?.templateView.footer}</label>
                           <div className="mt-1 p-3 bg-gray-50 rounded-md">
                             <p className="text-xs text-gray-600">{selectedTemplate.footer_text}</p>
                           </div>
@@ -736,7 +740,7 @@ export default function WhatsAppTemplatesPage() {
 
                       {selectedTemplate.buttons && selectedTemplate.buttons.length > 0 && (
                         <div>
-                          <label className="text-sm font-medium text-gray-700">Butonlar</label>
+                          <label className="text-sm font-medium text-gray-700">{t.admin?.whatsappTemplates?.templateView.buttons}</label>
                           <div className="mt-1 space-y-2">
                             {selectedTemplate.buttons.map((button: any, index: number) => (
                               <div key={index} className="p-2 bg-blue-100 rounded-md">
@@ -752,16 +756,16 @@ export default function WhatsAppTemplatesPage() {
                     {/* Meta API Bilgileri */}
                     {selectedTemplate.meta_template_id && (
                       <div className="border-t pt-4">
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Meta API Bilgileri</h4>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">{t.admin?.whatsappTemplates?.templateView.metaApiInfo}</h4>
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div>
-                            <span className="text-gray-600">Meta Template ID:</span>
+                            <span className="text-gray-600">{t.admin?.whatsappTemplates?.templateView.metaTemplateId}:</span>
                             <p className="font-mono text-xs">{selectedTemplate.meta_template_id}</p>
                           </div>
                           {selectedTemplate.created_at && (
                             <div>
-                              <span className="text-gray-600">Oluşturma Tarihi:</span>
-                              <p>{new Date(selectedTemplate.created_at).toLocaleDateString('tr-TR')}</p>
+                              <span className="text-gray-600">{t.admin?.whatsappTemplates?.templateView.createdAt}:</span>
+                              <p>{new Date(selectedTemplate.created_at).toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-US')}</p>
                             </div>
                           )}
                         </div>
@@ -780,37 +784,37 @@ export default function WhatsAppTemplatesPage() {
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">{stats.total_templates}</div>
-            <p className="text-sm text-muted-foreground">Toplam Template</p>
+            <p className="text-sm text-muted-foreground">{t.admin?.whatsappTemplates?.stats.totalTemplates}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-green-600">{stats.approved_templates}</div>
-            <p className="text-sm text-muted-foreground">Onaylı</p>
+            <p className="text-sm text-muted-foreground">{t.admin?.whatsappTemplates?.stats.approved}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-yellow-600">{stats.pending_templates}</div>
-            <p className="text-sm text-muted-foreground">Beklemede</p>
+            <p className="text-sm text-muted-foreground">{t.admin?.whatsappTemplates?.stats.pending}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">{stats.total_sent.toLocaleString()}</div>
-            <p className="text-sm text-muted-foreground">Gönderilen Mesaj</p>
+            <p className="text-sm text-muted-foreground">{t.admin?.whatsappTemplates?.stats.sentMessages}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">{(stats.avg_delivery_rate * 100).toFixed(1)}%</div>
-            <p className="text-sm text-muted-foreground">Ort. Teslimat</p>
+            <p className="text-sm text-muted-foreground">{t.admin?.whatsappTemplates?.stats.avgDelivery}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">{(stats.avg_read_rate * 100).toFixed(1)}%</div>
-            <p className="text-sm text-muted-foreground">Ort. Okunma</p>
+            <p className="text-sm text-muted-foreground">{t.admin?.whatsappTemplates?.stats.avgRead}</p>
           </CardContent>
         </Card>
       </div>
@@ -822,7 +826,7 @@ export default function WhatsAppTemplatesPage() {
             <div className="flex items-center gap-2">
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Template ara..."
+                placeholder={t.admin?.whatsappTemplates?.filters.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-64"
@@ -834,11 +838,11 @@ export default function WhatsAppTemplatesPage() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-3 py-2 border rounded-md"
             >
-              <option value="all">Tüm Durumlar</option>
-              <option value="DRAFT">Taslak</option>
-              <option value="PENDING">Beklemede</option>
-              <option value="APPROVED">Onaylı</option>
-              <option value="REJECTED">Reddedildi</option>
+              <option value="all">{t.admin?.whatsappTemplates?.filters.allStatuses}</option>
+              <option value="DRAFT">{t.admin?.whatsappTemplates?.status.draft}</option>
+              <option value="PENDING">{t.admin?.whatsappTemplates?.status.pending}</option>
+              <option value="APPROVED">{t.admin?.whatsappTemplates?.status.approved}</option>
+              <option value="REJECTED">{t.admin?.whatsappTemplates?.status.rejected}</option>
             </select>
             
             <select
@@ -846,10 +850,10 @@ export default function WhatsAppTemplatesPage() {
               onChange={(e) => setCategoryFilter(e.target.value)}
               className="px-3 py-2 border rounded-md"
             >
-              <option value="all">Tüm Kategoriler</option>
-              <option value="MARKETING">Marketing</option>
-              <option value="UTILITY">Utility</option>
-              <option value="AUTHENTICATION">Authentication</option>
+              <option value="all">{t.admin?.whatsappTemplates?.filters.allCategories}</option>
+              <option value="MARKETING">{t.admin?.whatsappTemplates?.categories.marketing}</option>
+              <option value="UTILITY">{t.admin?.whatsappTemplates?.categories.utility}</option>
+              <option value="AUTHENTICATION">{t.admin?.whatsappTemplates?.categories.authentication}</option>
             </select>
           </div>
         </CardContent>
@@ -858,7 +862,7 @@ export default function WhatsAppTemplatesPage() {
       {/* Template Tablosu */}
       <Card>
         <CardHeader>
-          <CardTitle>Template'ler</CardTitle>
+          <CardTitle>{t.admin?.whatsappTemplates?.pageTitle}</CardTitle>
         </CardHeader>
         <CardContent>
           <DataTable

@@ -234,6 +234,100 @@ export interface Dictionaries {
         removeFromAgency: string
       }
     }
+    whatsappTemplates?: {
+      pageTitle: string
+      pageDescription: string
+      newTemplate: string
+      refresh: string
+      metaApiSync: string
+      templateBuilder: {
+        createTitle: string
+        editTitle: string
+        createDescription: string
+        editDescription: string
+      }
+      templateView: {
+        title: string
+        description: (name: string) => string
+        templateName: string
+        category: string
+        language: string
+        status: string
+        header: string
+        content: string
+        footer: string
+        buttons: string
+        metaApiInfo: string
+        metaTemplateId: string
+        createdAt: string
+      }
+      stats: {
+        totalTemplates: string
+        approved: string
+        pending: string
+        sentMessages: string
+        avgDelivery: string
+        avgRead: string
+      }
+      filters: {
+        searchPlaceholder: string
+        allStatuses: string
+        allCategories: string
+      }
+      table: {
+        templateName: string
+        category: string
+        status: string
+        usage: string
+        deliveryRate: string
+        createdAt: string
+        actions: string
+        messages: string
+      }
+      actions: {
+        view: string
+        edit: string
+        submitForApproval: string
+        delete: string
+      }
+      status: {
+        draft: string
+        pending: string
+        approved: string
+        rejected: string
+        disabled: string
+      }
+      categories: {
+        marketing: string
+        utility: string
+        authentication: string
+      }
+      confirmDelete: (name: string) => string
+      toasts: {
+        templateDeleted: string
+        templateDeletedDesc: string
+        templateSubmitted: string
+        templateSubmittedDesc: string
+        templateUpdated: string
+        templateUpdatedDesc: string
+        draftSaved: string
+        draftSavedDesc: string
+        templateSentForApproval: string
+        templateSentForApprovalDesc: string
+        syncCompleted: string
+        syncCompletedDesc: (count: number) => string
+        syncError: string
+        syncErrorDesc: string
+        loadError: string
+        loadErrorDesc: string
+        deleteError: string
+        deleteErrorDesc: string
+        submitError: string
+        submitErrorDesc: string
+        saveError: string
+        saveErrorDesc: string
+      }
+    }
     settings?: {
       pageTitle: string
       pageDesc: string
@@ -481,6 +575,100 @@ const tr: Dictionaries = {
         removeFromAgency: "Bu ajanstan çıkar"
       }
     },
+    whatsappTemplates: {
+      pageTitle: "WhatsApp Template Yönetimi",
+      pageDescription: "WhatsApp Business Cloud API template'lerini oluştur ve yönet",
+      newTemplate: "Yeni Template",
+      refresh: "Yenile",
+      metaApiSync: "Meta API Senkronize Et",
+      templateBuilder: {
+        createTitle: "Yeni Template Oluştur",
+        editTitle: "Template Düzenle",
+        createDescription: "WhatsApp template'inizi tasarlayın ve önizleme yapın",
+        editDescription: "WhatsApp template'inizi tasarlayın ve önizleme yapın"
+      },
+      templateView: {
+        title: "Template Görüntüle",
+        description: (name) => `${name} template'inin detaylarını görüntüleyin`,
+        templateName: "Template Adı",
+        category: "Kategori",
+        language: "Dil",
+        status: "Durum",
+        header: "Başlık",
+        content: "İçerik",
+        footer: "Alt Bilgi",
+        buttons: "Butonlar",
+        metaApiInfo: "Meta API Bilgileri",
+        metaTemplateId: "Meta Template ID",
+        createdAt: "Oluşturma Tarihi"
+      },
+      stats: {
+        totalTemplates: "Toplam Template",
+        approved: "Onaylı",
+        pending: "Beklemede",
+        sentMessages: "Gönderilen Mesaj",
+        avgDelivery: "Ort. Teslimat",
+        avgRead: "Ort. Okunma"
+      },
+      filters: {
+        searchPlaceholder: "Template ara...",
+        allStatuses: "Tüm Durumlar",
+        allCategories: "Tüm Kategoriler"
+      },
+      table: {
+        templateName: "Template Adı",
+        category: "Kategori",
+        status: "Durum",
+        usage: "Kullanım",
+        deliveryRate: "Teslimat Oranı",
+        createdAt: "Oluşturulma",
+        actions: "İşlemler",
+        messages: "mesaj"
+      },
+      actions: {
+        view: "Görüntüle",
+        edit: "Düzenle",
+        submitForApproval: "Onaya Gönder",
+        delete: "Sil"
+      },
+      status: {
+        draft: "Taslak",
+        pending: "Beklemede",
+        approved: "Onaylı",
+        rejected: "Reddedildi",
+        disabled: "Devre Dışı"
+      },
+      categories: {
+        marketing: "Marketing",
+        utility: "Utility",
+        authentication: "Authentication"
+      },
+      confirmDelete: (name) => `"${name}" template'ini silmek istediğinize emin misiniz?`,
+      toasts: {
+        templateDeleted: "Başarılı",
+        templateDeletedDesc: "Template silindi",
+        templateSubmitted: "Başarılı",
+        templateSubmittedDesc: "Template onay için gönderildi",
+        templateUpdated: "Template Güncellendi",
+        templateUpdatedDesc: "Template başarıyla güncellendi",
+        draftSaved: "Taslak Kaydedildi",
+        draftSavedDesc: "Template taslak olarak kaydedildi",
+        templateSentForApproval: "Template Onaya Gönderildi",
+        templateSentForApprovalDesc: "Template Meta'ya gönderildi ve onay bekliyor",
+        syncCompleted: "Senkronizasyon Tamamlandı",
+        syncCompletedDesc: (count) => `Meta API'den ${count} template bulundu ve güncellendi`,
+        syncError: "Senkronizasyon Hatası",
+        syncErrorDesc: "Meta API senkronizasyonu sırasında hata oluştu",
+        loadError: "Hata",
+        loadErrorDesc: "Template'ler yüklenirken hata oluştu",
+        deleteError: "Hata",
+        deleteErrorDesc: "Template silinirken hata oluştu",
+        submitError: "Hata",
+        submitErrorDesc: "Template gönderilirken hata oluştu",
+        saveError: "Hata",
+        saveErrorDesc: "Template kaydedilirken hata oluştu"
+      }
+    },
     settings: {
       pageTitle: "Admin Ayarları",
       pageDesc: "Sistem yönetimi ve kullanıcı işlemleri için admin araçları",
@@ -726,6 +914,100 @@ const en: Dictionaries = {
         agent: "Agency",
         noAgencyMembership: "No agency membership",
         removeFromAgency: "Remove from this agency"
+      }
+    },
+    whatsappTemplates: {
+      pageTitle: "WhatsApp Template Management",
+      pageDescription: "Create and manage WhatsApp Business Cloud API templates",
+      newTemplate: "New Template",
+      refresh: "Refresh",
+      metaApiSync: "Sync Meta API",
+      templateBuilder: {
+        createTitle: "Create New Template",
+        editTitle: "Edit Template",
+        createDescription: "Design your WhatsApp template and preview",
+        editDescription: "Design your WhatsApp template and preview"
+      },
+      templateView: {
+        title: "View Template",
+        description: (name) => `View details of ${name} template`,
+        templateName: "Template Name",
+        category: "Category",
+        language: "Language",
+        status: "Status",
+        header: "Header",
+        content: "Content",
+        footer: "Footer",
+        buttons: "Buttons",
+        metaApiInfo: "Meta API Information",
+        metaTemplateId: "Meta Template ID",
+        createdAt: "Created At"
+      },
+      stats: {
+        totalTemplates: "Total Templates",
+        approved: "Approved",
+        pending: "Pending",
+        sentMessages: "Sent Messages",
+        avgDelivery: "Avg. Delivery",
+        avgRead: "Avg. Read"
+      },
+      filters: {
+        searchPlaceholder: "Search templates...",
+        allStatuses: "All Statuses",
+        allCategories: "All Categories"
+      },
+      table: {
+        templateName: "Template Name",
+        category: "Category",
+        status: "Status",
+        usage: "Usage",
+        deliveryRate: "Delivery Rate",
+        createdAt: "Created",
+        actions: "Actions",
+        messages: "messages"
+      },
+      actions: {
+        view: "View",
+        edit: "Edit",
+        submitForApproval: "Submit for Approval",
+        delete: "Delete"
+      },
+      status: {
+        draft: "Draft",
+        pending: "Pending",
+        approved: "Approved",
+        rejected: "Rejected",
+        disabled: "Disabled"
+      },
+      categories: {
+        marketing: "Marketing",
+        utility: "Utility",
+        authentication: "Authentication"
+      },
+      confirmDelete: (name) => `Are you sure you want to delete "${name}" template?`,
+      toasts: {
+        templateDeleted: "Success",
+        templateDeletedDesc: "Template deleted",
+        templateSubmitted: "Success",
+        templateSubmittedDesc: "Template submitted for approval",
+        templateUpdated: "Template Updated",
+        templateUpdatedDesc: "Template successfully updated",
+        draftSaved: "Draft Saved",
+        draftSavedDesc: "Template saved as draft",
+        templateSentForApproval: "Template Sent for Approval",
+        templateSentForApprovalDesc: "Template sent to Meta and awaiting approval",
+        syncCompleted: "Sync Completed",
+        syncCompletedDesc: (count) => `Found and updated ${count} templates from Meta API`,
+        syncError: "Sync Error",
+        syncErrorDesc: "Error occurred during Meta API synchronization",
+        loadError: "Error",
+        loadErrorDesc: "Error loading templates",
+        deleteError: "Error",
+        deleteErrorDesc: "Error deleting template",
+        submitError: "Error",
+        submitErrorDesc: "Error submitting template",
+        saveError: "Error",
+        saveErrorDesc: "Error saving template"
       }
     },
     settings: {

@@ -120,6 +120,13 @@ export async function POST(request: Request) {
     let finalWabaId = waba_id;
     let finalPhoneNumberId = phone_number_id;
     
+    // GEÇICI: App Review beklerken hardcoded WABA bilgileri
+    if (process.env.NODE_ENV === 'production' && !finalWabaId) {
+      console.log('⚠️ App Review pending - using hardcoded WABA ID');
+      finalWabaId = '637661996065430'; // Bilinen WABA ID
+      finalPhoneNumberId = '768446963020006'; // Bilinen Phone Number ID
+    }
+    
     if (!finalWabaId || !finalPhoneNumberId) {
       console.log('🔍 WABA ID or Phone Number ID missing, fetching from Graph API...');
       
