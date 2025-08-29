@@ -19,8 +19,13 @@ export async function GET(request: Request) {
   if (code) {
     console.log('📋 OAuth redirect received via GET:', { code: code.substring(0, 10) + '...', state });
     
-    // Redirect to frontend with code
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || 'https://happysmileclinic.com'}/?code=${code}&state=${state || ''}`);
+    // Return JSON response instead of redirect to prevent unwanted navigation
+    return NextResponse.json({ 
+      success: true, 
+      code, 
+      state,
+      message: 'OAuth code received successfully'
+    });
   }
   
   return NextResponse.json({ message: 'WhatsApp OAuth endpoint' });

@@ -191,13 +191,17 @@ const EmbeddedSignupButton = ({
         console.log('📱 Setting WhatsApp data for modal:', whatsappInfo);
         
         if (skipSignupModal) {
-          // Welcome sayfasında signup modal'ını atla, direkt success callback'ini çağır
+          // WhatsApp Settings sayfasında signup modal'ını atla, direkt success callback'ini çağır
           console.log('🔄 Skipping signup modal, calling success callback directly');
           onSuccess?.({
             code: '',
             phone_number_id: result.data?.phone_number_id || '',
             waba_id: result.data?.waba_id || ''
           });
+          
+          // WhatsApp verilerini temizle
+          setWhatsappData(null);
+          setShowSignupModal(false);
           
           toast({
             title: "WhatsApp Business Bağlandı!",
@@ -820,7 +824,7 @@ const EmbeddedSignupButton = ({
         onDecline={handleTermsDecline}
       />
 
-      {whatsappData && (
+      {whatsappData && !skipSignupModal && (
         <SignupModal
           isOpen={showSignupModal}
           onClose={() => {

@@ -23,8 +23,9 @@ import {
   Link,
   Globe,
   Webhook,
-  Server,
+  Loader2,
   Info,
+  Server,
   Copy,
   Eye,
   EyeOff,
@@ -36,7 +37,6 @@ import {
   Edit2,
   Check,
   X,
-  Loader2,
   Smartphone,
   Building2,
   User,
@@ -109,6 +109,8 @@ export default function WhatsAppSettingsPage() {
   const [testingConnection, setTestingConnection] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('numbers');
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
+  const [registrationPin, setRegistrationPin] = useState('');
+  const [registering, setRegistering] = useState(false);
   
   const supabase = createClient();
 
@@ -133,6 +135,7 @@ export default function WhatsAppSettingsPage() {
     console.log('📱 [WhatsApp Settings] Starting number registration:', phoneNumberId);
     
     try {
+      setRegistering(true);
       setLoading(true);
       
       const response = await fetch('/api/whatsapp/register-number', {
@@ -197,6 +200,8 @@ export default function WhatsAppSettingsPage() {
       return false;
     } finally {
       setLoading(false);
+      setRegistering(false);
+      setRegistrationPin(''); // PIN'i temizle
     }
   };
 
@@ -1016,8 +1021,14 @@ export default function WhatsAppSettingsPage() {
               
               <CardContent>
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="grid w-full grid-cols-4">
+                  <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="basic">{locale === 'tr' ? 'Temel Bilgiler' : 'Basic Info'}</TabsTrigger>
+                    <TabsTrigger value="registration" className="relative">
+                      {locale === 'tr' ? 'Kayıt Durumu' : 'Registration Status'}
+                      {selectedConfig?.status === 'PENDING' && (
+                        <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full"></div>
+                      )}
+                    </TabsTrigger>
                     <TabsTrigger value="api">{locale === 'tr' ? 'API Ayarları' : 'API Settings'}</TabsTrigger>
                     <TabsTrigger value="webhook">Webhook</TabsTrigger>
                     <TabsTrigger value="templates">{locale === 'tr' ? 'Şablonlar' : 'Templates'}</TabsTrigger>
@@ -1180,6 +1191,145 @@ export default function WhatsAppSettingsPage() {
                         />
                       </div>
                     </div>
+                  </TabsContent>
+                  
+                  {/* Registration Status Tab */}
+                  <TabsContent value="registration" className="space-y-4 mt-4">
+                    {selectedConfig?.status === 'PENDING' ? (
+                      <div className="space-y-4">
+                        <Alert className="border-orange-200 bg-orange-50">
+                          <AlertCircle className="h-4 w-4 text-orange-600" />
+                          <AlertDescription className="text-orange-800">
+                            {locale === 'tr' 
+                              ? 'Bu numara henüz WhatsApp Business API\'ye kayıtlı değil. Kayıt işlemini tamamlamak için aşağıdaki adımları takip edin.'
+                              : 'This number is not yet registered with WhatsApp Business API. Follow the steps below to complete registration.'
+                            }
+                          </AlertDescription>
+                        </Alert>
+
+                        <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Phone className="h-5 w-5 text-blue-600" />
+                            <h3 className="font-medium">
+                              {locale === 'tr' ? 'Numara Kayıt İşlemi' : 'Number Registration Process'}
+                            </h3>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            <div className="text-sm text-gray-600">
+                              {locale === 'tr' 
+                                ? 'WhatsApp Business API\'ye numara kaydı için 6 haneli PIN kodunuz gerekli.'
+                                : 'A 6-digit PIN code is required to register your number with WhatsApp Business API.'
+                              }
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label htmlFor="registration-pin">
+                                {locale === 'tr' ? 'PIN Kodu (6 haneli)' : 'PIN Code (6 digits)'}
+                              </Label>
+                              <Input
+                                id="registration-pin"
+                                type="text"
+                                placeholder="111111"
+                                maxLength={6}
+                                className="font-mono text-center text-lg tracking-widest"
+                                value={registrationPin}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                  setRegistrationPin(value);
+                                }}
+                              />
+                              <div className="text-xs text-gray-500">
+                                {locale === 'tr' 
+                                  ? 'Bu PIN kodu WhatsApp Business hesabınızın telefon numarasına SMS olarak gönderilir.'
+                                  : 'This PIN code will be sent via SMS to your WhatsApp Business account phone number.'
+                                }
+                              </div>
+                            </div>
+                            
+                            <Button 
+                              onClick={() => registerWhatsAppNumber(selectedConfig.phone_number_id, registrationPin)}
+                              disabled={registrationPin.length !== 6 || registering}
+                              className="w-full"
+                            >
+                              {registering ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  {locale === 'tr' ? 'Kaydediliyor...' : 'Registering...'}
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  {locale === 'tr' ? 'Numarayı Kaydet' : 'Register Number'}
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+
+                        <Alert>
+                          <Info className="h-4 w-4" />
+                          <AlertDescription>
+                            <strong>{locale === 'tr' ? 'Önemli:' : 'Important:'}</strong>{' '}
+                            {locale === 'tr' 
+                              ? 'Kayıt işlemi tamamlandıktan sonra numara aktif hale gelecek ve mesaj göndermeye başlayabileceksiniz.'
+                              : 'After registration is complete, the number will become active and you can start sending messages.'
+                            }
+                          </AlertDescription>
+                        </Alert>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <Alert className="border-green-200 bg-green-50">
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <AlertDescription className="text-green-800">
+                            {locale === 'tr' 
+                              ? 'Bu numara başarıyla WhatsApp Business API\'ye kayıtlı ve aktif durumda.'
+                              : 'This number is successfully registered and active with WhatsApp Business API.'
+                            }
+                          </AlertDescription>
+                        </Alert>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>{locale === 'tr' ? 'Kayıt Durumu' : 'Registration Status'}</Label>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary" className="bg-green-100 text-green-800">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                {locale === 'tr' ? 'Kayıtlı' : 'Registered'}
+                              </Badge>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label>{locale === 'tr' ? 'Kalite Puanı' : 'Quality Rating'}</Label>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary" className={cn(
+                                selectedConfig?.quality_rating === 'GREEN' && "bg-green-100 text-green-800",
+                                selectedConfig?.quality_rating === 'YELLOW' && "bg-yellow-100 text-yellow-800",
+                                selectedConfig?.quality_rating === 'RED' && "bg-red-100 text-red-800"
+                              )}>
+                                {selectedConfig?.quality_rating || 'GREEN'}
+                              </Badge>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label>{locale === 'tr' ? 'Mesajlaşma Limiti' : 'Messaging Limit'}</Label>
+                            <div className="text-sm font-mono">
+                              {selectedConfig?.messaging_limit_tier || '1000'} {locale === 'tr' ? 'mesaj/gün' : 'messages/day'}
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label>{locale === 'tr' ? 'Kayıt Tarihi' : 'Registration Date'}</Label>
+                            <div className="text-sm text-muted-foreground">
+                              {selectedConfig?.created_at ? new Date(selectedConfig.created_at).toLocaleDateString() : 'N/A'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </TabsContent>
                   
                   {/* API Settings Tab */}
