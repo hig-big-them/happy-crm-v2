@@ -2,13 +2,22 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
 // Redis client configuration - supports both Vercel integration and manual setup
-const redis = new Redis({
-  url: process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || "",
-  token: process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || "",
-});
+const redisUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || "";
+const redisToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || "";
 
-// Different rate limiters for different types of requests
-export const rateLimiters = {
+// Only create Redis client if we have valid configuration
+let redis: Redis | null = null;
+if (redisUrl && redisUrl.startsWith('https://') && redisToken) {
+  redis = new Redis({
+    url: redisUrl,
+    token: redisToken,
+  });
+} else {
+  console.log('⚠️ Redis not configured - rate limiting disabled');
+}
+
+// Different rate limiters for different types of requests - only create if Redis is available
+export const rateLimiters = redis ? {
   // General API routes - 100 requests per hour per IP
   api: new Ratelimit({
     redis,
@@ -50,7 +59,7 @@ export const rateLimiters = {
     limiter: Ratelimit.slidingWindow(5, "1 h"),
     analytics: true,
   }),
-};
+} : {};
 
 // Rate limiting types
 export type RateLimitType = keyof typeof rateLimiters;
@@ -75,6 +84,16 @@ export const applyRateLimit = async (
   type: RateLimitType = 'api'
 ): Promise<RateLimitResult> => {
   try {
+    // If Redis is not configured, allow all requests
+    if (!redis || !rateLimiters[type]) {
+      return {
+        success: true,
+        limit: 0,
+        remaining: 0,
+        reset: Date.now(),
+      };
+    }
+    
     const limiter = rateLimiters[type];
     const { success, limit, reset, remaining } = await limiter.limit(identifier);
     
@@ -169,8 +188,7 @@ export const rateLimitMiddleware = async (
   customIdentifier?: string
 ): Promise<RateLimitResult | null> => {
   // Skip rate limiting if Redis is not configured
-  const hasRedisConfig = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  if (!hasRedisConfig) {
+  if (!redis) {
     console.log('⚠️ Rate limiting skipped - Redis not configured');
     return null;
   }
@@ -218,5 +236,5 @@ export const rateLimitWebhook = async (
   return applyRateLimit(`webhook:${endpoint}:${sourceIP}`, 'webhook');
 };
 
-// Export redis client for advanced usage
+// Export redis client for advanced usage (may be null if not configured)
 export { redis };

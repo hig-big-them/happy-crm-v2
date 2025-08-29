@@ -2880,7 +2880,7 @@ function NewMessageModal({
   onPhoneChange: (phone: string) => void;
   text: string;
   onTextChange: (text: string) => void;
-  template: WhatsApp Template | null;
+  template: WhatsAppTemplate | null;
   onTemplateChange: (template: WhatsAppTemplate | null) => void;
   messageType: 'text' | 'template';
   onMessageTypeChange: (type: 'text' | 'template') => void;

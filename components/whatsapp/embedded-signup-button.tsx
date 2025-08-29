@@ -955,4 +955,5 @@ const EmbeddedSignupButton = ({
   );
 };
 
+export { EmbeddedSignupButton };
 export default EmbeddedSignupButton;
