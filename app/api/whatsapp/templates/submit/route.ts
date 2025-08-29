@@ -4,13 +4,19 @@ import { cookies } from 'next/headers';
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🚀 [WhatsApp Templates] POST /api/whatsapp/templates/submit - Template submission endpoint called');
+    console.log('📄 [WhatsApp Business Management] Initiating template submission to Facebook');
+    
     const supabase = createRouteHandlerClient({ cookies });
     
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
+      console.log('❌ [WhatsApp Templates] Authentication failed');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    console.log('✅ [WhatsApp Templates] User authenticated:', user.id);
 
     // Check if user is admin
     const { data: userData } = await supabase
@@ -20,11 +26,17 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (!userData || !['admin', 'super_admin'].includes(userData.role)) {
+      console.log('❌ [WhatsApp Templates] Insufficient permissions - admin role required');
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { templateId } = await request.json();
+    console.log('✅ [WhatsApp Templates] Admin permissions verified');
 
+    const { templateId } = await request.json();
+    console.log('📋 [WhatsApp Templates] Template submission request:', { templateId });
+
+    console.log('🔍 [WhatsApp Templates] Fetching template details from database');
+    
     // Get template details
     const { data: template, error: templateError } = await supabase
       .from('message_templates')
@@ -33,9 +45,19 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (templateError || !template) {
+      console.log('❌ [WhatsApp Templates] Template not found in database:', templateId);
       return NextResponse.json({ error: 'Template not found' }, { status: 404 });
     }
 
+    console.log('✅ [WhatsApp Templates] Template found:', {
+      name: template.name,
+      category: template.category,
+      language: template.language,
+      status: template.status
+    });
+
+    console.log('🔧 [WhatsApp Templates] Preparing template components for Facebook API');
+    
     // Prepare the template for Meta API
     const components = [];
 
@@ -73,6 +95,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    console.log('📊 [WhatsApp Templates] Template components prepared:', {
+      componentsCount: components.length,
+      hasHeader: components.some(c => c.type === 'HEADER'),
+      hasFooter: components.some(c => c.type === 'FOOTER'),
+      hasButtons: components.some(c => c.type === 'BUTTONS')
+    });
+
     // Meta API configuration
     const businessAccountId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || '640124182025093';
     const accessToken = process.env.WHATSAPP_ACCESS_TOKEN || 'EAAZA7w2AadZC4BPPRnKtBXXhi8ZAZBV06ZCHRurPtBikOW4umxYccikfaEcKUiopL8BnEAhO7X6YEl0CZAJ0nQpv8ZAD1BPZCOM6Isl49iowBHjBJwIW7lu33kPzykNBNtTlhRIuX99X2gZAcgwwjTzyLU9YjiuytvdKsPwQQIVS2SYDeYwUKFK1sD17ubZBC2J01D1yIsSaCRTAU9TZCCwP80gHFKcors4XQkFCFYtdYh6';
@@ -86,7 +115,15 @@ export async function POST(request: NextRequest) {
       components: components
     };
 
-    console.log('Submitting template to Meta:', metaPayload);
+    console.log('🌐 [WhatsApp Business Management] Submitting template to Facebook Graph API');
+    console.log('📡 [WhatsApp Templates] POST request to:', metaUrl);
+    console.log('🔑 [WhatsApp Business Management] Using access token with whatsapp_business_management permission');
+    console.log('📋 [WhatsApp Templates] Template payload:', {
+      name: metaPayload.name,
+      category: metaPayload.category,
+      language: metaPayload.language,
+      componentsCount: metaPayload.components.length
+    });
 
     const metaResponse = await fetch(metaUrl, {
       method: 'POST',
@@ -99,8 +136,17 @@ export async function POST(request: NextRequest) {
 
     const metaData = await metaResponse.json();
     
+    console.log('📨 [WhatsApp Templates] Facebook Graph API response received');
+    console.log('📊 [WhatsApp Business Management] Response status:', metaResponse.status);
+    
     if (!metaResponse.ok) {
-      console.error('Meta API error:', metaData);
+      console.log('❌ [WhatsApp Templates] Template submission failed');
+      console.log('🔍 [WhatsApp Business Management] Error details:', {
+        status: metaResponse.status,
+        error: metaData.error?.message,
+        code: metaData.error?.code,
+        type: metaData.error?.type
+      });
       return NextResponse.json({
         success: false,
         error: 'Failed to submit template to Meta',
@@ -108,6 +154,11 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    console.log('✅ [WhatsApp Templates] Template submitted successfully to Facebook');
+    console.log('📱 [WhatsApp Business Management] Template ID:', metaData.id);
+
+    console.log('💾 [WhatsApp Templates] Updating template status in database');
+    
     // Update template status in database
     const { error: updateError } = await supabase
       .from('message_templates')
@@ -119,8 +170,12 @@ export async function POST(request: NextRequest) {
       .eq('id', templateId);
 
     if (updateError) {
-      console.error('Database update error:', updateError);
+      console.log('❌ [WhatsApp Templates] Database update failed:', updateError);
+    } else {
+      console.log('✅ [WhatsApp Templates] Template status updated to PENDING in database');
     }
+
+    console.log('🎯 [WhatsApp Templates] Template submission endpoint completed successfully');
 
     return NextResponse.json({
       success: true,
@@ -130,7 +185,8 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Template submission error:', error);
+    console.log('💥 [WhatsApp Templates] Unexpected error in template submission');
+    console.log('🔍 [WhatsApp Business Management] Error details:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }

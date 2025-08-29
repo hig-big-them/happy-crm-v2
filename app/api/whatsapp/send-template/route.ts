@@ -5,10 +5,21 @@ import { rateLimitMiddleware, createRateLimitResponse } from '@/lib/security/rat
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🚀 [WhatsApp API] POST /api/whatsapp/send-template - Template message endpoint called');
+    console.log('📄 [WhatsApp Business Messaging] Initiating template message send request');
+    
     const body = await request.json()
     const { to, templateName, languageCode = 'tr', components = [] } = body
 
+    console.log('📋 [WhatsApp API] Template request payload:', {
+      to: to ? `${to.substring(0, 5)}****` : 'undefined',
+      templateName,
+      languageCode,
+      componentsCount: components.length
+    });
+
     if (!to || !templateName) {
+      console.log('❌ [WhatsApp API] Validation failed: Missing required parameters (to, templateName)');
       return NextResponse.json(
         { error: 'to ve templateName parametreleri gerekli' },
         { status: 400 }
@@ -18,22 +29,27 @@ export async function POST(request: NextRequest) {
     // Apply rate limiting for WhatsApp messages
     const rateLimitResult = await rateLimitMiddleware(request, 'whatsapp', `whatsapp:${to}`)
     if (rateLimitResult && !rateLimitResult.success) {
-      console.log('🚫 Rate limit exceeded for WhatsApp message to:', to)
+      console.log('⚠️ [WhatsApp API] Rate limit exceeded for template message to:', to.substring(0, 5) + '****')
       return createRateLimitResponse(rateLimitResult, 'Too many WhatsApp messages. Please wait before sending another.')
     }
+    
+    console.log('✅ [WhatsApp API] Rate limit check passed for template message');
+    console.log('🌐 [WhatsApp Business Messaging] Preparing to send template message');
+    console.log('📄 [WhatsApp API] Template details:', { name: templateName, language: languageCode });
 
-    console.log('🚀 WhatsApp Template mesajı gönderiliyor:')
-    console.log('To:', to)
-    console.log('Template:', templateName)
-    console.log('Language:', languageCode)
-
+    console.log('🔧 [WhatsApp API] Creating WhatsApp service instance');
     const whatsappService = createWhatsAppService()
+    
+    console.log('📡 [WhatsApp Business Messaging] Sending template message via Facebook Graph API');
+    console.log('🔑 [WhatsApp Business Messaging] Using access token with whatsapp_business_messaging permission');
     
     // Template mesajı gönder
     const result = await whatsappService.sendSimpleTemplateMessage(to, templateName, languageCode, components)
 
     if (result.success) {
-      console.log('✅ WhatsApp template mesajı başarıyla gönderildi:', result.messageId)
+      console.log('✅ [WhatsApp API] Template message sent successfully');
+      console.log('📱 [WhatsApp Business Messaging] Message ID:', result.messageId);
+      console.log('💾 [WhatsApp API] Saving message to database');
       
       // Mesajı veritabanına kaydet
       const supabase = createClient()
@@ -51,13 +67,16 @@ export async function POST(request: NextRequest) {
         is_incoming: false
       })
 
+      console.log('🎯 [WhatsApp API] Template message endpoint execution completed successfully');
+
       return NextResponse.json({
         success: true,
         messageId: result.messageId,
         message: 'WhatsApp template mesajı başarıyla gönderildi!'
       })
     } else {
-      console.error('❌ WhatsApp template mesajı gönderilemedi:', result.error)
+      console.log('❌ [WhatsApp API] Template message sending failed');
+      console.log('🔍 [WhatsApp Business Messaging] Error details:', result.error);
       return NextResponse.json({
         success: false,
         error: result.error
@@ -65,7 +84,8 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('WhatsApp template mesajı gönderme hatası:', error)
+    console.log('💥 [WhatsApp API] Unexpected error in template message endpoint');
+    console.log('🔍 [WhatsApp Business Messaging] Error details:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

@@ -85,7 +85,8 @@ import {
   Pin,
   Volume2,
   VolumeX,
-  Smile
+  Smile,
+  X
 } from 'lucide-react';
 // Mock client for messaging page
 const createMockClient = () => ({

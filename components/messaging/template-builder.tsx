@@ -684,8 +684,9 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
       const metaService = createMetaTemplateService();
 
       if (submitForReview) {
-        // Meta API'ye template gönder
-        console.log('🚀 Submitting template to Meta API:', currentTemplate.name);
+        console.log('🚀 [WhatsApp Template Builder] Starting template submission process');
+        console.log('📄 [WhatsApp Business Management] Template name:', currentTemplate.name);
+        console.log('🔧 [WhatsApp Template Builder] Converting UI data to Facebook format');
 
         // UI verilerini Meta formatına çevir
         const metaTemplateData = metaService.buildTemplateFromUI({
@@ -705,9 +706,13 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
             }))
         });
 
+        console.log('✅ [WhatsApp Template Builder] Template data converted successfully');
+        console.log('🔍 [WhatsApp Template Builder] Validating template components');
+
         // Component validation
         const validation = metaService.validateTemplateComponents(metaTemplateData.components);
         if (!validation.valid) {
+          console.log('❌ [WhatsApp Template Builder] Template validation failed:', validation.errors);
           toast({
             title: t.admin?.whatsappTemplates?.templateBuilder.toasts.validationError,
             description: validation.errors.join(', '),
@@ -716,19 +721,30 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
           return;
         }
 
+        console.log('✅ [WhatsApp Template Builder] Template validation passed');
+        console.log('🌐 [WhatsApp Business Management] Submitting template to Facebook Graph API');
+        console.log('🔑 [WhatsApp Business Management] Using whatsapp_business_management permission');
+
         // Debug template data
         metaService.debugTemplate(metaTemplateData);
 
         // Meta API'ye gönder
-        console.log('🚀 Submitting to Meta API with data:', metaTemplateData);
+        console.log('📡 [WhatsApp Template Builder] Sending template data to Facebook');
         const result = await metaService.createTemplate(metaTemplateData);
 
         if (result.success && result.data) {
+          console.log('✅ [WhatsApp Template Builder] Template submitted successfully to Facebook');
+          console.log('📱 [WhatsApp Business Management] Template ID:', result.data.id);
+          console.log('📊 [WhatsApp Template Builder] Template status:', result.data.status);
+          console.log('🔔 [WhatsApp Template Builder] Adding submission notification');
+          
           // Bildirim ekle
           addTemplateSubmittedNotification(currentTemplate.name);
           
           // Modal'ı göster
           setShowSubmittedModal(true);
+
+          console.log('🎯 [WhatsApp Template Builder] Template submission process completed successfully');
 
           // Parent component'e notify et
           onSave?.({
@@ -739,15 +755,21 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
             components: metaTemplateData.components
           });
         } else {
-          console.error('❌ Meta API submission failed:', result.error);
+          console.log('❌ [WhatsApp Template Builder] Template submission failed');
+          console.log('🔍 [WhatsApp Business Management] Error details:', result.error);
           throw new Error(result.error || 'Meta API submission failed');
         }
       } else {
+        console.log('💾 [WhatsApp Template Builder] Saving template as draft');
+        console.log('📄 [WhatsApp Template Builder] Draft template name:', currentTemplate.name);
+        
         // Sadece local draft olarak kaydet
         toast({
           title: t.admin?.whatsappTemplates?.templateBuilder.toasts.draftSaved,
           description: t.admin?.whatsappTemplates?.templateBuilder.toasts.draftSavedDesc
         });
+
+        console.log('✅ [WhatsApp Template Builder] Template draft saved successfully');
 
         onSave?.({
           ...currentTemplate,
@@ -756,6 +778,9 @@ export default function TemplateBuilder({ template, onSave, onCancel }: Template
       }
 
     } catch (error) {
+      console.log('💥 [WhatsApp Template Builder] Unexpected error during template save');
+      console.log('🔍 [WhatsApp Business Management] Error details:', error);
+      
       toast({
         title: t.admin?.whatsappTemplates?.templateBuilder.toasts.saveError,
         description: error instanceof Error ? error.message : 'Template kaydedilirken hata oluştu',

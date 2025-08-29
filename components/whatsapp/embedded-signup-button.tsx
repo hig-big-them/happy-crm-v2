@@ -9,25 +9,7 @@ import { SignupModal } from './signup-modal';
 
 declare global {
   interface Window {
-    FB: {
-      init: (params: {
-        appId: string;
-        cookie: boolean;
-        xfbml: boolean;
-        version: string;
-      }) => void;
-      login: (
-        callback: (response: any) => void,
-        options: {
-          config_id: string;
-          response_type: string;
-          override_default_response_type: boolean;
-          extras: {
-            sessionInfoVersion: number;
-          };
-        }
-      ) => void;
-    };
+    FB: any;
     fbAsyncInit: () => void;
     whatsappAuthCode?: string;
   }
@@ -381,11 +363,20 @@ const EmbeddedSignupButton = ({
 
             // Production'da WhatsApp Embedded Signup popup kullan
         if (process.env.NODE_ENV === 'production') {
-          console.log('🔄 Production mode: Using WhatsApp Embedded Signup popup');
+          console.log('🚀 [WhatsApp Embedded Signup] Production mode: Initiating WhatsApp Business onboarding');
+          console.log('🔗 [WhatsApp Business Management] Starting embedded signup flow');
+          
           const redirectUri = `${window.location.origin}/`;
+          
+          console.log('🔑 [WhatsApp Business Management] Required permissions: whatsapp_business_management, whatsapp_business_messaging');
+          console.log('📡 [WhatsApp Embedded Signup] Redirect URI:', redirectUri);
           
           // WhatsApp Embedded Signup URL (Facebook Login for Business)
           const embeddedSignupUrl = `https://www.facebook.com/v23.0/dialog/oauth?client_id=${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=whatsapp_business_management,whatsapp_business_messaging&response_type=code&config_id=${process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID}&extras={"sessionInfoVersion":"3"}`;
+          
+          console.log('🌐 [WhatsApp Embedded Signup] Opening Facebook OAuth dialog');
+          console.log('📋 [WhatsApp Business Management] App ID:', process.env.NEXT_PUBLIC_FACEBOOK_APP_ID);
+          console.log('🔧 [WhatsApp Embedded Signup] Config ID:', process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID);
           
           toast({
             title: "WhatsApp Business'a Bağlanıyor",
@@ -394,6 +385,8 @@ const EmbeddedSignupButton = ({
           
           // WhatsApp Embedded Signup popup'ı aç
           const popup = window.open(embeddedSignupUrl, 'whatsapp_embedded_signup', 'width=600,height=700,scrollbars=yes,resizable=yes');
+          
+          console.log('🪟 [WhatsApp Embedded Signup] Popup window opened');
           
           // Popup takibi başlat
           setWaitingForEvents(true);
@@ -405,7 +398,8 @@ const EmbeddedSignupButton = ({
               return;
             }
             
-            console.log('📨 Popup message received:', event.data);
+            console.log('📨 [WhatsApp Embedded Signup] Popup message received:', event.data);
+            console.log('🔍 [WhatsApp Business Management] Processing authorization response');
             
             if (event.data && event.data.type === 'WHATSAPP_AUTH_SUCCESS') {
               console.log('🎯 Auth code received from popup:', event.data.code?.substring(0, 10) + '...');
@@ -477,7 +471,7 @@ const EmbeddedSignupButton = ({
         }
 
         window.FB.login(
-          function (response) {
+          function (response: any) {
         
         console.log('📋 FB.login response:', response);
         
@@ -899,7 +893,7 @@ const EmbeddedSignupButton = ({
                 onClick={() => {
                   console.log('🔧 Manual fallback triggered');
                   setWaitingForEvents(false);
-                  handleOnboarding(window.whatsappAuthCode, {});
+                  handleOnboarding(window.whatsappAuthCode || '', {});
                 }}
                 className="bg-red-500 text-white px-2 py-1 rounded text-xs"
               >
@@ -915,7 +909,7 @@ const EmbeddedSignupButton = ({
                 console.log('🔍 Length:', window.whatsappAuthCode?.length || 0);
                 console.log('🔍 waitingForEvents:', waitingForEvents);
                 console.log('🔍 onboardingInProgress:', onboardingInProgress);
-                console.log('🔍 fallbackTriggered:', fallbackTriggered);
+                console.log('🔍 fallbackTriggered:', 'not defined');
                 console.log('🔍 Current URL:', window.location.href);
                 console.log('🔍 URL Params:', new URLSearchParams(window.location.search).toString());
                 console.log('🔍 === END DEBUG ===');

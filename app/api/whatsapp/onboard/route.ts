@@ -28,22 +28,36 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    console.log('🚀 [WhatsApp API] POST /api/whatsapp/onboard - WhatsApp Business onboarding endpoint called');
+    console.log('🔗 [WhatsApp Business Management] Processing embedded signup authorization code');
+    
     const body = await request.json();
     const { code, phone_number_id, waba_id, redirect_uri } = body;
 
+    console.log('📋 [WhatsApp API] Onboarding request payload:', {
+      hasCode: !!code,
+      codePreview: code ? code.substring(0, 10) + '...' : 'none',
+      phone_number_id,
+      waba_id,
+      redirect_uri
+    });
+
     if (!code) {
+      console.log('❌ [WhatsApp API] Validation failed: Authorization code is missing');
       return NextResponse.json(
         { error: 'Authorization code is missing' }, 
         { status: 400 }
       );
     }
 
+    console.log('🔑 [WhatsApp Business Management] Checking required permissions and configuration');
+    
     // Environment variables kontrolü
     const facebookAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
     const facebookAppSecret = process.env.FACEBOOK_APP_SECRET;
     
     if (!facebookAppId) {
-      console.error('❌ Missing NEXT_PUBLIC_FACEBOOK_APP_ID');
+      console.log('❌ [WhatsApp API] Facebook App ID not configured - this requires whatsapp_business_management permission');
       return NextResponse.json(
         { 
           error: 'Facebook App ID not configured', 

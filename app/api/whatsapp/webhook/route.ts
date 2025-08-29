@@ -90,22 +90,27 @@ export async function GET(request: NextRequest) {
   const hubChallenge = searchParams.get('hub.challenge');
   const hubVerifyToken = searchParams.get('hub.verify_token');
 
-  console.log('📋 WhatsApp webhook verification request:', {
+  console.log('🚀 [WhatsApp Webhook] GET /api/whatsapp/webhook - Webhook verification endpoint called');
+  console.log('🔍 [WhatsApp Business Messaging] Facebook webhook verification request');
+  console.log('📋 [WhatsApp Webhook] Verification parameters:', {
     hubMode,
-    hubChallenge,
-    hubVerifyToken,
-    expectedToken: WEBHOOK_VERIFY_TOKEN
+    hubChallenge: hubChallenge ? 'present' : 'missing',
+    hubVerifyToken: hubVerifyToken ? hubVerifyToken.substring(0, 10) + '...' : 'missing',
+    expectedToken: WEBHOOK_VERIFY_TOKEN ? WEBHOOK_VERIFY_TOKEN.substring(0, 10) + '...' : 'missing'
   });
 
   // WhatsApp webhook verification
   if (hubMode === 'subscribe' && hubVerifyToken === WEBHOOK_VERIFY_TOKEN) {
-    console.log('✅ WhatsApp webhook verification successful');
+    console.log('✅ [WhatsApp Webhook] Webhook verification successful');
+    console.log('🔑 [WhatsApp Business Messaging] Webhook verified with correct token');
+    console.log('🎯 [WhatsApp Webhook] Returning challenge to Facebook');
     return new NextResponse(hubChallenge, { 
       status: 200,
       headers: { 'Content-Type': 'text/plain' }
     });
   } else {
-    console.log('❌ WhatsApp webhook verification failed');
+    console.log('❌ [WhatsApp Webhook] Webhook verification failed');
+    console.log('🔍 [WhatsApp Business Messaging] Token mismatch or invalid mode');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 }
@@ -167,10 +172,13 @@ export async function POST(request: NextRequest) {
     const body = await request.text();
     const signature = request.headers.get('x-hub-signature-256');
     
-    console.log('📥 WhatsApp webhook event received');
+    console.log('🚀 [WhatsApp Webhook] POST /api/whatsapp/webhook - Webhook event endpoint called');
+    console.log('📥 [WhatsApp Business Messaging] Incoming webhook event from Facebook');
+    console.log('🔍 [WhatsApp Webhook] Processing webhook payload');
+    
     // SECURITY: Don't log headers in production (may contain sensitive data)
     if (process.env.NODE_ENV !== 'production') {
-      console.log('📋 Headers:', Object.fromEntries(request.headers.entries()));
+      console.log('📋 [WhatsApp Webhook] Headers:', Object.fromEntries(request.headers.entries()));
     }
 
     // Signature verification
@@ -187,12 +195,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
     }
 
+    console.log('📊 [WhatsApp Webhook] Webhook data parsed successfully');
+    console.log('🔍 [WhatsApp Business Messaging] Analyzing webhook content');
+    
     // SECURITY: Don't log full payload in production (contains PII)
     if (process.env.NODE_ENV !== 'production') {
-      console.log('📦 Webhook data:', JSON.stringify(webhookData, null, 2));
+      console.log('📦 [WhatsApp Webhook] Full webhook data:', JSON.stringify(webhookData, null, 2));
     } else {
       // Production: Log only non-PII metadata
-      console.log('📦 Webhook received:', {
+      console.log('📦 [WhatsApp Business Messaging] Webhook metadata:', {
         object: webhookData.object,
         entries: webhookData.entry?.length || 0,
         timestamp: new Date().toISOString()
@@ -201,9 +212,13 @@ export async function POST(request: NextRequest) {
 
     // WhatsApp object kontrolü
     if (webhookData.object !== 'whatsapp_business_account') {
-      console.log('⚠️ Unknown object type:', webhookData.object);
+      console.log('⚠️ [WhatsApp Webhook] Unknown object type:', webhookData.object);
+      console.log('🔍 [WhatsApp Business Messaging] Expected: whatsapp_business_account');
       return NextResponse.json({ success: true, message: 'Ignored unknown object type' });
     }
+    
+    console.log('✅ [WhatsApp Webhook] Valid WhatsApp Business Account webhook received');
+    console.log('🔄 [WhatsApp Business Messaging] Processing webhook entries');
 
     const supabase = createClient();
 
