@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const WHATSAPP_API_URL = 'https://graph.facebook.com/v23.0';
-const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
+const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN || 'EAAZA7w2AadZC4BPPRnKtBXXhi8ZAZBV06ZCHRurPtBikOW4umxYccikfaEcKUiopL8BnEAhO7X6YEl0CZAJ0nQpv8ZAD1BPZCOM6Isl49iowBHjBJwIW7lu33kPzykNBNtTlhRIuX99X2gZAcgwwjTzyLU9YjiuytvdKsPwQQIVS2SYDeYwUKFK1sD17ubZBC2J01D1yIsSaCRTAU9TZCCwP80gHFKcors4XQkFCFYtdYh6';
 
 export async function GET(request: NextRequest) {
   try {
     console.log('🚀 [WhatsApp API] GET /api/whatsapp/list-authenticated-wabas - Authenticated WABAs endpoint called');
     
-    if (!ACCESS_TOKEN) {
-      console.log('❌ [WhatsApp API] Access token not configured');
-      return NextResponse.json(
-        { error: 'WhatsApp access token is not configured', success: false },
-        { status: 500 }
-      );
-    }
+    console.log('🔑 [WhatsApp Business Management] Using access token:', ACCESS_TOKEN ? 'Token available' : 'No token');
 
     console.log('🔍 [WhatsApp Business Management] Fetching authenticated WABAs from Facebook Graph API');
     console.log('🔑 [WhatsApp Business Management] Using access token with whatsapp_business_management permission');

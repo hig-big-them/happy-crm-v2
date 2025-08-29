@@ -299,13 +299,13 @@ export default function WhatsAppSettingsPage() {
       
       if (wabaResponse.ok) {
         const wabaResult = await wabaResponse.json();
-        console.log('✅ [WhatsApp Settings] Authenticated WABAs loaded:', wabaResult.data?.length || 0);
+        console.log('✅ [WhatsApp Settings] Authenticated WABAs API response:', wabaResult);
         
         if (wabaResult.success && wabaResult.data) {
-          return wabaResult.data.map((waba: any) => ({
+          const authenticatedWABAs = wabaResult.data.map((waba: any) => ({
             id: `auth_waba_${waba.id}`,
             phone_number_id: waba.phone_number_id,
-            display_phone_number: waba.display_phone_number,
+            display_phone_number: waba.display_phone_number.startsWith('+') ? waba.display_phone_number : `+${waba.display_phone_number}`,
             verified_name: waba.verified_name,
             business_account_id: waba.id,
             access_token: 'EAAxxxxx...', // Masked for security
@@ -323,9 +323,14 @@ export default function WhatsAppSettingsPage() {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           }));
+          
+          console.log('🎯 [WhatsApp Settings] Processed authenticated WABAs:', authenticatedWABAs);
+          return authenticatedWABAs;
         }
       } else {
         console.log('⚠️ [WhatsApp Settings] Failed to load authenticated WABAs:', wabaResponse.status);
+        const errorText = await wabaResponse.text();
+        console.log('📄 [WhatsApp Settings] Error response:', errorText);
       }
     } catch (error) {
       console.error('❌ [WhatsApp Settings] Error loading authenticated WABAs:', error);
