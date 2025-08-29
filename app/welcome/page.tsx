@@ -37,6 +37,73 @@ export default function WelcomePage() {
     setShowWhatsappSetup(true)
   }
 
+  // Add WABA configuration to WhatsApp Settings
+  const addWABAConfiguration = async (wabaData: { code: string; phone_number_id: string; waba_id: string }) => {
+    console.log('🔗 [Welcome] Adding new WABA configuration:', wabaData);
+    
+    try {
+      // Fetch phone number details from Facebook Graph API
+      const phoneDetailsResponse = await fetch(`/api/whatsapp/phone-details?phone_number_id=${wabaData.phone_number_id}`);
+      let phoneDetails = null;
+      
+      if (phoneDetailsResponse.ok) {
+        phoneDetails = await phoneDetailsResponse.json();
+        console.log('📱 [Welcome] Phone details fetched:', phoneDetails);
+      }
+      
+      // Get existing configs from localStorage
+      const savedConfigs = localStorage.getItem('whatsapp_configs');
+      const existingConfigs = savedConfigs ? JSON.parse(savedConfigs) : [];
+      
+      // Check if this WABA already exists
+      const existingConfig = existingConfigs.find((config: any) => 
+        config.phone_number_id === wabaData.phone_number_id || 
+        config.business_account_id === wabaData.waba_id
+      );
+      
+      if (existingConfig) {
+        console.log('⚠️ [Welcome] WABA configuration already exists:', existingConfig);
+        return;
+      }
+      
+      // Create new configuration
+      const newConfig = {
+        id: `waba_${Date.now()}`,
+        phone_number_id: wabaData.phone_number_id,
+        display_phone_number: phoneDetails?.display_phone_number || `+${wabaData.phone_number_id}`,
+        verified_name: phoneDetails?.verified_name || 'New WhatsApp Business',
+        business_account_id: wabaData.waba_id,
+        access_token: 'EAAxxxxx...', // Will be updated with real token
+        api_version: 'v23.0',
+        webhook_url: `${window.location.origin}/api/webhooks/whatsapp`,
+        webhook_verify_token: `verify_${Date.now()}`,
+        is_active: true,
+        is_primary: existingConfigs.length === 0, // First one is primary
+        quality_rating: phoneDetails?.quality_rating || 'GREEN',
+        status: 'CONNECTED',
+        messaging_limit_tier: phoneDetails?.messaging_limit_tier || '1000',
+        max_phone_numbers: phoneDetails?.max_phone_numbers || 1,
+        namespace: phoneDetails?.namespace || 'whatsapp_business',
+        certificate: '',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      
+      console.log('✅ [Welcome] New WABA configuration created:', newConfig);
+      
+      // Add to existing configs
+      const updatedConfigs = [...existingConfigs, newConfig];
+      
+      // Save to localStorage
+      localStorage.setItem('whatsapp_configs', JSON.stringify(updatedConfigs));
+      
+      console.log('💾 [Welcome] WABA configuration saved to localStorage');
+      
+    } catch (error) {
+      console.error('❌ [Welcome] Failed to add WABA configuration:', error);
+    }
+  };
+
   const handleWhatsappSuccess = (data: { code: string; phone_number_id: string; waba_id: string }) => {
     console.log('✅ WhatsApp Business connected:', data)
     setWhatsappConnected(true)
@@ -45,6 +112,9 @@ export default function WelcomePage() {
       waba_id: data.waba_id,
       phone_number_id: data.phone_number_id
     })
+    
+    // Add WABA configuration to WhatsApp Settings
+    addWABAConfiguration(data);
     
     // Optional: Show success message
     // toast({ title: "WhatsApp Business bağlandı!", description: "Artık müşterilerinizle WhatsApp üzerinden iletişim kurabilirsiniz." })
@@ -240,17 +310,16 @@ export default function WelcomePage() {
                 </div>
 
                 <div className="text-center space-y-3">
-                  <FacebookSDKProvider>
-                    <EmbeddedSignupButton
-                      onSuccess={handleWhatsappSuccess}
-                      onError={handleWhatsappError}
-                      disabled={false}
-                      skipSignupModal={true}
-                    />
-                  </FacebookSDKProvider>
+                  <Button
+                    onClick={() => router.push('/messaging/whatsapp-settings')}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    WhatsApp Business'ı Ayarla
+                  </Button>
                   
                   <p className="text-sm text-gray-500">
-                    Bu adımı şimdi atlayıp daha sonra ayarlar sayfasından yapabilirsiniz.
+                    WhatsApp Business entegrasyonunu ayarlar sayfasından yapabilirsiniz.
                   </p>
                 </div>
               </div>

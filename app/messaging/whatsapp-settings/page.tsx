@@ -128,6 +128,97 @@ export default function WhatsAppSettingsPage() {
     loadTemplates();
   }, []);
 
+  // Register WhatsApp number with PIN
+  const registerWhatsAppNumber = async (phoneNumberId: string, pin: string = "111111") => {
+    console.log('📱 [WhatsApp Settings] Starting number registration:', phoneNumberId);
+    
+    try {
+      setLoading(true);
+      
+      const response = await fetch('/api/whatsapp/register-number', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone_number_id: phoneNumberId,
+          pin: pin
+        }),
+      });
+
+      const result = await response.json();
+      console.log('📋 [WhatsApp Settings] Registration response:', result);
+
+      if (result.success) {
+        console.log('✅ [WhatsApp Settings] Number registered successfully');
+        
+        // Update config status to CONNECTED
+        const updatedConfigs = configs.map(config => 
+          config.phone_number_id === phoneNumberId 
+            ? { ...config, status: 'CONNECTED' as const, updated_at: new Date().toISOString() }
+            : config
+        );
+        
+        setConfigs(updatedConfigs);
+        localStorage.setItem('whatsapp_configs', JSON.stringify(updatedConfigs));
+        
+        toast({
+          title: locale === 'tr' ? 'Numara Kaydedildi!' : 'Number Registered!',
+          description: locale === 'tr' 
+            ? 'WhatsApp numara kaydı başarıyla tamamlandı' 
+            : 'WhatsApp number registration completed successfully',
+        });
+        
+        return true;
+      } else {
+        console.error('❌ [WhatsApp Settings] Number registration failed:', result.error);
+        
+        toast({
+          title: locale === 'tr' ? 'Kayıt Hatası' : 'Registration Error',
+          description: result.error || (locale === 'tr' 
+            ? 'Numara kaydı sırasında hata oluştu' 
+            : 'Failed to register number'),
+          variant: 'destructive'
+        });
+        
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ [WhatsApp Settings] Registration error:', error);
+      
+      toast({
+        title: locale === 'tr' ? 'Bağlantı Hatası' : 'Connection Error',
+        description: locale === 'tr' 
+          ? 'Numara kaydı sırasında bağlantı hatası oluştu' 
+          : 'Connection error during number registration',
+        variant: 'destructive'
+      });
+      
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Complete setup for PENDING configurations
+  const completeSetup = async (config: WhatsAppConfig) => {
+    console.log('🔧 [WhatsApp Settings] Starting setup completion for:', config.phone_number_id);
+    
+    if (config.status === 'PENDING') {
+      const success = await registerWhatsAppNumber(config.phone_number_id);
+      if (success) {
+        console.log('✅ [WhatsApp Settings] Setup completed successfully');
+      }
+    } else {
+      toast({
+        title: locale === 'tr' ? 'Bilgi' : 'Info',
+        description: locale === 'tr' 
+          ? 'Bu numara zaten aktif durumda' 
+          : 'This number is already active',
+      });
+    }
+  };
+
   // Add new WABA configuration from embedded signup
   const addWABAConfiguration = async (wabaData: { code: string; phone_number_id: string; waba_id: string }) => {
     console.log('🔗 [WhatsApp Settings] Adding new WABA configuration:', wabaData);
@@ -142,7 +233,7 @@ export default function WhatsAppSettingsPage() {
         console.log('📱 [WhatsApp Settings] Phone details fetched:', phoneDetails);
       }
       
-      // Create new configuration
+      // Create new configuration with PENDING status (needs registration)
       const newConfig: WhatsAppConfig = {
         id: `waba_${Date.now()}`,
         phone_number_id: wabaData.phone_number_id,
@@ -155,8 +246,8 @@ export default function WhatsAppSettingsPage() {
         webhook_verify_token: generateVerifyToken(),
         is_active: true,
         is_primary: configs.length === 0, // First one is primary
-        quality_rating: 'GREEN',
-        status: 'CONNECTED',
+        quality_rating: phoneDetails?.quality_rating || 'UNKNOWN',
+        status: 'PENDING', // Set as PENDING until registration is completed
         messaging_limit_tier: phoneDetails?.messaging_limit_tier || '1000',
         max_phone_numbers: phoneDetails?.max_phone_numbers || 1,
         namespace: phoneDetails?.namespace || 'whatsapp_business',
@@ -165,7 +256,7 @@ export default function WhatsAppSettingsPage() {
         updated_at: new Date().toISOString(),
       };
       
-      console.log('✅ [WhatsApp Settings] New WABA configuration created:', newConfig);
+      console.log('✅ [WhatsApp Settings] New WABA configuration created with PENDING status:', newConfig);
       
       // Add to existing configs
       const updatedConfigs = [...configs, newConfig];
@@ -182,8 +273,8 @@ export default function WhatsAppSettingsPage() {
       toast({
         title: locale === 'tr' ? 'WABA Bağlandı!' : 'WABA Connected!',
         description: locale === 'tr' 
-          ? `${newConfig.display_phone_number} numarası başarıyla eklendi` 
-          : `${newConfig.display_phone_number} number added successfully`,
+          ? `${newConfig.display_phone_number} numarası eklendi. Kurulumu tamamlamak için "Kurulumu Tamamla" butonuna tıklayın.` 
+          : `${newConfig.display_phone_number} number added. Click "Complete Setup" to finish registration.`,
       });
       
     } catch (error) {
@@ -198,17 +289,88 @@ export default function WhatsAppSettingsPage() {
     }
   };
 
+  // Load authenticated WABAs from Facebook Graph API
+  const loadAuthenticatedWABAs = async () => {
+    console.log('🔍 [WhatsApp Settings] Loading authenticated WABAs from Facebook Graph API');
+    
+    try {
+      // Get current user's authenticated WABAs
+      const wabaResponse = await fetch('/api/whatsapp/list-authenticated-wabas');
+      
+      if (wabaResponse.ok) {
+        const wabaResult = await wabaResponse.json();
+        console.log('✅ [WhatsApp Settings] Authenticated WABAs loaded:', wabaResult.data?.length || 0);
+        
+        if (wabaResult.success && wabaResult.data) {
+          return wabaResult.data.map((waba: any) => ({
+            id: `auth_waba_${waba.id}`,
+            phone_number_id: waba.phone_number_id,
+            display_phone_number: waba.display_phone_number,
+            verified_name: waba.verified_name,
+            business_account_id: waba.id,
+            access_token: 'EAAxxxxx...', // Masked for security
+            api_version: 'v23.0',
+            webhook_url: `${window.location.origin}/api/webhooks/whatsapp`,
+            webhook_verify_token: generateVerifyToken(),
+            is_active: true,
+            is_primary: false,
+            quality_rating: waba.quality_rating || 'GREEN',
+            status: 'CONNECTED' as const,
+            messaging_limit_tier: waba.messaging_limit_tier || '1000',
+            max_phone_numbers: waba.max_phone_numbers || 1,
+            namespace: waba.namespace || 'whatsapp_business',
+            certificate: '',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }));
+        }
+      } else {
+        console.log('⚠️ [WhatsApp Settings] Failed to load authenticated WABAs:', wabaResponse.status);
+      }
+    } catch (error) {
+      console.error('❌ [WhatsApp Settings] Error loading authenticated WABAs:', error);
+    }
+    
+    return [];
+  };
+
   const loadConfigurations = async () => {
     try {
       setLoading(true);
       
-      // For now, load from localStorage or use defaults
+      // Load from localStorage
       const savedConfigs = localStorage.getItem('whatsapp_configs');
+      let localConfigs: WhatsAppConfig[] = [];
+      
       if (savedConfigs) {
-        setConfigs(JSON.parse(savedConfigs));
-      } else {
-        // Mock configurations from messaging page
-        setConfigs([
+        localConfigs = JSON.parse(savedConfigs);
+        console.log('📱 [WhatsApp Settings] Local configs loaded:', localConfigs.length);
+      }
+      
+      // Load authenticated WABAs from Facebook Graph API
+      const authenticatedWABAs = await loadAuthenticatedWABAs();
+      
+      // Merge local configs with authenticated WABAs (avoid duplicates)
+      const allConfigs = [...localConfigs];
+      
+      authenticatedWABAs.forEach((authWaba: WhatsAppConfig) => {
+        const exists = allConfigs.find(config => 
+          config.phone_number_id === authWaba.phone_number_id ||
+          config.business_account_id === authWaba.business_account_id
+        );
+        
+        if (!exists) {
+          console.log('➕ [WhatsApp Settings] Adding authenticated WABA:', authWaba.verified_name);
+          allConfigs.push(authWaba);
+        } else {
+          console.log('⚠️ [WhatsApp Settings] WABA already exists locally:', authWaba.verified_name);
+        }
+      });
+      
+      // If no configs at all, add default mock configurations
+      if (allConfigs.length === 0) {
+        console.log('📱 [WhatsApp Settings] No configs found, adding defaults');
+        const defaultConfigs: WhatsAppConfig[] = [
           {
             id: '1',
             phone_number_id: '793146130539824',
@@ -266,8 +428,17 @@ export default function WhatsAppSettingsPage() {
             namespace: 'happy_crm_test',
             certificate: '',
           }
-        ]);
+        ];
+        allConfigs.push(...defaultConfigs);
       }
+      
+      // Set all configurations (local + authenticated WABAs)
+      setConfigs(allConfigs);
+      console.log('🎯 [WhatsApp Settings] Total configurations loaded:', allConfigs.length);
+      
+      // Update localStorage with merged configs
+      localStorage.setItem('whatsapp_configs', JSON.stringify(allConfigs));
+      
     } catch (error) {
       console.error('Error loading configurations:', error);
       toast({
@@ -480,6 +651,7 @@ export default function WhatsAppSettingsPage() {
           
           {/* WABA Connect Button */}
           <EmbeddedSignupButton
+            skipSignupModal={true}
             onSuccess={(data) => {
               console.log('🎉 [WhatsApp Settings] WABA Connected successfully:', data);
               // Add the new WABA configuration
@@ -549,6 +721,7 @@ export default function WhatsAppSettingsPage() {
                       
                       <div className="space-y-2">
                         <EmbeddedSignupButton
+                          skipSignupModal={true}
                           onSuccess={(data) => {
                             console.log('🎉 [WhatsApp Settings] WABA Connected from empty state:', data);
                             // Add the new WABA configuration
@@ -582,26 +755,29 @@ export default function WhatsAppSettingsPage() {
                     </div>
                   ) : (
                     configs.map(config => (
-                      <button
+                      <div
                         key={config.id}
-                        onClick={() => {
-                          setSelectedConfig(config);
-                          setIsEditing(false);
-                        }}
                         className={cn(
-                          "w-full text-left p-3 rounded-lg border transition-all",
+                          "w-full p-3 rounded-lg border transition-all",
                           selectedConfig?.id === config.id
                             ? "border-primary bg-primary/5"
                             : "border-border hover:bg-accent"
                         )}
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Phone className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-medium text-sm">
-                                {config.display_phone_number || (locale === 'tr' ? 'Numara girilmedi' : 'No number')}
-                              </span>
+                        <button
+                          onClick={() => {
+                            setSelectedConfig(config);
+                            setIsEditing(false);
+                          }}
+                          className="w-full text-left"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Phone className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium text-sm">
+                                  {config.display_phone_number || (locale === 'tr' ? 'Numara girilmedi' : 'No number')}
+                                </span>
                             </div>
                             <p className="text-xs text-muted-foreground">
                               {config.verified_name || (locale === 'tr' ? 'İsim belirtilmedi' : 'No name')}
@@ -610,6 +786,12 @@ export default function WhatsAppSettingsPage() {
                               {config.is_primary && (
                                 <Badge variant="secondary" className="text-xs">
                                   {locale === 'tr' ? 'Birincil' : 'Primary'}
+                                </Badge>
+                              )}
+                              {config.id.startsWith('auth_waba_') && (
+                                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                  <Shield className="h-3 w-3 mr-1" />
+                                  {locale === 'tr' ? 'Doğrulanmış' : 'Authenticated'}
                                 </Badge>
                               )}
                               <Badge
@@ -635,7 +817,40 @@ export default function WhatsAppSettingsPage() {
                             )} />
                           )}
                         </div>
-                      </button>
+                        </button>
+                        
+                        {/* Complete Setup Button for PENDING status */}
+                        {config.status === 'PENDING' && (
+                          <div className="mt-3 pt-3 border-t border-border">
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                completeSetup(config);
+                              }}
+                              size="sm"
+                              className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                              disabled={loading}
+                            >
+                              {loading ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  {locale === 'tr' ? 'Kaydediliyor...' : 'Registering...'}
+                                </>
+                              ) : (
+                                <>
+                                  <Zap className="h-4 w-4 mr-2" />
+                                  {locale === 'tr' ? 'Kurulumu Tamamla' : 'Complete Setup'}
+                                </>
+                              )}
+                            </Button>
+                            <p className="text-xs text-muted-foreground mt-2 text-center">
+                              {locale === 'tr' 
+                                ? 'Numara kaydını tamamlamak için tıklayın' 
+                                : 'Click to complete number registration'}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     ))
                   )}
                 </div>
@@ -663,6 +878,15 @@ export default function WhatsAppSettingsPage() {
                 <span className="text-muted-foreground">{locale === 'tr' ? 'Bağlı' : 'Connected'}</span>
                 <span className="font-medium">
                   {configs.filter(c => c.status === 'CONNECTED').length}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground flex items-center gap-1">
+                  <Shield className="h-3 w-3" />
+                  {locale === 'tr' ? 'Doğrulanmış' : 'Authenticated'}
+                </span>
+                <span className="font-medium text-blue-600">
+                  {configs.filter(c => c.id.startsWith('auth_waba_')).length}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
@@ -701,6 +925,27 @@ export default function WhatsAppSettingsPage() {
                   </div>
                   
                   <div className="flex items-center gap-2">
+                    {/* Complete Setup Button for PENDING status */}
+                    {selectedConfig.status === 'PENDING' && !isEditing && (
+                      <Button
+                        onClick={() => completeSetup(selectedConfig)}
+                        className="bg-orange-600 hover:bg-orange-700 text-white"
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            {locale === 'tr' ? 'Kaydediliyor...' : 'Registering...'}
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="h-4 w-4 mr-2" />
+                            {locale === 'tr' ? 'Kurulumu Tamamla' : 'Complete Setup'}
+                          </>
+                        )}
+                      </Button>
+                    )}
+                    
                     {!isEditing ? (
                       <>
                         <Button
@@ -1219,6 +1464,7 @@ export default function WhatsAppSettingsPage() {
                 
                 <div className="flex flex-col gap-2 mt-4">
                   <EmbeddedSignupButton
+                    skipSignupModal={true}
                     onSuccess={(data) => {
                       console.log('🎉 [WhatsApp Settings] WABA Connected from config details:', data);
                       // Add the new WABA configuration
