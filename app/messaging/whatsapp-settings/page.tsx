@@ -128,6 +128,76 @@ export default function WhatsAppSettingsPage() {
     loadTemplates();
   }, []);
 
+  // Add new WABA configuration from embedded signup
+  const addWABAConfiguration = async (wabaData: { code: string; phone_number_id: string; waba_id: string }) => {
+    console.log('🔗 [WhatsApp Settings] Adding new WABA configuration:', wabaData);
+    
+    try {
+      // Fetch phone number details from Facebook Graph API
+      const phoneDetailsResponse = await fetch(`/api/whatsapp/phone-details?phone_number_id=${wabaData.phone_number_id}`);
+      let phoneDetails = null;
+      
+      if (phoneDetailsResponse.ok) {
+        phoneDetails = await phoneDetailsResponse.json();
+        console.log('📱 [WhatsApp Settings] Phone details fetched:', phoneDetails);
+      }
+      
+      // Create new configuration
+      const newConfig: WhatsAppConfig = {
+        id: `waba_${Date.now()}`,
+        phone_number_id: wabaData.phone_number_id,
+        display_phone_number: phoneDetails?.display_phone_number || `+${wabaData.phone_number_id}`,
+        verified_name: phoneDetails?.verified_name || 'New WhatsApp Business',
+        business_account_id: wabaData.waba_id,
+        access_token: 'EAAxxxxx...', // Will be updated with real token
+        api_version: 'v23.0',
+        webhook_url: `${window.location.origin}/api/webhooks/whatsapp`,
+        webhook_verify_token: generateVerifyToken(),
+        is_active: true,
+        is_primary: configs.length === 0, // First one is primary
+        quality_rating: 'GREEN',
+        status: 'CONNECTED',
+        messaging_limit_tier: phoneDetails?.messaging_limit_tier || '1000',
+        max_phone_numbers: phoneDetails?.max_phone_numbers || 1,
+        namespace: phoneDetails?.namespace || 'whatsapp_business',
+        certificate: '',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      
+      console.log('✅ [WhatsApp Settings] New WABA configuration created:', newConfig);
+      
+      // Add to existing configs
+      const updatedConfigs = [...configs, newConfig];
+      setConfigs(updatedConfigs);
+      
+      // Save to localStorage
+      localStorage.setItem('whatsapp_configs', JSON.stringify(updatedConfigs));
+      
+      console.log('💾 [WhatsApp Settings] WABA configuration saved to localStorage');
+      
+      // Select the new configuration
+      setSelectedConfig(newConfig);
+      
+      toast({
+        title: locale === 'tr' ? 'WABA Bağlandı!' : 'WABA Connected!',
+        description: locale === 'tr' 
+          ? `${newConfig.display_phone_number} numarası başarıyla eklendi` 
+          : `${newConfig.display_phone_number} number added successfully`,
+      });
+      
+    } catch (error) {
+      console.error('❌ [WhatsApp Settings] Failed to add WABA configuration:', error);
+      toast({
+        title: locale === 'tr' ? 'Hata' : 'Error',
+        description: locale === 'tr' 
+          ? 'WABA konfigürasyonu eklenirken hata oluştu' 
+          : 'Failed to add WABA configuration',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const loadConfigurations = async () => {
     try {
       setLoading(true);
@@ -411,13 +481,9 @@ export default function WhatsAppSettingsPage() {
           {/* WABA Connect Button */}
           <EmbeddedSignupButton
             onSuccess={(data) => {
-              console.log('WABA Connected:', data);
-              toast({
-                title: locale === 'tr' ? 'Başarılı!' : 'Success!',
-                description: locale === 'tr' ? 'WhatsApp Business hesabı başarıyla bağlandı' : 'WhatsApp Business account connected successfully',
-              });
-              // Reload configurations to show new number
-              loadConfigurations();
+              console.log('🎉 [WhatsApp Settings] WABA Connected successfully:', data);
+              // Add the new WABA configuration
+              addWABAConfiguration(data);
             }}
             onError={(error) => {
               console.error('WABA Connection Error:', error);
@@ -484,12 +550,9 @@ export default function WhatsAppSettingsPage() {
                       <div className="space-y-2">
                         <EmbeddedSignupButton
                           onSuccess={(data) => {
-                            console.log('WABA Connected:', data);
-                            toast({
-                              title: locale === 'tr' ? 'Başarılı!' : 'Success!',
-                              description: locale === 'tr' ? 'WhatsApp Business hesabı başarıyla bağlandı' : 'WhatsApp Business account connected successfully',
-                            });
-                            loadConfigurations();
+                            console.log('🎉 [WhatsApp Settings] WABA Connected from empty state:', data);
+                            // Add the new WABA configuration
+                            addWABAConfiguration(data);
                           }}
                           onError={(error) => {
                             console.error('WABA Connection Error:', error);
@@ -1157,12 +1220,9 @@ export default function WhatsAppSettingsPage() {
                 <div className="flex flex-col gap-2 mt-4">
                   <EmbeddedSignupButton
                     onSuccess={(data) => {
-                      console.log('WABA Connected:', data);
-                      toast({
-                        title: locale === 'tr' ? 'Başarılı!' : 'Success!',
-                        description: locale === 'tr' ? 'WhatsApp Business hesabı başarıyla bağlandı' : 'WhatsApp Business account connected successfully',
-                      });
-                      loadConfigurations();
+                      console.log('🎉 [WhatsApp Settings] WABA Connected from config details:', data);
+                      // Add the new WABA configuration
+                      addWABAConfiguration(data);
                     }}
                     onError={(error) => {
                       console.error('WABA Connection Error:', error);

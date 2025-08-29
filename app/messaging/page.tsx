@@ -328,8 +328,8 @@ export default function MessagingPage() {
     { id: '10', phone: '+90 540 678 90 12', name: 'Selin Yıldız', company: 'YZ Medya', email: 'selin@yz.com' }
   ];
 
-  // WhatsApp Business Numbers - Gerçek API ile entegre
-  const whatsappNumbers: WhatsAppNumber[] = [
+  // WhatsApp Business Numbers - Load from WhatsApp Settings
+  const [whatsappNumbers, setWhatsappNumbers] = useState<WhatsAppNumber[]>([
     {
       id: '1',
       phone_number_id: '793146130539824', // TODO: Update to correct Phone Number ID for +447782610222
@@ -350,7 +350,45 @@ export default function MessagingPage() {
       messaging_limit: 250,
       current_limit: 200
     }
-  ];
+  ]);
+
+  // Load WhatsApp configurations from settings
+  const loadWhatsAppNumbers = () => {
+    try {
+      console.log('📱 [Messaging] Loading WhatsApp numbers from settings');
+      
+      const savedConfigs = localStorage.getItem('whatsapp_configs');
+      if (savedConfigs) {
+        const configs = JSON.parse(savedConfigs);
+        console.log('✅ [Messaging] WhatsApp configs loaded from localStorage:', configs.length);
+        
+        // Convert WhatsApp configs to WhatsApp numbers format
+        const numbers: WhatsAppNumber[] = configs.map((config: any) => ({
+          id: config.id,
+          phone_number_id: config.phone_number_id,
+          display_phone_number: config.display_phone_number,
+          verified_name: config.verified_name,
+          quality_rating: config.quality_rating || 'GREEN',
+          status: config.status || 'CONNECTED',
+          messaging_limit: parseInt(config.messaging_limit_tier) || 1000,
+          current_limit: Math.floor((parseInt(config.messaging_limit_tier) || 1000) * 0.8) // 80% usage simulation
+        }));
+        
+        // Add default numbers if no configs exist
+        if (numbers.length === 0) {
+          console.log('📱 [Messaging] No saved configs, using default numbers');
+          return;
+        }
+        
+        setWhatsappNumbers(numbers);
+        console.log('🎯 [Messaging] WhatsApp numbers updated:', numbers.length);
+      } else {
+        console.log('📱 [Messaging] No saved WhatsApp configs found, using defaults');
+      }
+    } catch (error) {
+      console.error('❌ [Messaging] Failed to load WhatsApp numbers:', error);
+    }
+  };
 
   // Quick Reply Templates
   const quickReplies = [
@@ -593,6 +631,7 @@ export default function MessagingPage() {
   useEffect(() => {
     loadMessageThreads();
     loadWhatsAppTemplates();
+    loadWhatsAppNumbers(); // Load WhatsApp numbers from settings
   }, [activeChannel, showUnreadOnly, showStarredOnly, showArchivedOnly, selectedWhatsAppNumber, selectedTags, selectedPriority]);
 
   // WhatsApp template'lerini yükle
